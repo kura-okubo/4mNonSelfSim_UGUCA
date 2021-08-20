@@ -29,80 +29,73 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
+#include "uca_fftable_mesh.hh"
 #include "fftable_nodal_field.hh"
-#include "static_communicator_mpi.hh"
 
 using namespace uguca;
 
-/* This is serial
- * however it can be executed in parallel and only the 0 rank would perform the operations
- */
-
 int main() {
 
-  int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-
-  if (world_rank==0)
-    std::cout << "start test: fftable_nodal_field" << std::endl;
+  std::cout << "start test: fftable_nodal_field" << std::endl;
 
   int nb_points_x = 64*2;
   int nb_points_z = 64;
 
-
   double length_x = 3.0;
   double length_z = 1.0;
 
+  FFTableMesh mesh(length_x,nb_points_x,
+		  length_z,nb_points_z);
+  
+  FFTableNodalField Ftf(mesh);
+  NodalField Field(mesh);
 
-  Mesh mesh(length_x,nb_points_x,
-	    length_z,nb_points_z);
-
-  FFTableNodalField ftf(mesh);
-  if (world_rank==0)
-    std::cout<<"fftable field contructed"<< std::endl;
-
-  NodalField field(nb_points_x*nb_points_z);
-
-  std::vector<NodalField *>  coords = mesh.getCoords();
+  double ** coords = mesh.getLocalCoords();
 
   // initiate field and ftf
-  for (int i=0; i<mesh.getGlobalNbNodesX(); ++i) {
-    for (int j=0; j<mesh.getGlobalNbNodesZ(); ++j) {
-      int ij = i*mesh.getGlobalNbNodesZ()+j;
-      double x = (*coords[0])(ij);
-      double z = (*coords[2])(ij);
-      if (world_rank!=0) continue;
-      field(ij) = 1.0+cos(x*4*M_PI)*sin(z*8*M_PI)+cos(x*2*M_PI);
-      ftf(ij) = field(ij);
-    }
-  }
-
-  if (world_rank==0)
-    std::cout << "fftable field initialized" << std::endl
-	      << "check forward and backward fft" << std::endl;
-
-  ftf.forwardFFT();
-  ftf.setAllValuesTo(0.0);
-  ftf.backwardFFT();
-
-  // check
-  for (int i=0; i<mesh.getGlobalNbNodesX(); ++i) {
-    for (int j=0; j<mesh.getGlobalNbNodesZ(); ++j) {
-      int ij = i*mesh.getGlobalNbNodesZ()+j;
-      if (world_rank!=0) continue;
-      if (fabs(field(ij) - ftf(ij))>1e-12) {
-	std::cout <<"("<<i<<","<<j<<") "<< fabs(field(ij) - ftf(ij)) << "\n";
-	std::cout <<"2D FFT failed"<< std::endl;
-	return 1;
+  for (int d=0; d<mesh.getDim(); ++d) {
+    FFTableNodalFieldComponent & ftf = Ftf.component(d);
+    NodalFieldComponent & field = Field.component(d);
+    for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
+      for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
+	int ij = i*mesh.getNbGlobalNodesZ()+j;
+	double x = coords[0][ij];
+	double z = coords[2][ij];
+	field.set(ij) = 1.0+cos(x*4*M_PI)*sin(z*8*M_PI)+cos(x*2*M_PI);
+	ftf.set(ij) = field.at(ij);
       }
     }
   }
 
-  if (world_rank==0)
+  std::cout << "fftable field initialized" << std::endl
+	    << "check forward and backward fft" << std::endl;
+
+  Ftf.forwardFFT();
+  Ftf.setAllValuesTo(0.0);
+  Ftf.backwardFFT();
+
+  // check
+  for (int d=0; d<mesh.getDim(); ++d) {
+    FFTableNodalFieldComponent & ftf = Ftf.component(d);
+    NodalFieldComponent & field = Field.component(d);
+    for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
+      for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
+	int ij = i*mesh.getNbGlobalNodesZ()+j;
+	if (fabs(field.at(ij) - ftf.at(ij))>1e-12) {
+	  std::cout <<"("<<i<<","<<j<<") "
+		    << field.at(ij) << " != " << ftf.at(ij) << " -> "
+		    << fabs(field.at(ij) - ftf.at(ij)) << "\n";
+	  std::cout <<"2D FFT failed"<< std::endl;
+	  return 1;
+	}
+      }
+    }
+  }
+
   std::cout << "forward and backward FFT correct"<< std::endl
 	    << "all checks passed -> overall success" << std::endl;
 
-  StaticCommunicatorMPI::getInstance()->finalize();
   return 0; // success
 }

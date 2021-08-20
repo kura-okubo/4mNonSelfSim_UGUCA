@@ -44,9 +44,10 @@ class DefRigInterface : public Interface {
   /* ------------------------------------------------------------------------ */
 public:
 
-  DefRigInterface(Mesh & mesh,
+  DefRigInterface(FFTableMesh & mesh,
 		  Material & top_material,
-		  InterfaceLaw & law);
+		  InterfaceLaw & law,
+		  const SolverMethod & method = _dynamic);
 
   virtual ~DefRigInterface();
 
@@ -56,17 +57,17 @@ public:
 public:
 
   // compute force needed to close normal gap
-  virtual void closingNormalGapForce(NodalField * close_force,
+  virtual void closingNormalGapForce(NodalFieldComponent & close_force,
 				     bool predicting = false);
 
   // compute force needed to maintain current shear gap
-  virtual void maintainShearGapForce(std::vector<NodalField *> & maintain_force);
+  virtual void maintainShearGapForce(NodalField & maintain_force);
 
   // compute gap in displacement
-  virtual void computeGap(std::vector<NodalField *> & gap, bool predicting = false);
+  virtual void computeGap(NodalField & gap, bool predicting = false);
 
   // compute gap relative velocity
-  virtual void computeGapVelocity(std::vector<NodalField *> & gap_velo,
+  virtual void computeGapVelocity(NodalField & gap_velo,
 				  bool predicting = false);
 
   // dumper function
@@ -77,7 +78,7 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
 
-  virtual HalfSpace & getTop() { return this->top; };
+  virtual HalfSpace & getTop() { return *(this->top); };
   virtual HalfSpace & getBot() {
     throw "DefRigInterface::getBot() is not implemented.";
   };
@@ -86,8 +87,9 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
+  
   // half spaces
-  HalfSpace top;
+  HalfSpace * top;
 
   double fact_t_2;
 };

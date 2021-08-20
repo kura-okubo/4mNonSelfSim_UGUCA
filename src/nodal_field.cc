@@ -29,23 +29,38 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "nodal_field.hh"
-#include <cstring>
-#include <cassert>
+#include <stdexcept>
+#include <cmath>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-NodalField::NodalField(int nb_nodes) :
-  nb_nodes(nb_nodes),
-  field(NULL) {
+void NodalField::init(BaseMesh & mesh) {
+  // do not initialize twice
+  if (this->initialized)
+    throw std::runtime_error("NodalField: do not initialize twice\n");
+  
+  this->mesh = &mesh;
+  
+  // if you want to use less components, simply use the NodalFieldComponent
+  this->field.resize(this->mesh->getDim());
+  for (int d=0; d<this->mesh->getDim(); ++d) {
+    this->field[d] = new NodalFieldComponent(*(this->mesh),d,this->name);
+  }
 
-  this->field = new double[nb_nodes];
-  this->zeros();
+  // done
+  this->initialized = true;
 }
 
 /* -------------------------------------------------------------------------- */
-NodalField::~NodalField() {
-  delete[] this->field;
+void NodalField::free() {
+  if (this->initialized) {
+    for (int d=0; d<this->mesh->getDim(); ++d) {
+      delete this->field[d];
+    }
+  }
+  this->field.resize(0);
+  this->initialized = false;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -55,8 +70,53 @@ void NodalField::zeros() {
 
 /* -------------------------------------------------------------------------- */
 void NodalField::setAllValuesTo(double value) {
-  std::fill_n(this->field,this->nb_nodes,value);
+  if (!this->initialized)
+    throw std::runtime_error("NodalField: cannot set value\n");
 
+  for (int d=0; d<this->mesh->getDim(); ++d) {
+    std::fill_n(this->field[d]->storage(),
+		this->mesh->getNbLocalNodes(),
+		value);
+  }
 }
+
+/* -------------------------------------------------------------------------- */
+void NodalField::computeNorm(NodalFieldComponent & norm,
+			     int ignore_dir) const {
+  norm.zeros();
+  double * norm_p = norm.storage();
+
+  for (int d=0; d<this->getDim(); ++d) {
+    if (d == ignore_dir) continue;
+
+    const double * field_d_p = this->storage(d);
+
+    for (int n=0; n<this->getNbNodes(); ++n) {
+      norm_p[n] += field_d_p[n] * field_d_p[n];
+    }
+  }
+
+  for (int n=0; n<this->getNbNodes(); ++n) {
+    norm_p[n] = std::sqrt(norm_p[n]);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+void NodalField::multiplyByScalar(const NodalFieldComponent & scalar,
+				       int ignore_dir) {
+
+  const double * scalar_p = scalar.storage();
+
+  for (int d=0; d<this->getDim(); ++d) {
+    if (d == ignore_dir) continue;
+
+    double * field_d_p = this->storage(d);
+
+    for (int n=0; n<this->getNbNodes(); ++n) {
+      field_d_p[n] *= scalar_p[n];
+    }
+  }
+}
+
 
 __END_UGUCA__

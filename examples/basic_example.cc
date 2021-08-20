@@ -30,16 +30,13 @@
  */
 #include "static_communicator_mpi.hh"
 #include "material.hh"
-
+#include "uca_simple_mesh.hh"
 #include "unimat_shear_interface.hh"
 #include "linear_shear_cohesive_law.hh"
 
 using namespace uguca;
 
 int main() {
-
-  // communicator for parallel simulation
-  StaticCommunicatorMPI * comm = StaticCommunicatorMPI::getInstance();
 
   // materials - args: E, nu, rho
   Material top_mat = Material(3e9, 0.25, 2000);
@@ -48,7 +45,7 @@ int main() {
   // mesh
   double length = 1.;
   int nb_elements = 512;
-  Mesh mesh(length, nb_elements);
+  SimpleMesh mesh(length, nb_elements);
 
   // constitutive interface law - args: mesh, Gc, tauc
   LinearShearCohesiveLaw law(mesh, 10., 1e6);
@@ -57,15 +54,14 @@ int main() {
   UnimatShearInterface interface(mesh, top_mat, law);
 
   // external loading
-  NodalField * ext_normal = interface.getNormalLoad();
-  ext_normal->setAllValuesTo(-5e6);
+  interface.getLoad().component(1).setAllValuesTo(-5e6);
 
   // heterogeneity for nucleation
-  NodalField * X = mesh.getCoords()[0];
-  NodalField * ext_shear = interface.getShearLoad();
+  double * X = mesh.getLocalCoords()[0];
+  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
   double Xnuc = length/2.;
-  for (int i=0;i<mesh.getNbNodes(); ++i)
-    (*ext_shear)(i) = 1.1e6 - 0.7e6*std::tanh(80*std::abs((*X)(i) - Xnuc) - 2.);
+  for (int i=0;i<mesh.getNbLocalNodes(); ++i)
+    ext_shear(i) = 1.1e6 - 0.7e6*std::tanh(80*std::abs(X[i] - Xnuc) - 2.);
 
   // time step
   double duration = 5e-4;
@@ -89,6 +85,6 @@ int main() {
       interface.dump(s,s*time_step); // args: time-step, time
   }
 
-  delete comm;
+  StaticCommunicatorMPI::getInstance()->finalize();
   return 0;
 }

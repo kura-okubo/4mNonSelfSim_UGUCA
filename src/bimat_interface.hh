@@ -44,10 +44,11 @@ class BimatInterface : public Interface {
   /* ------------------------------------------------------------------------ */
 public:
 
-  BimatInterface(Mesh & mesh,
+  BimatInterface(FFTableMesh & mesh,
 		 Material & top_material,
 		 Material & bot_material,
-		 InterfaceLaw & law);
+		 InterfaceLaw & law,
+		 const SolverMethod & method = _dynamic);
 
   virtual ~BimatInterface();
 
@@ -57,18 +58,18 @@ public:
 public:
 
   // compute force needed to close normal gap
-  virtual void closingNormalGapForce(NodalField * close_force,
+  virtual void closingNormalGapForce(NodalFieldComponent & close_force,
 				     bool predicting = false);
 
   // compute force needed to maintain current shear gap
-  virtual void maintainShearGapForce(std::vector<NodalField *> & maintain_force);
+  virtual void maintainShearGapForce(NodalField & maintain_force);
 
   // compute gap in displacement
-  virtual void computeGap(std::vector<NodalField *> & gap,
+  virtual void computeGap(NodalField & gap,
 			  bool predicting = false);
 
   // compute gap relative velocity
-  virtual void computeGapVelocity(std::vector<NodalField *> & gap_velo,
+  virtual void computeGapVelocity(NodalField & gap_velo,
 				  bool predicting = false);
 
   // dumper function
@@ -79,8 +80,8 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
 
-  virtual HalfSpace & getTop() { return this->top; };
-  virtual HalfSpace & getBot() { return this->bot; };
+  virtual HalfSpace & getTop() { return *(this->top); };
+  virtual HalfSpace & getBot() { return *(this->bot); };
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -88,8 +89,8 @@ public:
 private:
 
   // half spaces
-  HalfSpace top;
-  HalfSpace bot;
+  HalfSpace * top;
+  HalfSpace * bot;
 };
 
 __END_UGUCA__

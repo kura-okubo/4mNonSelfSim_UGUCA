@@ -32,16 +32,24 @@ set(UGUCA_HEADER
   uca_common.hh
   uca_parameter_reader.hh
   material.hh
+  nodal_field_component.hh
+  fftable_nodal_field_component.hh
   nodal_field.hh
   fftable_nodal_field.hh
+  uca_base_mesh.hh
+  uca_fftable_mesh.hh
+  uca_distributed_fftable_mesh.hh
+  uca_simple_mesh.hh
+  uca_custom_mesh.hh
   limited_history.hh
   kernel.hh
   precomputed_kernel.hh
   kernel_collection.hh
   preint_kernel.hh
-  half_space.hh
   uca_dumper.hh
-  uca_mesh.hh
+  half_space.hh
+  half_space_quasi_dynamic.hh
+  half_space_dynamic.hh
 
   # MPI static communicator
   static_communicator_mpi.hh
@@ -66,17 +74,24 @@ set(UGUCA_HEADER
 set(UGUCA_SRC
   uca_parameter_reader.cc
   material.cc
+  nodal_field_component.cc
+  fftable_nodal_field_component.cc
   nodal_field.cc
   fftable_nodal_field.cc
+  uca_base_mesh.cc
+  uca_fftable_mesh.cc
+  uca_distributed_fftable_mesh.cc
+  uca_simple_mesh.cc
+  uca_custom_mesh.cc
   limited_history.cc
   kernel.cc
   precomputed_kernel.cc
   kernel_collection.cc
   preint_kernel.cc
-  half_space.cc
   uca_dumper.cc
-  uca_mesh.cc
-
+  half_space.cc
+  half_space_dynamic.cc
+  
   # MPI static communicator
   static_communicator_mpi.cc
 

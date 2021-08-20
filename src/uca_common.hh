@@ -35,5 +35,15 @@
 #define __BEGIN_UGUCA__ namespace uguca {
 #define __END_UGUCA__  }
 
+namespace uguca {
+
+  enum SolverMethod {
+    _static = 0,
+    _quasi_dynamic = 1,
+    _dynamic = 2,
+    _hybrid = 3
+  };
+  
+} // namespace
 
 #endif /* __UCA_COMMON_H__ */

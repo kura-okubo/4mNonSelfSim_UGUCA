@@ -56,7 +56,7 @@ class LinearCoulombFrictionLaw : public InterfaceLaw {
   /* ------------------------------------------------------------------------ */
 public:
 
-  LinearCoulombFrictionLaw(Mesh & mesh,
+  LinearCoulombFrictionLaw(BaseMesh & mesh,
 			   double mu_s_default,
 			   double mu_k_default,
 			   double d_c_default,
@@ -68,23 +68,23 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(std::vector<NodalField *> &cohesion,
+  void computeCohesiveForces(NodalField & cohesion,
 			     bool predicting = false);
 
-  void computeRegContactPressure(NodalField * cohesion_1,
-				 NodalField * reg_cont_pres);
+  void computeRegContactPressure(NodalFieldComponent & cohesion_1,
+				 NodalFieldComponent & reg_cont_pres);
 
  // dumper function
- virtual void registerDumpField(const std::string &field_name);
+ virtual void registerDumpField(const std::string & field_name);
 
  /* ------------------------------------------------------------------------ */
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalField * getMuS() { return &(this->mu_s); };
-  NodalField * getMuK() { return &(this->mu_k); };
-  NodalField * getDc() { return &(this->d_c); };
-  NodalField * getCharacteristicTime() { return &(this->char_time); };
+  NodalFieldComponent & getMuS() { return this->mu_s; };
+  NodalFieldComponent & getMuK() { return this->mu_k; };
+  NodalFieldComponent & getDc() { return this->d_c; };
+  NodalFieldComponent & getCharacteristicTime() { return this->char_time; };
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -92,14 +92,14 @@ public:
 private:
   bool initialized;
 
-  NodalField reg_contact_pressure;
-  NodalField mu_s;
-  NodalField mu_k;
-  NodalField d_c;
-  NodalField char_time;
+  NodalFieldComponent reg_contact_pressure;
+  NodalFieldComponent mu_s;
+  NodalFieldComponent mu_k;
+  NodalFieldComponent d_c;
+  NodalFieldComponent char_time;
 
   // for predictor-corrector approach
-  NodalField reg_cont_pres_tmp;
+  NodalFieldComponent reg_cont_pres_tmp;
 };
 
 __END_UGUCA__

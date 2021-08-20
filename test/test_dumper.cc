@@ -37,29 +37,29 @@
 #include <vector>
 
 #include "uca_dumper.hh"
-#include "uca_mesh.hh"
+#include "uca_simple_mesh.hh"
 
 using namespace uguca;
 
 class TestDumper : public Dumper {
 public:
- TestDumper(Mesh& mesh)
-     : Dumper(mesh), field1(mesh.getNbNodes()), field2(mesh.getNbNodes()) {}
+ TestDumper(SimpleMesh& mesh)
+     : Dumper(mesh), field1(mesh), field2(mesh) {}
  virtual void registerDumpField(const std::string& field_name) {
    (void)field_name;  // unused parameter
-   this->registerForDump("field1", &(this->field1));
-   this->registerForDump("field2", &(this->field2));
+   this->registerForDump("field1", this->field1);
+   this->registerForDump("field2", this->field2);
   }
   void closeAllFiles() { this->closeFiles(false); }
-  NodalField field1;
-  NodalField field2;
+  NodalFieldComponent field1;
+  NodalFieldComponent field2;
 };
 
 void removeFile(std::string path) { remove(path.c_str()); }
 
 void cleanupFiles(std::string bname, std::string path, std::string file_ext){
   std::string sep = Dumper::directorySeparator();
-  removeFile(path + sep + bname + ".coord");
+  removeFile(path + sep + bname + ".coords");
   removeFile(path + sep + bname + ".fields");
   removeFile(path + sep + bname + ".info");
   removeFile(path + sep + bname + ".time");
@@ -96,7 +96,7 @@ int checkInfo(std::string bname, std::string path, std::string format) {
   }
   if (lines[0] != ("field_description " + bname + ".fields") ||
       lines[1] != ("time_description " + bname + ".time")||
-      lines[2] != ("coord_description " + bname + ".coord") ||
+      lines[2] != ("coord_description " + bname + ".coords") ||
       lines[3] != ("folder_name " + bname + "-DataFiles") ||
       lines[4] != ("output_format " + format)) {
     std::cout << "wrong content found in .info dump file" << std::endl;
@@ -106,9 +106,9 @@ int checkInfo(std::string bname, std::string path, std::string format) {
   return 0; // success
 }
 
-int checkCoords(Mesh& mesh, std::string bname, std::string path,
+int checkCoords(SimpleMesh& mesh, std::string bname, std::string path,
                 Dumper::Format format) {
-  std::ifstream file(path + Dumper::directorySeparator() + bname + ".coord");
+  std::ifstream file(path + Dumper::directorySeparator() + bname + ".coords");
   std::vector<std::vector<double>> coords;
   if (!file.is_open()) {
     std::cout << "cannot open *.coord dump file" << std::endl;
@@ -139,15 +139,15 @@ int checkCoords(Mesh& mesh, std::string bname, std::string path,
     }
   }
   file.close();
-  if (coords.size() != (size_t)mesh.getNbNodes()) {
+  if (coords.size() != (size_t)mesh.getNbLocalNodes()) {
     std::cout << "wrong # of nodes in *.coord" << std::endl;
     return 1;  // failure
   }
-  const std::vector<NodalField*> coords_ref = mesh.getCoords();
-  double tol = 1e-10;
-  for (int i = 0; i < mesh.getNbNodes(); ++i) {
+  double ** coords_ref = mesh.getLocalCoords();
+  double tol = 1e-5;
+  for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
     for (unsigned j = 0; j < 3; ++j) {
-      if (std::abs(coords[i][j] - (*coords_ref[j])(i)) > tol) {
+      if (std::abs(coords[i][j] - coords_ref[j][i]) > tol) {
         std::cout << "discrepancy found in *.coord" << std::endl;
         return 1;  // failure
       }
@@ -225,8 +225,8 @@ int checkFields(std::string bname, std::string path,
   return 0;  // success
 }
 
-int checkField(Mesh& mesh, std::string bname, std::string path,
-               NodalField& field, std::string name, Dumper::Format format,
+int checkField(SimpleMesh& mesh, std::string bname, std::string path,
+               NodalFieldComponent& field, std::string name, Dumper::Format format,
                std::string file_ext) {
   std::string sep = Dumper::directorySeparator();
   std::string file_name = name + file_ext;
@@ -259,7 +259,7 @@ int checkField(Mesh& mesh, std::string bname, std::string path,
             }
           }
         }
-        if (row.size() == (size_t)mesh.getNbNodes()) {
+        if (row.size() == (size_t)mesh.getNbLocalNodes()) {
           data.push_back(row);
         } else {
           std::cout << "wrong dimensions in \"" << file_name << "\" dump file"
@@ -274,16 +274,16 @@ int checkField(Mesh& mesh, std::string bname, std::string path,
         std::cout << "wrong # of steps in " << file_name << std::endl;
         return 1;  // failure
       }
-      for (size_t i = 0; i < (size_t)mesh.getNbNodes(); ++i) {
+      for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
         if (data[0][i] != 0) {
           std::cout << "discrepancy found in " << file_name << " at step 0"
                     << std::endl;
           return 1;  // failure
         }
       }
-      double tol = 1.0e-10;
-      for (size_t i = 0; i < (size_t)mesh.getNbNodes(); ++i) {
-        if (std::abs(data[1][i] - field((int)i)) > tol) {
+      double tol = 1.0e-6;
+      for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
+        if (std::abs(data[1][i] - field.at((int)i)) > tol) {
           std::cout << "discrepancy found in " << file_name << " at step 1"
                     << std::endl;
           return 1;  // failure
@@ -306,18 +306,18 @@ int checkField(Mesh& mesh, std::string bname, std::string path,
       file.close();
 
       // inspect data
-      if (data.size() != 2 * (size_t)mesh.getNbNodes()) {
+      if (data.size() != 2 * (size_t)mesh.getNbLocalNodes()) {
         std::cout << "wrong # of dumped values in " << file_name << std::endl;
         return 1;  // failure
       }
       float tol = 1e-7; // machine epsilon of float = 1.19e-7
-      for (size_t i = 0; i < (size_t)mesh.getNbNodes(); ++i) {
+      for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
         if (data[i] != 0) {
           std::cout << "discrepancy found in " << file_name << " at step 0"
                     << std::endl;
           return 1;  // failure
         }
-        if (std::abs(data[i + (size_t)mesh.getNbNodes()] - field(i)) > tol) {
+        if (std::abs(data[i + (size_t)mesh.getNbLocalNodes()] - field.at(i)) > tol) {
           std::cout << "discrepancy found in " << file_name << " at step 1"
                     << std::endl;
           return 1;  // failure
@@ -334,7 +334,7 @@ int checkField(Mesh& mesh, std::string bname, std::string path,
   return 0;
 }
 
-int testDumper(Mesh& mesh, std::string bname, std::string path,
+int testDumper(SimpleMesh& mesh, std::string bname, std::string path,
                Dumper::Format format, std::string format_str,
                std::string file_ext) {
   std::string _bname = bname + "_" + format_str;
@@ -349,9 +349,9 @@ int testDumper(Mesh& mesh, std::string bname, std::string path,
   std::cout << "assign and dump random values at step 1 (t = 0.1)" << std::endl;
   std::uniform_real_distribution<double> unif(0, 1);
   std::default_random_engine re;
-  for (size_t i = 0; i < (size_t)mesh.getNbNodes(); ++i) {
-    dumper->field1(i) = unif(re);
-    dumper->field2(i) = unif(re);
+  for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
+    dumper->field1.set(i) = unif(re);
+    dumper->field2.set(i) = unif(re);
   }
   dumper->dump(1, 0.1);
 
@@ -387,7 +387,7 @@ int main(){
   int Nx = 2;
   double Lz = 0.5;
   int Nz = 3;
-  Mesh mesh(Lx, Nx, Lz, Nz);
+  SimpleMesh mesh(Lx, Nx, Lz, Nz);
   std::string bname = "test_dump";
   std::string path = ".";
   // --------------------------------------------------------------

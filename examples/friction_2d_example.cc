@@ -35,7 +35,7 @@
 #include "static_communicator_mpi.hh"
 #include "uca_parameter_reader.hh"
 #include "material.hh"
-
+#include "uca_simple_mesh.hh"
 #include "unimat_shear_interface.hh"
 #include "linear_coulomb_friction_law.hh"
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
   // mesh
   double length   = data.get<double>("length");
   int nb_elements = data.get<int>("nb_elements");
-  Mesh mesh(length, nb_elements);
+  SimpleMesh mesh(length, nb_elements);
 
   // constitutive interface law
   LinearCoulombFrictionLaw law(mesh,
@@ -91,26 +91,26 @@ int main(int argc, char *argv[]) {
   interface.setTimeStep(time_step);
 
   // heterogeneity in system: "random" strength
-  NodalField * X = mesh.getCoords()[0];
-  NodalField * mus = law.getMuS();
+  double * X = mesh.getLocalCoords()[0];
+  NodalFieldComponent & mus = law.getMuS();
   double mus_min = std::numeric_limits<double>::max();
-  for (int i=0;i<mesh.getNbNodes(); ++i) {
-    double x = (*X)(i);
-    (*mus)(i) = data.get<double>("mus")
+  for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
+    double x = X[i];
+    mus(i) = data.get<double>("mus")
       + data.get<double>("mus_ampl") * (1.0*std::sin(2*x*M_PI)
 					+ 0.5*std::cos(12*x*M_PI)
 					+ 0.7*std::sin(18*x*M_PI));
-    mus_min = std::min(mus_min,(*mus)(i));
+    mus_min = std::min(mus_min,mus(i));
   }
   if (world_rank==0) std::cout << "min mu_s: " << mus_min << std::endl;
 
   // external loading
   double shear_load_rate = data.get<double>("shear_load_rate");
   double normal_load = data.get<double>("normal_load");
-  NodalField * ext_shear = interface.getShearLoad();
-  NodalField * ext_normal = interface.getNormalLoad();
-  ext_normal->setAllValuesTo(normal_load);
-  ext_shear->setAllValuesTo(mus_min*std::abs(normal_load));
+  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
+  NodalFieldComponent & ext_normal = interface.getLoad().component(1);
+  ext_normal.setAllValuesTo(normal_load);
+  ext_shear.setAllValuesTo(mus_min*std::abs(normal_load));
 
   // initialization
   interface.init();
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
       std::cout.flush();
     }
 
-    ext_shear->setAllValuesTo(mus_min*std::abs(normal_load) + s*time_step*shear_load_rate);
+    ext_shear.setAllValuesTo(mus_min*std::abs(normal_load) + s*time_step*shear_load_rate);
 
     // time integration
     interface.advanceTimeStep();
@@ -138,6 +138,6 @@ int main(int argc, char *argv[]) {
       interface.dump(s,s*time_step);
   }
 
-  delete comm;
+  comm->finalize();
   return 0;
 }

@@ -83,7 +83,7 @@ int main() {
   if (world_rank==root)
     std::cout<<"send recv success!\n"<<std::flush;
 
-  delete buffer;
+  delete[] buffer;
 
   //---------------------------------------------------
   //---------------------------------------------------
@@ -239,7 +239,7 @@ int main() {
   // SCATTER in-place - all gather in-place
 
   StaticCommunicatorMPI::getInstance()->barrier();
-  delete buffer;
+  delete[] buffer;
 
   if (world_rank==root) printf("test allGather in-place\n") ;
   StaticCommunicatorMPI::getInstance()->barrier();
@@ -309,8 +309,8 @@ int main() {
   StaticCommunicatorMPI::getInstance()->barrier();
   if (world_rank==root) printf("test allGather not-in-place \n") ;
   StaticCommunicatorMPI::getInstance()->barrier();
-  delete buffer;
-  delete root_buffer;
+  delete[] buffer;
+  delete[] root_buffer;
 
   size_pproc=size/world_size;
   if (world_rank==root && size%world_size!=0)
@@ -510,8 +510,8 @@ int main() {
   //---------------------------------------------------
 
   // clean up
-  delete root_buffer;
-  delete buffer;
+  delete[] root_buffer;
+  delete[] buffer;
 
   if (world_rank==root) printf("went to the end \n");
   StaticCommunicatorMPI::getInstance()->finalize();
