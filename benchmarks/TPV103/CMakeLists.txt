@@ -30,3 +30,4 @@
 ####
 add_simulation(TPV103 TPV103.cc)
 configure_file(TPV103.sh TPV103.sh COPYONLY)
+configure_file(generate_output.py generate_output.py COPYONLY)
