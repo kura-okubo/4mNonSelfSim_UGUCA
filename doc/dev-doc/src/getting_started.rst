@@ -22,7 +22,7 @@ The following software are required for uguca:
 
 - `CMake <https://cmake.org/>`_ (3.1.0 or higher)
 - `FFTW <http://www.fftw.org>`_ (3.x)
-- `OpenMPI <https://www.open-mpi.org/>`_
+- `OpenMPI <https://www.open-mpi.org/>`_ (2.x or higher)
 - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
   
 Optional software for additional features in uguca:
