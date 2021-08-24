@@ -310,7 +310,8 @@ int main(){
     NodalFieldComponent & r1 = hs2.getResidual().component(1);
 
     for (int i=0;i<r0.getNbNodes();++i){
-      if (std::abs(r1.at(i)-(s1.at(i)+u1.at(i)))>1e-12) {
+      if (std::abs(r1.at(i)-(s1.at(i)+u1.at(i)))>1e-10) {
+	std::cout<<r1.at(i)<<" != "<<(s1.at(i)+u1.at(i))<<std::endl;
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
@@ -372,7 +373,7 @@ int main(){
 
     NodalFieldComponent & u0 = hs3.getDisp().component(0);
     NodalFieldComponent & u1 = hs3.getDisp().component(1);
-    NodalFieldComponent & u2 = hs3.getDisp().component(1);
+    NodalFieldComponent & u2 = hs3.getDisp().component(2);
 
     if (prank==0) {
       for (int i=0; i<nb_x; ++i){
@@ -394,28 +395,28 @@ int main(){
       FFTableNodalFieldComponent & s0 = hs3.getInternal().component(0);
       FFTableNodalFieldComponent & s1 = hs3.getInternal().component(1);
       FFTableNodalFieldComponent & s2 = hs3.getInternal().component(2);
-
+      
       if (false) {
 	std::cout<<"solution"<<std::endl
 		 << std::setprecision(12)
 		 << s0.at(4) << std::endl
-		 << s1.at(8) << std::endl
-		 << s2.at(12) << std::endl;
+		 << s1.at(62) << std::endl
+		 << s2.at(47) << std::endl;
       }
       else {
-	if (std::abs(s0.at(4) - (-109012153972))>1e3) {
+	if (std::abs(s0.at(4) - (-99443675301.1))>1e3) {
 	  std::cout << "failed 4" << std::endl
 		    << s0.at(4) << std::endl;
 	  return 1; // failure
 	}
-	if (std::abs(s1.at(8) - (5711704665.29))>1e0) {
-	  std::cout << "failed 8" << std::endl
-		    << s1.at(8) << std::endl;
+	if (std::abs(s1.at(62) - (17019761277.7))>1e-1) {
+	  std::cout << "failed 62" << std::endl
+		    << s1.at(62) << std::endl;
 	  return 1; // failure
 	}
-	if (std::abs(s2.at(12) - (-1888663842.28))>1e0) {
-	  std::cout << "failed 12" << std::endl
-		    << s2.at(12) << std::endl;
+	if (std::abs(s2.at(47) - (5687137976.34))>1e-2) {
+	  std::cout << "failed 47" << std::endl
+		    << s2.at(47) << std::endl;
 	  return 1; // failure
 	}
       }
