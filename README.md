@@ -20,8 +20,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 - [CMake](https://cmake.org/) (3.1.0 or higher)
 - [FFTW](http://www.fftw.org) (3.x)
 - [OpenMPI](https://www.open-mpi.org/)
-- [GNU Scientific Library](https://www.gnu.org/software/gsl/)
-
 
 **Compilation**:
 

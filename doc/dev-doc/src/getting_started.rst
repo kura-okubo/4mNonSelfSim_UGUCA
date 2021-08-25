@@ -23,7 +23,6 @@ The following software are required for uguca:
 - `CMake <https://cmake.org/>`_ (3.1.0 or higher)
 - `FFTW <http://www.fftw.org>`_ (3.x)
 - `OpenMPI <https://www.open-mpi.org/>`_
-- `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
   
 Optional software for additional features in uguca:
 
@@ -31,6 +30,7 @@ Optional software for additional features in uguca:
 - `Automatically Tuned Linear Algebra Software (ATLAS) <http://math-atlas.sourceforge.net/>`_
 - `Python3 <https://www.python.org/>`_
 - `CMake curses graphical user interface <https://cmake.org/>`_
+- `BLAS` <(>http://www.netlib.org/blas/>`_
 
 Compilers:
 
@@ -46,7 +46,7 @@ uguca has successfully been compiled with the following compilers:
 
 In ubuntu-based systems you can install the requirements with the following command::
 
-  > sudo apt-get install g++ cmake git libfftw3-dev libopenmpi-dev openmpi-bin libgsl-dev 
+  > sudo apt-get install g++ cmake git libfftw3-dev libopenmpi-dev openmpi-bin 
 
 Uguca includes additional features, which have further requirements.
 
@@ -72,7 +72,7 @@ First, install Command Line Tools::
 
 You can install the requirements with `Homebrew <https://brew.sh>`_::
 
-  > brew install cmake fftw gsl 
+  > brew install cmake fftw 
 
 Required packages for *UCA_USE_MPI* option::
 

@@ -52,7 +52,6 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries.")
 mark_as_advanced(
   BUILD_SHARED_LIBS)
 
-find_package(GSL REQUIRED)
 find_package(FFTW REQUIRED)
 find_package(Git)
 
@@ -101,7 +100,6 @@ set(UGUCA_INCLUDE_DIRS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/interface_laws"
   )
 include_directories(${UGUCA_INCLUDE_DIRS})
-include_directories(${GSL_INCLUDE_PATH})
 include_directories(${FFTW_INCLUDE_PATH})
 include_directories(${BLAS_INCLUDE_PATH})
 include_directories(${MPI_INCLUDE_PATH})
