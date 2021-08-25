@@ -30,6 +30,7 @@ Optional software for additional features in uguca:
 - `Automatically Tuned Linear Algebra Software (ATLAS) <http://math-atlas.sourceforge.net/>`_
 - `Python3 <https://www.python.org/>`_
 - `CMake curses graphical user interface <https://cmake.org/>`_
+- `BLAS` <(>http://www.netlib.org/blas/>`_
 
 Compilers:
 
