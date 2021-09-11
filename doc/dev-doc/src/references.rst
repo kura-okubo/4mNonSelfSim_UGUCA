@@ -6,8 +6,14 @@ Implementation of uguca
 
 If you use uguca for your work, please refer to this article:
 
-- Kammer DS, Albertini G, Ke CY (2021) "UGUCA: spectral-boundary-integral method formodeling fracture and friction".
+- Kammer, D.S., Albertini, G., \& Ke C.-Y. (2021) "`UGUCA: a spectral-boundary-integral method for modeling fracture and friction <https://doi.org/10.1016/j.softx.2021.100785>`_" SoftwareX, 15, 100785.
 
++------------------------------------------------------+-------------------------------------------------------+------------------------------------------------------+
+| :download:`BibTeX <../../ref/uguca_softwarex.bib>`   | :download:`EndNote <../../ref/uguca_softwarex.enw>`   | :download:`RefMan <../../ref/uguca_softwarex.ris>`   |
++------------------------------------------------------+-------------------------------------------------------+------------------------------------------------------+
+
+
+  
   
 Theoretical framework
 ---------------------

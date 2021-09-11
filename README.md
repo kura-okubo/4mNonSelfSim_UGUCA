@@ -13,6 +13,15 @@ uguca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANT
 You should have received a copy of the GNU Lesser General Public License along with uguca.  If not, see <https://www.gnu.org/licenses/>.
 
 
+## Reference
+
+The implementation of uguca is described in
+
+> Kammer, D.S., Albertini, G., \& Ke C.-Y. (2021) ["UGUCA: a spectral-boundary-integral method for modeling fracture and friction"](https://doi.org/10.1016/j.softx.2021.100785) SoftwareX, 15, 100785.
+
+| [BibTeX](doc/ref/uguca_softwarex.bib)   | [EndNote](doc/ref/uguca_softwarex.enw)   | [RefMan](doc/ref/uguca_softwarex.ris)   |
+
+
 ## Getting started
 
 **Requirements**:
