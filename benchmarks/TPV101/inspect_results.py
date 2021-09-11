@@ -46,13 +46,13 @@ def compare_cplot(full_path, bname):
   nt = len(t)
   xx, zz = np.meshgrid(x, z, indexing='ij')
 
-  tau0 = read_data_cplot('%s-DataFiles/cohesion_0.out' %
-                         full_path, nb_nodes_x, nb_nodes_z, nt)
+  delta_dot = read_data_cplot('%s-DataFiles/top_velo_0.out' %
+                         full_path, nb_nodes_x, nb_nodes_z, nt) * 2
 
   rpt_arrival = np.zeros(xx.shape)
   for j in range(nb_nodes_x):
     for k in range(nb_nodes_z):
-      i = np.argmax(tau0[:, j, k])
+      i = np.argmax(delta_dot[:, j, k] > 1e-3)
       rpt_arrival[j, k] = t[i]
 
   fig, ax = plt.subplots(1)
@@ -106,7 +106,7 @@ def compare_station(full_path, bname, x_interest, z_interest):
   idx_x = np.argmin(np.abs(x - x_interest))
   idx_z = np.argmin(np.abs(z - z_interest))
   idx = (idx_x - 1) * nb_nodes_z + idx_z
-  print('Warning: (%.2e, %.2e) != (%e, %e)' %
+  print('Double check: (%.2e, %.2e) = (%e, %e) ?' %
         (x_interest, z_interest, x[idx_x], z[idx_z]))
 
   t = np.fromfile('%s.time' % full_path, sep=' ')

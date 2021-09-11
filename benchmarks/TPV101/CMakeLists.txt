@@ -31,3 +31,4 @@
 add_simulation(TPV101 TPV101.cc)
 configure_file(TPV101.sh TPV101.sh COPYONLY)
 configure_file(result_summary.py result_summary.py COPYONLY)
+configure_file(generate_output.py generate_output.py COPYONLY)

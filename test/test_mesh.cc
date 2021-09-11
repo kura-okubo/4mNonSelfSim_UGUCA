@@ -35,6 +35,7 @@
 #include <random>
 #include <iostream>
 #include <unistd.h>
+#include <stdexcept>
 
 using namespace uguca;
 
