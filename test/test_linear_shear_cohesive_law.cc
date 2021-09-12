@@ -28,12 +28,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iostream>
 
 #include "uca_simple_mesh.hh"
 #include "material.hh"
 #include "linear_shear_cohesive_law.hh"
 #include "defrig_interface.hh"
+
+#include <iostream>
 
 using namespace uguca;
 

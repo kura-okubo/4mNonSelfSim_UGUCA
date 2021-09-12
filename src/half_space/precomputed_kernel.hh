@@ -33,13 +33,12 @@
 #define __PRECOMPUTED_KERNEL_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "kernel.hh"
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
 #include <vector>
-
-#include "kernel.hh"
 
 __BEGIN_UGUCA__
 

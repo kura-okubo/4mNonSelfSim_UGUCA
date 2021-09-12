@@ -29,17 +29,17 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-#include <iostream>
-#include <random>
-#include <vector>
-
 #include "half_space_dynamic.hh"
 #include "interface.hh"
 #include "interface_law.hh"
 #include "linear_shear_cohesive_law.hh"
 #include "uca_simple_mesh.hh"
 #include "nodal_field.hh"
+
+#include <cmath>
+#include <iostream>
+#include <random>
+#include <vector>
 
 using namespace uguca;
 

@@ -28,12 +28,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iostream>
-#include <cmath>
-#include <unistd.h>
 
 #include "uca_distributed_fftable_mesh.hh"
 #include "fftable_nodal_field_component.hh"
+
+#include <iostream>
+#include <cmath>
+#include <unistd.h>
 
 using namespace uguca;
 

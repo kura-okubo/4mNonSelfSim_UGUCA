@@ -28,13 +28,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iostream>
-#include <iomanip>
-#include <fstream>
 
 typedef double fftw_complex[2];
 
 #include "static_communicator_mpi.hh"
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 
 using namespace uguca;
 

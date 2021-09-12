@@ -28,13 +28,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iostream>
-#include <cmath>
 
 #include "material.hh"
 #include "uca_simple_mesh.hh"
 #include "barras_law.hh"
 #include "defrig_interface.hh"
+
+#include <iostream>
+#include <cmath>
 
 using namespace uguca;
 

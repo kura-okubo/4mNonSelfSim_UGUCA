@@ -28,13 +28,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include "kernel_collection.hh"
+#include "precomputed_kernel.hh"
+
 #include <iostream>
 #include <algorithm> // for std::min
 #include <iomanip> // for std::setprecision
 #include <cmath> // for std::abs(double)
-
-#include "kernel_collection.hh"
-#include "precomputed_kernel.hh"
 
 using namespace uguca;
 

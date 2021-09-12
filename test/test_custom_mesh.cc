@@ -28,6 +28,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 #include "uca_custom_mesh.hh"
 #include "static_communicator_mpi.hh"
 #include "fftable_nodal_field.hh"

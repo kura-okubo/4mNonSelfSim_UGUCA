@@ -31,10 +31,11 @@
 #ifndef __KERNEL_COLLECTION_H__
 #define __KERNEL_COLLECTION_H__
 /* -------------------------------------------------------------------------- */
-#include <string>
 
 #include "uca_common.hh"
 #include "kernel.hh"
+
+#include <string>
 
 __BEGIN_UGUCA__
 

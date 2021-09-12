@@ -33,12 +33,11 @@
 #define __PREINT_KERNEL_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "kernel.hh"
+#include "limited_history.hh"
 
 #include <vector>
 #include <complex>
-
-#include "kernel.hh"
-#include "limited_history.hh"
 
 __BEGIN_UGUCA__
 

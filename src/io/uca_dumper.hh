@@ -30,16 +30,16 @@
  */
 #ifndef __DUMPER_H__
 #define __DUMPER_H__
+
 /* -------------------------------------------------------------------------- */
+#include "uca_common.hh"
+#include "uca_base_mesh.hh"
+#include "nodal_field_component.hh"
 
 #include <fstream>
 #include <map>
 #include <sstream>
 #include <string>
-
-#include "uca_common.hh"
-#include "uca_base_mesh.hh"
-#include "nodal_field_component.hh"
 
 __BEGIN_UGUCA__
 
