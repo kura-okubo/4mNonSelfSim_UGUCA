@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   double duration = 12.0;
   double dump_int = 0.1;
 
-  unsigned int nb_nodes_x = 1440;
+  unsigned int nb_nodes_x = 720;
   double time_step_factor = 0.35;
 
   int s_dump = 0;
