@@ -37,6 +37,7 @@
 #include "barras_law.hh"
 
 #include <iostream>
+#include <cmath>
 
 using namespace uguca;
 
