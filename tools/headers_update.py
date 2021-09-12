@@ -65,8 +65,8 @@ def replace_header(header, fname, write=True,
 
 # -----------------------------------------
 def get_all_files(extension):
-    files = glob('./**/*'+extension, recursive=True)
-    files = [f for f in files if './build' not in f] # remove build files
+    files = glob('../**/*'+extension, recursive=True)
+    files = [f for f in files if '../build' not in f] # remove build files
     return files
 
 # -----------------------------------------
