@@ -35,6 +35,7 @@
 #include "defrig_interface.hh"
 
 #include <iostream>
+#include <cmath>
 
 using namespace uguca;
 

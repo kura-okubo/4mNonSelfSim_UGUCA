@@ -38,6 +38,7 @@
 
 #include <cmath> // for pi
 #include <limits> // for max of double
+#include <iostream>
 
 using namespace uguca;
 
