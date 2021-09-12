@@ -1,59 +1,56 @@
 #include "example_interface.hh"
-#include "static_communicator_mpi.hh"
+#include "half_space.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-
-ExampleInterface::ExampleInterface(Mesh & mesh,
+ExampleInterface::ExampleInterface(FFTableMesh & mesh,
 				   Material & top_material,
-				   InterfaceLaw & law) :
-  Interface(mesh, law),
-  top(mesh,  1),
+				   InterfaceLaw & law,
+				   const SolverMethod & method) :
+  Interface(mesh, law)
 {
-
-  this->half_space.resize(1);
-  this->half_space[0] = &this->top;
-
-  this->top.setMaterial(&top_material);
+  this->top = HalfSpace::newHalfSpace(mesh, 1, method);
+  
+  this->half_spaces.resize(1);
+  this->half_spaces[0] = this->top;
+  this->top->setMaterial(&top_material);
 }
 
 /* -------------------------------------------------------------------------- */
-ExampleInterface::~ExampleInterface() {}
+ExampleInterface::~ExampleInterface() {
+  delete this->top;
+}
 
 /* -------------------------------------------------------------------------- */
-void ExampleInterface::closingNormalGapForce(NodalField *close_force,
+void ExampleInterface::closingNormalGapForce(NodalFieldComponent & close_force,
 					     bool predicting) {
   // YOUR CODE COMES HERE
   // YOU NEED TO FILL THE CLOSE_FORCE FIELD
 }
 
 /* -------------------------------------------------------------------------- */
-void ExampleInterface::maintainShearGapForce(std::vector<NodalField *> &maintain_force) {
+void ExampleInterface::maintainShearGapForce(NodalField & maintain_force) {
   // YOUR CODE COMES HERE
   // YOU NEED TO FILL THE MAINTAIN_FORCE FIELD
 }
 
 /* -------------------------------------------------------------------------- */
-void ExampleInterface::computeGap(std::vector<NodalField *> & gap,
-                                bool predicting) {
+void ExampleInterface::computeGap(NodalField & gap,
+				  bool predicting) {
   // YOUR CODE COMES HERE
   // YOU NEED TO FILL THE GAP FIELD
 }
 
 /* -------------------------------------------------------------------------- */
-void ExampleInterface::computeGapVelocity(std::vector<NodalField *> & gap_velo,
-                                        bool predicting) {
+void ExampleInterface::computeGapVelocity(NodalField & gap_velo,
+					  bool predicting) {
   // YOUR CODE COMES HERE
   // YOU NEED TO FILL THE GAP_VELO FIELD
 }
 
 /* -------------------------------------------------------------------------- */
-void ExampleInterface::registerDumpField(const std::string &field_name) {
-
-  int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-
-  if (world_rank != 0) return;
+void ExampleInterface::registerDumpField(const std::string & field_name) {
 
   int d = std::atoi(&field_name[field_name.length() - 1]);
 
@@ -65,9 +62,9 @@ void ExampleInterface::registerDumpField(const std::string &field_name) {
   // field_name starts with "top"
   if (field_name.rfind("top", 0) == 0) {
     // cut away "top_" from field_name and give interface as dumper
-    registered = this->top.registerDumpFieldToDumper(field_name.substr(4),
-						     field_name,
-						     this);
+    registered = this->top->registerDumpFieldToDumper(field_name.substr(4),
+						      field_name,
+						      this);
   }
 
   // DO SAME WITH BOT IF NEEDED
@@ -75,7 +72,7 @@ void ExampleInterface::registerDumpField(const std::string &field_name) {
   if (!registered) {
     // YOUR NEW FIELDS COME HERE
     if (field_name == "example_field" + std::to_string(d))
-      this->registerForDump(field_name, this->example_field[d]);
+      this->registerForDump(field_name, this->example_field.component(d));
     else
       Interface::registerDumpField(field_name);
   }

@@ -13,7 +13,7 @@ class ExampleLaw : public InterfaceLaw {
   /* ------------------------------------------------------------------------ */
 public:
 
-  ExampleLaw(Mesh & mesh,
+  ExampleLaw(BaseMesh & mesh,
 	     double example_parameter_default);
 
   virtual ~ExampleLaw() {};
@@ -22,23 +22,23 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(std::vector<NodalField *> &cohesion,
+  void computeCohesiveForces(NodalField & cohesion,
 			     bool predicting = false);
 
   // dumper function
-  virtual void registerDumpField(const std::string &field_name);
+  virtual void registerDumpField(const std::string & field_name);
 
  /* ------------------------------------------------------------------------ */
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalField * getExampleParameter() { return &(this->example_parameter); };
+  NodalFieldComponent & getExampleParameter() { return this->example_parameter; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  NodalField example_parameter;
+  NodalFieldComponent example_parameter;
 };
 
 __END_UGUCA__
