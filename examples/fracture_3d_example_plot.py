@@ -22,7 +22,7 @@ def plot(fldname,time):
     # get space data
     Xdata = []
     Zdata = []
-    with open(exname+".coord",'r') as fl:
+    with open(exname+".coords",'r') as fl:
         lines = fl.readlines()
     for line in lines:
         c = line.strip().split()

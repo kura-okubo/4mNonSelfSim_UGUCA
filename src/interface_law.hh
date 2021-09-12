@@ -32,7 +32,7 @@
 #define __INTERFACE_LAW_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "uca_mesh.hh"
+#include "uca_base_mesh.hh"
 #include <sstream>
 
 #include "nodal_field.hh"
@@ -47,14 +47,14 @@ class InterfaceLaw {
   /* ------------------------------------------------------------------------ */
 public:
 
-  InterfaceLaw(Mesh & mesh) : mesh(mesh) {};
+  InterfaceLaw(BaseMesh & mesh) : mesh(mesh) {};
   virtual ~InterfaceLaw() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeCohesiveForces(std::vector<NodalField *> & cohesion,
+  virtual void computeCohesiveForces(NodalField & cohesion,
                                      bool predicting = false) = 0;
 
   // dumper function
@@ -72,7 +72,7 @@ public:
  /* Class Members                                                            */
  /* ------------------------------------------------------------------------ */
 protected:
-  Mesh & mesh;
+  BaseMesh & mesh;
   Interface * interface;
 };
 

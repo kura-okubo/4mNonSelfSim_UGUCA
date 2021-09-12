@@ -32,22 +32,22 @@
 #define __INFINITE_BOUNDARY_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "half_space.hh"
+#include "interface.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class InfiniteBoundary : public HalfSpace {
+class InfiniteBoundary : public Interface {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
 
   // side factor top=1 bot=-1
-
-  InfiniteBoundary(Mesh & mesh,
+  InfiniteBoundary(FFTableMesh & mesh,
 		   int side_factor,
-		   Material & material);
+		   Material & material,
+		   const SolverMethod & method = _dynamic);
 
   virtual ~InfiniteBoundary();
 
@@ -55,31 +55,66 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-
+  void initConvolutions() { this->hs->initConvolutions(); }
+  
   void advanceTimeStepDirichlet();
   void predictTimeStepDirichlet();
   void advanceTimeStepNeumann();
- 
- 
+
+  virtual void computeResidual();
+  
+  // dumper function
+  virtual void registerDumpField(const std::string & field_name);
 
 private:
-
-  void gatherCostumMeshForwardFFT(bool predicting = false);
   void computeExternal();
+
+  // due to inheritance from interface
+  void closingNormalGapForce(NodalFieldComponent &, bool) {
+    throw std::runtime_error(
+	 "InfiniteBoundary::closingNormalGapForce not implemented.");
+  }
+  void maintainShearGapForce(NodalField & ) {
+    throw std::runtime_error(
+	 "InfiniteBoundary::maintainShearGapForce not implemented.");
+  }
+  void computeGap(NodalField &, bool) {
+    throw std::runtime_error(
+	 "InfiniteBoundary::computeGap not implemented.");
+  }
+  void computeGapVelocity(NodalField &, bool) {
+    throw std::runtime_error(
+	 "InfiniteBoundary::computeGapVelocity not implemented.");
+  }
+  HalfSpace & getTop() {
+    throw std::runtime_error(
+	 "InfiniteBoundary::getTop not implemented.");
+  }
+  HalfSpace & getBot() {
+    throw std::runtime_error(
+	 "InfiniteBoundary::getBot not implemented.");
+  }
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  NodalField * getExternal(int d) { return this->external[d]; };
+  NodalField & getExternal() { return this->external; }
+
+  FFTableNodalField & getDisp(bool predicting = false) {
+    return this->hs->getDisp(predicting);
+  }
+  NodalField & getVelo(bool predicting = false) {
+    return this->hs->getVelo(predicting); 
+  }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  std::vector< NodalField *> external;
-  std::vector< NodalField *> scratch;
-  int nb_pc = 0;
+  // half space
+  HalfSpace * hs;
+  NodalField external;
 };
 
 __END_UGUCA__

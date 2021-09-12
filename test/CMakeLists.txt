@@ -52,10 +52,15 @@ endfunction()
 
 # basics
 uguca_add_test(test_parameter_reader)
+uguca_add_test(test_nodal_field_component)
 uguca_add_test(test_nodal_field)
+uguca_add_test(test_fftable_nodal_field_component)
 uguca_add_test(test_fftable_nodal_field)
 uguca_add_test(test_limited_history)
-uguca_add_test(test_mesh)
+uguca_add_test(test_fftable_mesh)
+uguca_add_test(test_distributed_fftable_mesh)
+uguca_add_test(test_simple_mesh)
+uguca_add_test(test_custom_mesh)
 if(UCA_USE_MPI)
   uguca_add_test(test_static_communicator_mpi)
 endif()
@@ -68,7 +73,7 @@ uguca_add_test(test_preint_kernel)
 # core
 uguca_add_test(test_material)
 uguca_add_test(test_dumper)
-uguca_add_test(test_half_space)
+uguca_add_test(test_half_space_dynamic)
 uguca_add_test(test_infinite_boundary)
 
 # test interfaces

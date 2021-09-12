@@ -33,6 +33,7 @@
 #define __NODAL_FIELD_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "nodal_field_component.hh"
 #include <vector>
 /* -------------------------------------------------------------------------- */
 
@@ -43,11 +44,15 @@ class NodalField {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  NodalField(){};
-
-  NodalField(int nb_nodes);
-
-  virtual ~NodalField();
+  NodalField(const std::string & name = "unnamed") : name(name),
+						     initialized(false),
+						     mesh(NULL) {}
+  NodalField(BaseMesh & mesh,
+	     const std::string & name = "unnamed") : name(name),
+						     initialized(false)
+  { this->init(mesh); }
+  
+  virtual ~NodalField() { this->free(); }
 
 private:
   // private copy constructor: NodalField cannot be copied (for now to debug)
@@ -57,49 +62,53 @@ private:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void zeros();
+  virtual void init(BaseMesh & mesh);
+  virtual void free();
 
+public:
+  void zeros();
   void setAllValuesTo(double value);
 
+  // compute element-wise norm of field
+  void computeNorm(NodalFieldComponent & norm,
+		   int ignore_dir = -1) const;
+
+  // multiply fields element-wise with scalar
+  void multiplyByScalar(const NodalFieldComponent & scalar,
+			int ignore_dir = -1);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // get dimension
+  int getDim() const { return this->mesh->getDim(); }
+  
   // get number of nodes
-  int getNbNodes() const { return this->nb_nodes; };
+  int getNbNodes() const { return this->mesh->getNbLocalNodes(); };
 
-  // access the value of node n (reading and writing)
-  inline double & operator()(int node);
-
-  // access the value of node n (only reading for const nodal field)
-  inline double at(int node) const ;
-
+  inline NodalFieldComponent & component(int i) { return (*this->field[i]); }
+  
   // access to storage
-  inline double * storage() { return this->field; };
-  inline const double * storage() const { return this->field; };
+  inline double * storage(int i) { return this->field[i]->storage(); }
+  inline const double * storage(int i) const { return this->field[i]->storage(); }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // number of nodes
-  int nb_nodes;
+  // name
+  std::string name;
+  
+  // initialized
+  bool initialized;
+  
+  // associated mesh
+  BaseMesh * mesh;
 
   // nodal field
-  double * field;
+  std::vector<NodalFieldComponent * > field;
 };
-
-
-/* -------------------------------------------------------------------------- */
-/* inline functions                                                           */
-/* -------------------------------------------------------------------------- */
-inline double & NodalField::operator()(int node) {
-  return this->field[node];
-}
-
-inline double NodalField::at(int node) const {
-  return this->field[node];
-}
 
 __END_UGUCA__
 

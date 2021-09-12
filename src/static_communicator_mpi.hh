@@ -45,6 +45,8 @@ static const MPI_Op MPI_MAX=0;
 
 __BEGIN_UGUCA__
 
+typedef double fftw_complex[2];
+
 
 /*
  *

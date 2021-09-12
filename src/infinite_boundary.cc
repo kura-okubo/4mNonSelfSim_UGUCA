@@ -29,41 +29,33 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "infinite_boundary.hh"
-#include "static_communicator_mpi.hh"
+#include "half_space.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-
-InfiniteBoundary::InfiniteBoundary(Mesh & mesh,
+InfiniteBoundary::InfiniteBoundary(FFTableMesh & mesh,
 				   int side_factor,
-				   Material & material) :
-  HalfSpace(mesh, side_factor) {
+				   Material & material,
+				   const SolverMethod & method) :
+  Interface(mesh),
+  external(mesh,"external") {
 
-  this->setMaterial(&material);
-
-  this->external.    resize(this->mesh.getDim());
-  this->scratch.     resize(this->mesh.getDim());
-
-  for (int d=0; d<this->mesh.getDim(); ++d){
-    this->external[d]     = new NodalField(mesh.getNbNodes());
-    this->scratch[d]      = new NodalField(mesh.getNbNodes());
-  }
+  this->hs = HalfSpace::newHalfSpace(mesh, side_factor, method);
+  
+  this->half_spaces.resize(1);
+  this->half_spaces[0] = this->hs;
+  this->hs->setMaterial(&material);
 }
 
 /* -------------------------------------------------------------------------- */
 InfiniteBoundary::~InfiniteBoundary() {
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    delete this->external[d];
-    delete this->scratch[d];
-  }
+  delete this->hs;
 }
-
-
+				   
 /* -------------------------------------------------------------------------- */
-void InfiniteBoundary::gatherCostumMeshForwardFFT(bool predicting) {
-  HalfSpace::gatherCostumMeshForwardFFT(this->scratch,
-					predicting);
+void InfiniteBoundary::computeResidual() {
+  this->hs->computeResidual(this->external);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -77,7 +69,7 @@ void InfiniteBoundary::predictTimeStepDirichlet() {
   this->computeDisplacement(true);
 
   // tau_ext* -> compute residual -> tau_res*
-  this->computeResidual(this->external);
+  this->computeResidual();
   // tau_res* -> compute velocity -> v*
   this->computeVelocity(true);
 
@@ -85,40 +77,36 @@ void InfiniteBoundary::predictTimeStepDirichlet() {
   // v** = (v + v*) / 2 ---> overwrite storage if reached last prediction step
   this->correctVelocity(true);
 }
+
+/* -------------------------------------------------------------------------- */
 void InfiniteBoundary::advanceTimeStepDirichlet() {
 
   // copy FEM displacement and internal
-
   this->computeDisplacement();
-
-  this->gatherCostumMeshForwardFFT();
-
-  this->computeStressFourierCoeff();
-
-  this->backwardFFTscatterCostumMesh();
-
-  this->computeResidual(this->external);
-
+  this->computeInternal();
+  this->computeResidual();
   this->computeVelocity();
-
 }
 
 // --------------------------------------------------------------------------
 // NEUMANN BC on FEM
 void InfiniteBoundary::computeExternal() {
-  double mu = this->material->getShearModulus();
-  double Cs = this->material->getCs();
-  double Cp = this->material->getCp();
+
+  double mu = this->hs->getMaterial().getShearModulus();
+  double Cs = this->hs->getMaterial().getCs();
+  double Cp = this->hs->getMaterial().getCp();
   std::vector<double> eta = {1.0, Cp / Cs, 1.0};
 
+  int sf = this->hs->getSideFactor();
+  
   for (int d = 0; d < this->mesh.getDim(); ++d) {
-    double *int_p =  this->internal[d]->storage();
-    double *ext_p =  this->external[d]->storage();
-    double *velo_p = this->velo[d]->storage();
+    double *int_p =  this->hs->getInternal().storage(d);
+    double *ext_p =  this->external.storage(d);
+    double *velo_p = this->hs->getVelo().storage(d);
     double eta_d = eta[d];
 
-    for (int n = 0; n < this->mesh.getNbNodes(); ++n) {
-      ext_p[n] = - this->side_factor * mu / Cs * eta_d * velo_p[n] + int_p[n];
+    for (int n = 0; n < this->external.getNbNodes(); ++n) {
+      ext_p[n] = - sf * mu / Cs * eta_d * velo_p[n] + int_p[n];
     }
   }
 }
@@ -132,18 +120,30 @@ void InfiniteBoundary::computeExternal() {
  * for the next time step
  *
  */
-
 void InfiniteBoundary::advanceTimeStepNeumann() {
 
   // set displacement and velocity from FEM
-
-  this->gatherCostumMeshForwardFFT(false);
-
-  this->computeStressFourierCoeff();
-
-  this->backwardFFTscatterCostumMesh();
-
+  this->computeInternal();
   this->computeExternal();
+}
+
+/* -------------------------------------------------------------------------- */
+void InfiniteBoundary::registerDumpField(const std::string &field_name) {
+
+  int d = std::atoi(&field_name[field_name.length() - 1]);
+
+  if (d >= this->mesh.getDim())
+    throw std::runtime_error("Field "+field_name
+			     +" cannot be dumped, too high dimension");
+
+  bool registered = false;
+
+  registered = this->hs->registerDumpFieldToDumper(field_name,
+						   field_name,
+						   this);
+
+  if (!registered)
+    Interface::registerDumpField(field_name);
 }
 
 

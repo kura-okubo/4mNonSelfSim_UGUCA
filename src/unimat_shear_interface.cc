@@ -29,31 +29,35 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "unimat_shear_interface.hh"
-#include "static_communicator_mpi.hh"
+#include "half_space.hh"
 
 __BEGIN_UGUCA__
 
 /*-------------------------------------------------------------------------- */
-UnimatShearInterface::UnimatShearInterface(Mesh & mesh,
+UnimatShearInterface::UnimatShearInterface(FFTableMesh & mesh,
 					   Material & top_material,
-					   InterfaceLaw & law) :
-  Interface(mesh, law),
-  top(mesh, 1)
+					   InterfaceLaw & law,
+					   const SolverMethod & method) :
+  Interface(mesh, law)
 {
-  this->half_space.resize(1);
-  this->half_space[0] = &this->top;
+  this->top = HalfSpace::newHalfSpace(mesh, 1, method);
+  
+  this->half_spaces.resize(1);
+  this->half_spaces[0] = this->top;
 
-  this->top.setMaterial(&top_material);
+  this->top->setMaterial(&top_material);
 }
 
 /* -------------------------------------------------------------------------- */
-UnimatShearInterface::~UnimatShearInterface() {}
+UnimatShearInterface::~UnimatShearInterface() {
+  delete this->top;
+}
 
 /* -------------------------------------------------------------------------- */
-void UnimatShearInterface::closingNormalGapForce(NodalField * close_force,
+void UnimatShearInterface::closingNormalGapForce(NodalFieldComponent & close_force,
 						 bool predicting) {
   // top material information
-  const Material & mat_t = this->top.getMaterial();
+  const Material & mat_t = this->top->getMaterial();
   double cp_t = mat_t.getCp();
   double cs_t = mat_t.getCs();
   double mu_t = mat_t.getShearModulus();
@@ -61,12 +65,12 @@ void UnimatShearInterface::closingNormalGapForce(NodalField * close_force,
   double fact_t = this->time_step * cs_t / mu_t / eta_t;
 
   // accessors
-  double * u_1_t = this->top.getDisp(1, predicting)->storage();
-  double * f_1_t = this->top.getInternal(1)->storage();
-  double * t0_1 = this->load[1]->storage();
-  double * cf = close_force->storage();
+  double * u_1_t = this->top->getDisp(predicting).storage(1);
+  double * f_1_t = this->top->getInternal().storage(1);
+  double * t0_1 = this->load.storage(1);
+  double * cf = close_force.storage();
 
-  for (int n=0; n<this->mesh.getNbNodes(); ++n) {
+  for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
     double u_1_gap = 0.0 * u_1_t[n];           // for readability
     double du_1_t =  t0_1[n] + 0.0 * f_1_t[n]; // for readability
     cf[n] = 0.5 * u_1_gap / fact_t +  du_1_t;
@@ -74,44 +78,46 @@ void UnimatShearInterface::closingNormalGapForce(NodalField * close_force,
 }
 
 /* -------------------------------------------------------------------------- */
-void UnimatShearInterface::maintainShearGapForce(std::vector<NodalField *> &maintain_force) {
-  // doesn't matter if it is predicting or not
+void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
 
   for (int d=0; d<this->mesh.getDim(); d+=2) {
-    // accessors
-    double *f_t = this->top.getInternal(d)->storage();
-    double *t0 = this->load[d]->storage();
-    double *mf = maintain_force[d]->storage();
 
-    for (int n=0; n<this->mesh.getNbNodes(); ++n) {
+    // accessors
+    double *f_t = this->top->getInternal().storage(d);
+    double *t0 = this->load.storage(d);
+    double *mf = maintain_force.storage(d);
+
+    for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       mf[n] = t0[n] + f_t[n];
     }
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void UnimatShearInterface::computeGap(std::vector<NodalField *> & gap,
+void UnimatShearInterface::computeGap(NodalField & gap,
 				      bool predicting) {
 
   for (int d = 0; d < this->mesh.getDim(); ++d) {
-    double * top_disp = this->top.getDisp(d, predicting)->storage();
-    double * gap_p = gap[d]->storage();
 
-    for (int n=0; n<this->mesh.getNbNodes(); ++n) {
+    double * top_disp = this->top->getDisp(predicting).storage(d);
+    double * gap_p = gap.storage(d);
+
+    for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       gap_p[n] = 2 * top_disp[n];
     }
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void UnimatShearInterface::computeGapVelocity(std::vector<NodalField *> &gap_velo,
+void UnimatShearInterface::computeGapVelocity(NodalField & gap_velo,
 					      bool predicting) {
 
   for (int d = 0; d < this->mesh.getDim(); ++d) {
-    double * top_velo_p = this->top.getVelo(d, predicting)->storage();
-    double * gap_velo_p = gap_velo[d]->storage();
 
-    for (int n = 0; n < this->mesh.getNbNodes(); ++n) {
+    double * top_velo_p = this->top->getVelo(predicting).storage(d);
+    double * gap_velo_p = gap_velo.storage(d);
+
+    for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
       gap_velo_p[n] = 2 * top_velo_p[n];
     }
   }
@@ -119,9 +125,6 @@ void UnimatShearInterface::computeGapVelocity(std::vector<NodalField *> &gap_vel
 
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::registerDumpField(const std::string & field_name) {
-
-  int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  if (world_rank!=0) return;
 
   int d = std::atoi(&field_name[field_name.length()-1]);
 
@@ -133,9 +136,9 @@ void UnimatShearInterface::registerDumpField(const std::string & field_name) {
   // field_name starts with "top"
   if (field_name.rfind("top", 0) == 0) {
     // cut away "top_" from field_name and give interface as dumper
-    registered = this->top.registerDumpFieldToDumper(field_name.substr(4),
-						     field_name,
-						     this);
+    registered = this->top->registerDumpFieldToDumper(field_name.substr(4),
+						      field_name,
+						      this);
   }
 
   if (!registered)

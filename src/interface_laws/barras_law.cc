@@ -37,13 +37,13 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 
-BarrasLaw::BarrasLaw(Mesh & mesh,
+BarrasLaw::BarrasLaw(BaseMesh & mesh,
 		     double tau_max_default,
 		     double delta_c_default) :
   InterfaceLaw(mesh),
-  tau_max(mesh.getNbNodes()),
-  delta_c(mesh.getNbNodes()),
-  gap_norm(mesh.getNbNodes())
+  tau_max(mesh),
+  delta_c(mesh),
+  gap_norm(mesh)
 {
   this->tau_max.setAllValuesTo(tau_max_default);
   this->delta_c.setAllValuesTo(delta_c_default);
@@ -51,27 +51,27 @@ BarrasLaw::BarrasLaw(Mesh & mesh,
 }
 
 /* -------------------------------------------------------------------------- */
-void BarrasLaw::computeCohesiveForces(std::vector<NodalField *> &cohesion,
+void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
                                       bool predicting) {
 
-  unsigned int nb = this->mesh.getNbNodes();
-
   // find current gap
-  std::vector<NodalField *> gap = this->interface->getBufferField();
+  //std::vector<NodalField *> gap = this->interface->getBufferField();
+  NodalField gap(this->mesh);
   this->interface->computeGap(gap, predicting);
-  this->interface->computeNorm(gap, this->gap_norm);
+  gap.computeNorm(this->gap_norm);
   double *gap_norm_p = this->gap_norm.storage();
 
   // find forces needed to close normal gap
-  this->interface->closingNormalGapForce(cohesion[1], predicting);
-  double * coh1 = cohesion[1]->storage();
+  NodalFieldComponent & coh1 = cohesion.component(1);
+  this->interface->closingNormalGapForce(coh1, predicting);
+  double * p_coh1 = coh1.storage();
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of shear cohesion
-  NodalField shear_trac_norm(nb);
-  this->interface->computeNorm(cohesion, shear_trac_norm, true);
+  NodalFieldComponent shear_trac_norm(this->mesh);
+  cohesion.computeNorm(shear_trac_norm, 1);
   double * tau_shear = shear_trac_norm.storage();
 
   // interface properties
@@ -79,17 +79,17 @@ void BarrasLaw::computeCohesiveForces(std::vector<NodalField *> &cohesion,
   double *dc = this->delta_c.storage();
 
   // to be filled
-  NodalField alpha_field(nb);
+  NodalFieldComponent alpha_field(this->mesh);
   double * alpha = alpha_field.storage();
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
-  for (unsigned int n = 0; n < nb; ++n) {
+  for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
 
     double rel_gap = gap_norm_p[n] / dc[n];
     double strength = tauc[n] * std::max(0., 1 - rel_gap);
 
-    coh1[n] = std::min(coh1[n], strength);
+    p_coh1[n] = std::min(p_coh1[n], strength);
 
     // maximal shear cohesive force given by strength.
     // keep orientation of shear force
@@ -97,20 +97,20 @@ void BarrasLaw::computeCohesiveForces(std::vector<NodalField *> &cohesion,
   }
 
   // only in shear direction
-  this->interface->multiplyFieldByScalar(cohesion, alpha_field, true);
+  cohesion.multiplyByScalar(alpha_field, 1);
 }
 
 /* --------------------------------------------------------------------------*/
-void BarrasLaw::registerDumpField(const std::string &field_name) {
+void BarrasLaw::registerDumpField(const std::string & field_name) {
 
   // tau_max
   if (field_name == "tau_max") {
-    this->interface->registerForDump(field_name, &(this->tau_max));
+    this->interface->registerForDump(field_name, this->tau_max);
   }
 
   // delta_c
   else if (field_name == "delta_c") {
-    this->interface->registerForDump(field_name, &(this->delta_c));
+    this->interface->registerForDump(field_name, this->delta_c);
   }
 
   // do not know this field

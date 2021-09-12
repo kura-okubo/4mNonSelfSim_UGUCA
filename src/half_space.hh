@@ -37,12 +37,8 @@
 #include "nodal_field.hh"
 #include "fftable_nodal_field.hh"
 #include "limited_history.hh"
-#include "uca_mesh.hh"
+#include "uca_fftable_mesh.hh"
 #include "uca_dumper.hh"
-
-#ifdef UCA_USE_OPENMP
-#include <omp.h>
-#endif /* UCA_USE_OPENMP */
 
 __BEGIN_UGUCA__
 
@@ -52,35 +48,28 @@ class HalfSpace {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-
   // side factor top=1 bot=-1
-
-  HalfSpace(Mesh & mesh, int side_factor);
+  HalfSpace(FFTableMesh & mesh, int side_factor);
 
   virtual ~HalfSpace();
 
+  // allocate HalfSpace of type
+  static HalfSpace * newHalfSpace(FFTableMesh & mesh,
+				  int side_factor,
+				  const SolverMethod & method);
+  
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
   virtual void computeDisplacement(bool predicting = false);
-  virtual void computeStressFourierCoeff(bool predicting = false,
-					 bool correcting = false);
-  virtual void computeResidual(std::vector<NodalField *> &external);
+  virtual void computeInternal(bool predicting = false,
+			       bool correcting = false);
+  virtual void computeResidual(NodalField & external);
   virtual void computeVelocity(bool predicting = false);
 
   // init convolutions
-  void initConvolutions();
-
-  // apply fft forward on displacement
-  virtual void forwardFFT(bool predicting = false);
-  // apply fft backward on internal
-  virtual void backwardFFT();
-
-  // for costum mesh
-  virtual void gatherCostumMeshForwardFFT(std::vector<NodalField *> &scratch,
-					  bool predicting = false);
-  virtual void backwardFFTscatterCostumMesh();
+  virtual void initConvolutions() {}
 
   // for predictor-corrector implmentation
   void initPredictorCorrector();
@@ -93,13 +82,22 @@ public:
 				 Dumper * const dumper);
 
 protected:
-  void computeStressFourierCoeffDynamic(bool predicting, bool correcting);
-  void computeStressFourierCoeffStatic(bool predicting);
+  // apply fft forward on displacement
+  virtual void forwardFFT(bool predicting = false);
+  // apply fft backward on internal
+  virtual void backwardFFT();
+
+  virtual void computeStressFourierCoeff(bool predicting = false,
+					 bool correcting = false) = 0;
 
 private:
-  void computeDisplacement(NodalField *disp, NodalField *velo, NodalField *target);
-  void computeVelocity(std::vector<NodalField *> & _velo);
-  void correctVelocity(NodalField *velo_n, NodalField *velo_pc, NodalField *target);
+  void computeDisplacement(NodalField & disp,
+			   NodalField & velo,
+			   NodalField & target);
+  void computeVelocity(NodalField & _velo);
+  void correctVelocity(NodalField & velo_n,
+		       NodalField & velo_pc,
+		       NodalField & target);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -107,42 +105,44 @@ private:
 public:
   // set a material to half space
   void setMaterial(Material *material) { this->material = material; }
+
   // get material of half space
   const Material &getMaterial() const { return (*this->material); }
 
-  void setTimeStep(double time_step);
+  // set time step
+  virtual void setTimeStep(double time_step) { this->time_step = time_step; }
 
+  // get side factor
+  int getSideFactor() const { return this->side_factor; }
+  
   // accessors
-  FFTableNodalField * getDisp(int d, bool predicting = false) {
-    return predicting ? this->disp_pc[d] : this->disp[d];
+  FFTableNodalField & getDisp(bool predicting = false) {
+    return predicting ? this->disp_pc : this->disp;
   }
-  NodalField * getVelo(int d, bool predicting = false) {
-    return predicting ? this->velo_pc[d] : this->velo[d];
+  NodalField & getVelo(bool predicting = false) {
+    return predicting ? this->velo_pc : this->velo;
   }
 
-  FFTableNodalField * getInternal(int d) { return this->internal[d]; };
+  FFTableNodalField & getInternal() { return this->internal; };
 
-  NodalField * getResidual(int d) { return this->residual[d]; };
+  NodalField & getResidual() { return this->residual; };
 
   // const accessors
-  const FFTableNodalField * getDisp(int d, bool predicting = false) const {
-    return predicting ? this->disp_pc[d] : this->disp[d];
+  const FFTableNodalField & getDisp(bool predicting = false) const {
+    return predicting ? this->disp_pc : this->disp;
   }
-  const NodalField * getVelo(int d, bool predicting = false) const {
-    return predicting ? this->velo_pc[d] : this->velo[d];
+  const NodalField & getVelo(bool predicting = false) const {
+    return predicting ? this->velo_pc : this->velo;
   }
-  const FFTableNodalField * getInternal(int d) const { return internal[d]; }
+  const FFTableNodalField & getInternal() const { return this->internal; }
 
-  double getStableTimeStep();
-
-  void setDynamic(bool fully_dynamic) { this->dynamic = fully_dynamic; }
-  bool getDynamic() { return this->dynamic; }
+  virtual double getStableTimeStep() = 0;
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  Mesh & mesh;
+  FFTableMesh & mesh;
 
   // time step
   double time_step;
@@ -150,39 +150,25 @@ protected:
   // used to know in which directions the tractions pull
   int side_factor;
 
+  // displacement 0 x "in-plane shear" ; 1 y "normal"; 2 z "out-of-plane shear"
+  FFTableNodalField disp;
+
+  // velocity
+  NodalField velo;
+  
   // material properties
   Material * material;
 
-  // displacement 0 x "in-plane shear" ; 1 y "normal"; 2 z "out-of-plane shear"
-  std::vector<FFTableNodalField *> disp;
-
-  // velocity
-  std::vector<NodalField *> velo;
-
-  // past values of displacement in frequency domain
-  // each LimitedHistory is for a given wave number q
-  std::vector<std::vector<LimitedHistory *> > U_r;
-  std::vector<std::vector<LimitedHistory *> > U_i;
-
-  // convolutions
-
-  std::vector<PreintKernel *> H00_pi;
-  std::vector<PreintKernel *> H01_pi;
-  std::vector<PreintKernel *> H11_pi;
-  std::vector<PreintKernel *> H22_pi;
-
   // tractions due to deformation
-  std::vector<FFTableNodalField *> internal;
+  FFTableNodalField internal;
 
   // all acting forces
-  std::vector<NodalField *> residual;
+  NodalField residual;
 
   // for predictor-corrector implmentation
   bool predictor_corrector = false;
-  std::vector<FFTableNodalField *> disp_pc;
-  std::vector<NodalField *> velo_pc;
-
-  bool dynamic = true;
+  FFTableNodalField disp_pc;
+  NodalField velo_pc;
 
 };
 

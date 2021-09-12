@@ -36,18 +36,18 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(Mesh & mesh,
+LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 						   double mu_s_default,
 						   double mu_k_default,
 						   double d_c_default,
 						   double char_reg_time) :
   InterfaceLaw(mesh),
-  reg_contact_pressure(mesh.getNbNodes()),
-  mu_s(mesh.getNbNodes()),
-  mu_k(mesh.getNbNodes()),
-  d_c(mesh.getNbNodes()),
-  char_time(mesh.getNbNodes()),
-  reg_cont_pres_tmp(mesh.getNbNodes())
+  reg_contact_pressure(mesh),
+  mu_s(mesh),
+  mu_k(mesh),
+  d_c(mesh),
+  char_time(mesh),
+  reg_cont_pres_tmp(mesh)
 {
   if (d_c_default < 1e-12) {
     std::cerr << "d_c cannot be zero, and it is currently: " << d_c_default << std::endl;
@@ -63,30 +63,29 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(Mesh & mesh,
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearCoulombFrictionLaw::computeCohesiveForces(std::vector<NodalField *> & cohesion,
+void LinearCoulombFrictionLaw::computeCohesiveForces(NodalField & cohesion,
 						     bool predicting) {
 
-  unsigned int nb = this->mesh.getNbNodes();
-
   // find forces needed to close normal gap
-  this->interface->closingNormalGapForce(cohesion[1], predicting);
-  double * coh1 = cohesion[1]->storage();
+  NodalFieldComponent & coh1 = cohesion.component(1);
+  this->interface->closingNormalGapForce(coh1, predicting);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of shear cohesion
-  NodalField shear_trac_norm(nb);
-  this->interface->computeNorm(cohesion, shear_trac_norm, true);
+  NodalFieldComponent shear_trac_norm(this->mesh);
+  cohesion.computeNorm(shear_trac_norm, 1);
   double * tau_shear = shear_trac_norm.storage();
 
   // find current gap
-  std::vector<NodalField *> gap = this->interface->getBufferField();
+  //NodalField gap = this->interface->getBufferField();
+  NodalField gap(this->mesh);
   this->interface->computeGap(gap, predicting);
 
   // compute norm of shear gap
-  NodalField shear_gap_norm(nb);
-  this->interface->computeNorm(gap, shear_gap_norm, true);
+  NodalFieldComponent shear_gap_norm(this->mesh);
+  gap.computeNorm(shear_gap_norm, 1);
   double * shear_gap = shear_gap_norm.storage();
 
   // interface properties
@@ -94,42 +93,44 @@ void LinearCoulombFrictionLaw::computeCohesiveForces(std::vector<NodalField *> &
   double * muk = this->mu_k.storage();
   double * dc  = this->d_c.storage();
 
+  double * p_coh1 = coh1.storage();
+  
   // initialize regularized contact pressure
   if (!this->initialized) {
-    for (unsigned int n = 0; n<nb; ++n) {
-      this->reg_contact_pressure(n) = coh1[n];
+    for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
+      this->reg_contact_pressure(n) = p_coh1[n];
     }
     this->initialized = true;
   }
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
-  for (unsigned int n = 0; n<nb; ++n) {
+  for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
     // avoid penetration "at any cost"
     // apply no normal cohesive force
-    coh1[n] = std::min(coh1[n], 0.);
+    p_coh1[n] = std::min(p_coh1[n], 0.);
   }
 
   // regularized contact pressure
   double * reg_sig = NULL;
   if (predicting) {
-    for (unsigned int n = 0; n<nb; ++n)
+    for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n)
       this->reg_cont_pres_tmp(n) = this->reg_contact_pressure(n);
-    this->computeRegContactPressure(cohesion[1],
-				    &(this->reg_cont_pres_tmp));
+    this->computeRegContactPressure(cohesion.component(1),
+				    this->reg_cont_pres_tmp);
     reg_sig = this->reg_cont_pres_tmp.storage();
   }
   else {
-    this->computeRegContactPressure(cohesion[1],
-				    &(this->reg_contact_pressure));
+    this->computeRegContactPressure(cohesion.component(1),
+				    this->reg_contact_pressure);
     reg_sig = this->reg_contact_pressure.storage();
   }
 
   // to be filled
-  NodalField alpha_field(nb);
+  NodalFieldComponent alpha_field(this->mesh);
   double * alpha = alpha_field.storage();
 
-  for (unsigned int n = 0; n<nb; ++n) {
+  for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
 
     // compute friction coefficient
     double dmu = (1 - shear_gap[n] / dc[n]) * (mus[n] - muk[n]);
@@ -145,21 +146,20 @@ void LinearCoulombFrictionLaw::computeCohesiveForces(std::vector<NodalField *> &
   }
 
   // only in shear direction
-  this->interface->multiplyFieldByScalar(cohesion, alpha_field, true);
+  cohesion.multiplyByScalar(alpha_field, 1);
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearCoulombFrictionLaw::computeRegContactPressure(NodalField * cohesion_1,
-							 NodalField * reg_cont_pres) {
+void LinearCoulombFrictionLaw::computeRegContactPressure(NodalFieldComponent & cohesion_1,
+							 NodalFieldComponent & reg_cont_pres) {
 
-  unsigned int nb = this->mesh.getNbNodes();
   double dt = this->interface->getTimeStep();
 
-  double * reg_sig = reg_cont_pres->storage();
-  double * coh1 = cohesion_1->storage();
+  double * reg_sig = reg_cont_pres.storage();
+  double * coh1 = cohesion_1.storage();
   double * tc  = this->char_time.storage();
 
-  for (unsigned int n = 0; n<nb; ++n) {
+  for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
 
     // regularized
     if (tc[n] > 0) {
@@ -182,25 +182,25 @@ void LinearCoulombFrictionLaw::registerDumpField(const std::string & field_name)
   // mu_s
   if (field_name == "mu_s") {
     this->interface->registerForDump(field_name,
-				     &(this->mu_s));
+				     this->mu_s);
   }
 
   // mu_k
   else if (field_name == "mu_k") {
     this->interface->registerForDump(field_name,
-				     &(this->mu_k));
+				     this->mu_k);
   }
 
   // d_c
   else if (field_name == "d_c") {
     this->interface->registerForDump(field_name,
-				     &(this->d_c));
+				     this->d_c);
   }
 
   // reg_cont_pres
   else if (field_name == "reg_cont_pres") {
     this->interface->registerForDump(field_name,
-				     &(this->reg_contact_pressure));
+				     this->reg_contact_pressure);
   }
 
   // do not know this field

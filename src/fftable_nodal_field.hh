@@ -33,73 +33,63 @@
 #define __FFTABLE_NODAL_FIELD_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "uca_mesh.hh"
-
-#include <fftw3.h>
-
 #include "nodal_field.hh"
+#include "fftable_nodal_field_component.hh"
+#include "uca_fftable_mesh.hh"
+
 /* -------------------------------------------------------------------------- */
 
 __BEGIN_UGUCA__
-/* **
- * MPI:
- * use default FFTW MPI datastructure N0x(N1/2+1)*2
- * note integer division rounds down
- *
- * Serial:
- * use default FFTW datastructure N0xN1
- */
+
 class FFTableNodalField : public NodalField {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
+  FFTableNodalField(const std::string & name = "unnamed") : NodalField(name) {}
+  FFTableNodalField(FFTableMesh & mesh,
+		    const std::string & name = "unnamed");
 
-  FFTableNodalField(Mesh & mesh);
+  virtual ~FFTableNodalField() {}
 
-  virtual ~FFTableNodalField();
+private:
+  // private copy constructor: NodalField cannot be copied (for now to debug)
+  FFTableNodalField(FFTableNodalField & to_copy);
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void forwardFFT(unsigned int root=0);
-  void backwardFFT(unsigned int root=0);
+  virtual void init(FFTableMesh & mesh);
 
+  void forwardFFT();
+  void backwardFFT();
+
+protected:
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  inline FFTableNodalFieldComponent & component(int i) {
+    return (FFTableNodalFieldComponent&)(*this->field[i]);
+  }
 
-  // get one value of frequency domain
-  inline fftw_complex & fd(int f);
-
-  // get access directly to frequency domain
-  // WARNING: convert it to double (assuming that fftw_complex is double[2])
-  inline fftw_complex * fd_storage() { return this->freq_dom_field; };
-
+  inline fftw_complex * fd_storage(int d) {
+    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd_storage();
+  }
+  
+  // get one value of frequency domain in direction d
+  inline fftw_complex & fd(int d, int f) {
+    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd(f);
+  }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-private:
+protected:
 
-  Mesh & mesh;
-
-  // values in frequency domain in complex form
-  fftw_complex * freq_dom_field;
-
-  // the forward and backward plan
-  fftw_plan forward_plan;
-  fftw_plan backward_plan;
 };
-
-/* -------------------------------------------------------------------------- */
-/* inline functions                                                           */
-/* -------------------------------------------------------------------------- */
-inline fftw_complex & FFTableNodalField::fd(int f) {
-  return this->freq_dom_field[f];
-}
-
 
 __END_UGUCA__
 

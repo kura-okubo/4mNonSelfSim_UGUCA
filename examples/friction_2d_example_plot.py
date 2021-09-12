@@ -17,7 +17,7 @@ def plot(fldname,ax):
 
     # get space data
     Xdata = []
-    with open(exname+".coord",'r') as fl:
+    with open(exname+".coords",'r') as fl:
         lines = fl.readlines()
     for line in lines:
         Xdata.append(float(line.strip().split()[0]))

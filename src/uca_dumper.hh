@@ -37,9 +37,9 @@
 #include <sstream>
 #include <string>
 
-#include "nodal_field.hh"
 #include "uca_common.hh"
-#include "uca_mesh.hh"
+#include "uca_base_mesh.hh"
+#include "nodal_field_component.hh"
 
 __BEGIN_UGUCA__
 
@@ -51,39 +51,40 @@ public:
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
 protected:
-  typedef std::map<std::ofstream *, const NodalField *> FileToFieldMap;
+  typedef std::map<std::ofstream *, const NodalFieldComponent *> FileToFieldMap;
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  Dumper(Mesh & mesh);
+  Dumper(BaseMesh & mesh);
   virtual ~Dumper();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void initDump(const std::string &bname, const std::string &path,
+  virtual void initDump(const std::string &bname,
+			const std::string &path,
                         const Format format = Format::ASCII);
 
-  virtual void registerDumpField(const std::string &field_name) = 0;
+  virtual void registerDumpField(const std::string & field_name) = 0;
 
   void registerDumpFields(const std::string & field_names,
 			  char delim = ',');
 
-  void registerForDump(const std::string &field_name,
-                       const NodalField *nodal_field);
+  void registerForDump(const std::string & field_name,
+                       const NodalFieldComponent & nodal_field);
 
   void dump(unsigned int step, double time);
 
  protected:
   void setBaseName(const std::string & bname);
 
-  void setCoords();
+  void setCoords(std::ofstream * cfile);
 
   void dumpField(std::ofstream * dump_file,
-		 const NodalField * nodal_field);
+		 const NodalFieldComponent * nodal_field);
 
 protected:
   void closeFiles(bool release_memory);
@@ -99,14 +100,16 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-
+  
  /* ------------------------------------------------------------------------ */
  /* Class Members                                                            */
  /* ------------------------------------------------------------------------ */
 protected:
-  Mesh & mesh;
+  BaseMesh & mesh;
   Format dump_format;
 
+  bool parallel_dump = false;
+  
 private:
   // base name
   std::string base_name;
@@ -122,6 +125,7 @@ private:
   std::string time_file_name;
   std::string coord_file_name;
   std::string field_file_name;
+  std::string proc_file_name;
   std::string folder_name;
 
   // files corresponding to field
@@ -139,6 +143,14 @@ private:
   // characteristics of dumper
   std::string separator = " ";
 
+  // files extention
+  std::string file_extension;
+
+  // rank string
+  std::string rank_str = ".proc";
+  
+  // precision of dump to text
+  int precision = 6;
 };
 
 __END_UGUCA__

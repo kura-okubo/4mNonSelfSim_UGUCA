@@ -23,9 +23,9 @@ The material needs to read the pre-computed kernels required for the spectral-bo
 
 **Mesh**
 
-The discretization of the simulation domain is given by the ``Mesh`` object. The discretization needs to be a regular mesh with constant element size due to the spectral nature of the method. The mesh is given by the length and number of elements. A 2D problem consists of a 1D interface, and, hence, is described by single length. A 3D problem, however, results in a 2D interface, which is defined by the length and width, as well as, number of elements for each side (see other examples for 3D problems).
+The discretization of the simulation domain is given by the ``SimpleMesh`` object. The discretization needs to be a regular mesh with constant element size due to the spectral nature of the method. The mesh is given by the length and number of elements. A 2D problem consists of a 1D interface, and, hence, is described by single length. A 3D problem, however, results in a 2D interface, which is defined by the length and width, as well as, number of elements for each side (see other examples for 3D problems).
 
-The ``Mesh`` conveniently generated the mesh and discretization itself. However, if needed, one can also provide a pre-defined mesh.
+The ``SimpleMesh`` conveniently generated the mesh and discretization itself. However, if needed, one can also create a custom mesh ``CustomMesh``.
 
 **Interface Law**
 
@@ -56,7 +56,7 @@ The interface needs to be initialized with the ``init()`` method after the time 
 
 **External Loading**
 
-External interface load can be applied by accessing the normal and shear load arrays of the interface using the ``getNormalLoad()`` and/or the ``getShearLoad()`` methods of the ``Interface`` object. If non-uniform profiles of loading are needed, we can use the ``getCoords()`` method of the ``Mesh`` object for coordinates of the interface discretization.
+External interface load can be applied by accessing the load array of the interface using the ``getLoad()`` method of the ``Interface`` object. The shear load can be accessed with the ``.component(0)`` and the normal load with ``.component(1)``. If non-uniform profiles of loading are needed, we can use the ``getLocalCoords()`` method of the ``Mesh`` object for coordinates of the interface discretization.
 
 **Time Step**
 

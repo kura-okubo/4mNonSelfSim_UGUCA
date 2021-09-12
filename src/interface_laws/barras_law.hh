@@ -50,7 +50,7 @@ class BarrasLaw : public InterfaceLaw {
   /* ------------------------------------------------------------------------ */
 public:
 
-  BarrasLaw(Mesh & mesh,
+  BarrasLaw(BaseMesh & mesh,
 	    double tau_max_default, double delta_c_default);
   virtual ~BarrasLaw() {};
 
@@ -58,24 +58,25 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
- void computeCohesiveForces(std::vector<NodalField *> &cohesion,
+ void computeCohesiveForces(NodalField & cohesion,
                             bool predicting = false);
- virtual void registerDumpField(const std::string &field_name);
+  
+ virtual void registerDumpField(const std::string & field_name);
 
  /* ------------------------------------------------------------------------ */
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalField * getTauMax() { return &(this->tau_max); };
-  NodalField * getDc() { return &(this->delta_c); };
+  NodalFieldComponent & getTauMax() { return this->tau_max; }
+  NodalFieldComponent & getDc()     { return this->delta_c; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  NodalField tau_max;
-  NodalField delta_c;
-  NodalField gap_norm;
+  NodalFieldComponent tau_max;
+  NodalFieldComponent delta_c;
+  NodalFieldComponent gap_norm;
 };
 
 __END_UGUCA__
