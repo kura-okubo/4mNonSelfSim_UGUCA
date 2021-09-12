@@ -29,6 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <iostream>
+#include <cmath>
 
 #include "material.hh"
 #include "uca_simple_mesh.hh"

@@ -30,86 +30,106 @@
 ####
 set(UGUCA_HEADER
   uca_common.hh
-  uca_parameter_reader.hh
-  material.hh
-  nodal_field_component.hh
-  fftable_nodal_field_component.hh
-  nodal_field.hh
-  fftable_nodal_field.hh
-  uca_base_mesh.hh
-  uca_fftable_mesh.hh
-  uca_distributed_fftable_mesh.hh
-  uca_simple_mesh.hh
-  uca_custom_mesh.hh
-  limited_history.hh
-  kernel.hh
-  precomputed_kernel.hh
-  kernel_collection.hh
-  preint_kernel.hh
-  uca_dumper.hh
-  half_space.hh
-  half_space_quasi_dynamic.hh
-  half_space_dynamic.hh
 
   # MPI static communicator
   static_communicator_mpi.hh
 
-  # use method as infinite boundary condition for FEM
-  infinite_boundary.hh
+  # io
+  io/uca_parameter_reader.hh
+  io/uca_dumper.hh
+
+  # meshes
+  mesh/uca_base_mesh.hh
+  mesh/uca_fftable_mesh.hh
+  mesh/uca_distributed_fftable_mesh.hh
+  mesh/uca_simple_mesh.hh
+  mesh/uca_custom_mesh.hh
+
+  # nodal fields
+  mesh/nodal_field_component.hh
+  mesh/nodal_field.hh
+  mesh/fftable_nodal_field_component.hh
+  mesh/fftable_nodal_field.hh
+  
+  # kernels and material
+  half_space/kernel.hh
+  half_space/precomputed_kernel.hh
+  half_space/kernel_collection.hh
+  half_space/material.hh
+
+  # half spaces
+  half_space/limited_history.hh
+  half_space/preint_kernel.hh
+  half_space/half_space.hh
+  half_space/half_space_quasi_dynamic.hh
+  half_space/half_space_dynamic.hh
 
   # interfaces
-  interface.hh
-  bimat_interface.hh
-  defrig_interface.hh
-  unimat_shear_interface.hh
+  interface/interface.hh
+  interface/bimat_interface.hh
+  interface/defrig_interface.hh
+  interface/unimat_shear_interface.hh
 
   # interface laws
-  interface_law.hh
-  interface_laws/linear_coulomb_friction_law.hh
-  interface_laws/linear_shear_cohesive_law.hh
-  interface_laws/barras_law.hh
-  interface_laws/rate_and_state_law.hh
+  interface/laws/interface_law.hh
+  interface/laws/linear_coulomb_friction_law.hh
+  interface/laws/linear_shear_cohesive_law.hh
+  interface/laws/barras_law.hh
+  interface/laws/rate_and_state_law.hh
+
+  # use method as infinite boundary condition for FEM
+  interface/infinite_boundary/infinite_boundary.hh
   )
 
 set(UGUCA_SRC
-  uca_parameter_reader.cc
-  material.cc
-  nodal_field_component.cc
-  fftable_nodal_field_component.cc
-  nodal_field.cc
-  fftable_nodal_field.cc
-  uca_base_mesh.cc
-  uca_fftable_mesh.cc
-  uca_distributed_fftable_mesh.cc
-  uca_simple_mesh.cc
-  uca_custom_mesh.cc
-  limited_history.cc
-  kernel.cc
-  precomputed_kernel.cc
-  kernel_collection.cc
-  preint_kernel.cc
-  uca_dumper.cc
-  half_space.cc
-  half_space_dynamic.cc
-  
+
   # MPI static communicator
   static_communicator_mpi.cc
 
-  # use method as infinite boundary condition for FEM
-  infinite_boundary.cc
+  # io
+  io/uca_parameter_reader.cc  
+  io/uca_dumper.cc  
+
+  # meshes
+  mesh/uca_base_mesh.cc
+  mesh/uca_fftable_mesh.cc
+  mesh/uca_distributed_fftable_mesh.cc
+  mesh/uca_simple_mesh.cc
+  mesh/uca_custom_mesh.cc
+
+  # nodal fields
+  mesh/nodal_field_component.cc
+  mesh/nodal_field.cc
+  mesh/fftable_nodal_field_component.cc
+  mesh/fftable_nodal_field.cc
+
+  # kernels and material
+  half_space/kernel.cc
+  half_space/precomputed_kernel.cc
+  half_space/kernel_collection.cc
+  half_space/material.cc
+
+  # half spaces
+  half_space/limited_history.cc
+  half_space/preint_kernel.cc
+  half_space/half_space.cc
+  half_space/half_space_dynamic.cc
 
   # interfaces
-  interface.cc
-  bimat_interface.cc
-  defrig_interface.cc
-  unimat_shear_interface.cc
+  interface/interface.cc
+  interface/bimat_interface.cc
+  interface/defrig_interface.cc
+  interface/unimat_shear_interface.cc
 
   # interface laws
-  interface_law.cc
-  interface_laws/linear_coulomb_friction_law.cc
-  interface_laws/linear_shear_cohesive_law.cc
-  interface_laws/barras_law.cc
-  interface_laws/rate_and_state_law.cc
+  interface/laws/interface_law.cc
+  interface/laws/linear_coulomb_friction_law.cc
+  interface/laws/linear_shear_cohesive_law.cc
+  interface/laws/barras_law.cc
+  interface/laws/rate_and_state_law.cc
+
+  # use method as infinite boundary condition for FEM
+  interface/infinite_boundary/infinite_boundary.cc
   )
 set(UGUCA_DEPEND_FILES ${UGUCA_SRC} ${UGUCA_HEADER} PARENT_SCOPE)
 

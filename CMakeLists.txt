@@ -97,7 +97,12 @@ set(UGUCA_INCLUDE_DIRS
   "${CMAKE_CURRENT_BINARY_DIR}/src"
 
   "${CMAKE_CURRENT_SOURCE_DIR}/src"
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface_laws"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/io"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/mesh"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/half_space"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/laws"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/infinite_boundary"
   )
 include_directories(${UGUCA_INCLUDE_DIRS})
 include_directories(${FFTW_INCLUDE_PATH})

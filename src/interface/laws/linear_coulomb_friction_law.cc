@@ -32,6 +32,7 @@
 #include "interface.hh"
 
 #include <cmath>
+#include <iostream>
 
 __BEGIN_UGUCA__
 

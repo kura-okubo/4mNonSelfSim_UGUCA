@@ -32,6 +32,8 @@
 #define __HALF_SPACE_DYNAMIC_H__
 /* -------------------------------------------------------------------------- */
 #include "half_space_quasi_dynamic.hh"
+#include "preint_kernel.hh"
+#include "limited_history.hh"
 
 __BEGIN_UGUCA__
 
