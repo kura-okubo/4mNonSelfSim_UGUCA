@@ -37,6 +37,9 @@
 #include "bimat_interface.hh"
 #include "barras_law.hh"
 
+#include <iostream>
+#include <cmath>
+
 using namespace uguca;
 
 int main(int argc, char *argv[]) {

@@ -29,13 +29,13 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <iomanip>      // std::setprecision
-#include <unistd.h>
-
 #include "uca_simple_mesh.hh"
 #include "half_space_dynamic.hh"
 #include "static_communicator_mpi.hh"
+
+#include <iostream>
+#include <iomanip>      // std::setprecision
+#include <unistd.h>
 
 using namespace uguca;
 

@@ -1,5 +1,5 @@
 /**
- * @file   interface_law.hh
+ * @file   precomputed_kernel.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,56 +28,74 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __INTERFACE_LAW_H__
-#define __INTERFACE_LAW_H__
+/* -------------------------------------------------------------------------- */
+#ifndef __PRECOMPUTED_KERNEL_H__
+#define __PRECOMPUTED_KERNEL_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "uca_base_mesh.hh"
-#include <sstream>
+#include "kernel.hh"
 
-#include "nodal_field.hh"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 __BEGIN_UGUCA__
 
-class Interface; // <--- don't know if this works --------------------------
-
-class InterfaceLaw {
+class PrecomputedKernel : public Kernel {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-
-  InterfaceLaw(BaseMesh & mesh) : mesh(mesh) {};
-  virtual ~InterfaceLaw() {};
+  PrecomputedKernel(const std::string & fname);
+  virtual ~PrecomputedKernel();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeCohesiveForces(NodalField & cohesion,
-                                     bool predicting = false) = 0;
-
-  // dumper function
-  virtual void registerDumpField(const std::string & field_name);
+  // read kernel from file generated before with fortran script
+  void readKernelFromFile(const std::string & fname);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
- virtual void setInterface(Interface *interface) {
-   this->interface = interface;
- };
+  // get value of Kernel at given T (by interpolation)
+  virtual double at(double T) const;
 
- /* ------------------------------------------------------------------------ */
- /* Class Members                                                            */
- /* ------------------------------------------------------------------------ */
+  // get T for truncation
+  virtual double getTruncation() const { return this->trunc; };
+
+  // get number of nodes
+  unsigned int getSize() const { return this->values.size(); };
+
+  // get delta t
+  double getDt() const { return this->delta_t; };
+
+  // get direct access to values (only used to testing)
+  std::vector<double> & getValues() { return this->values; };
+
+  /* ------------------------------------------------------------------------ */
+  /* Class Members                                                            */
+  /* ------------------------------------------------------------------------ */
 protected:
-  BaseMesh & mesh;
-  Interface * interface;
+  // nodal field
+  std::vector<double> values;
+
+  // truncation of kernel
+  double trunc;
+
+  // delta time of kernel entries
+  double delta_t;
+
 };
+
+
+/* -------------------------------------------------------------------------- */
+/* inline functions                                                           */
+/* -------------------------------------------------------------------------- */
 
 __END_UGUCA__
 
-//#include "interface_law_impl.cc"
-
-#endif /* __INTERFACE_LAW_H__ */
+#endif /* __PRECOMPUTED_KERNEL_H__ */

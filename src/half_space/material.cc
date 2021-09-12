@@ -28,8 +28,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <cmath>
+
 #include "material.hh"
+#include <cmath>
 
 __BEGIN_UGUCA__
 

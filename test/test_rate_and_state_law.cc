@@ -28,13 +28,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <cmath>
-#include <iostream>
 
 #include "uca_simple_mesh.hh"
 #include "unimat_shear_interface.hh"
 #include "material.hh"
 #include "rate_and_state_law.hh"
+
+#include <cmath>
+#include <iostream>
 
 using namespace uguca;
 

@@ -29,14 +29,15 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* -------------------------------------------------------------------------- */
+
+#include "uca_parameter_reader.hh"
+
 // std
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <utility>
 #include <algorithm>
-
-#include "uca_parameter_reader.hh"
 
 __BEGIN_UGUCA__
 

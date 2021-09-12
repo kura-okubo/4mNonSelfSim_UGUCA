@@ -28,6 +28,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include "uca_dumper.hh"
+#include "uca_simple_mesh.hh"
+
 #include <stdio.h>
 
 #include <iostream>
@@ -35,9 +39,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "uca_dumper.hh"
-#include "uca_simple_mesh.hh"
 
 using namespace uguca;
 

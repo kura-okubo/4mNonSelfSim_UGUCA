@@ -33,10 +33,8 @@
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include "material.hh"
-#include "preint_kernel.hh"
 #include "nodal_field.hh"
 #include "fftable_nodal_field.hh"
-#include "limited_history.hh"
 #include "uca_fftable_mesh.hh"
 #include "uca_dumper.hh"
 

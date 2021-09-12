@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
+#include <cmath>
 #include <sys/time.h>
 #include <unistd.h>
 

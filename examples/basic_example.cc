@@ -34,6 +34,8 @@
 #include "unimat_shear_interface.hh"
 #include "linear_shear_cohesive_law.hh"
 
+#include <cmath>
+
 using namespace uguca;
 
 int main() {

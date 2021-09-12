@@ -28,12 +28,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include "precomputed_kernel.hh"
+
+#include <cmath>
 #include <iomanip> // for std::setprecision
 #include <limits> // for std::numeric_limits<>
 #include <stdexcept> // for std::runtime_error
-
-#include "precomputed_kernel.hh"
-#include <cmath>
 
 using namespace uguca;
 

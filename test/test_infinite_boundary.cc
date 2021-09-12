@@ -28,18 +28,18 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iostream>
-#include <iomanip>      // std::setprecision
-
-#include <cmath>
-#include <sstream>
-#include <vector>
-#include <unistd.h>
 
 #include "static_communicator_mpi.hh"
 #include "material.hh"
 #include "uca_custom_mesh.hh"
 #include "infinite_boundary.hh"
+
+#include <iostream>
+#include <iomanip>      // std::setprecision
+#include <cmath>
+#include <sstream>
+#include <vector>
+#include <unistd.h>
 
 using namespace uguca;
 

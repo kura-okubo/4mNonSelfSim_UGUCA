@@ -29,15 +29,16 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "cmath" // for pi
-#include <limits> // for max of double
-
 #include "static_communicator_mpi.hh"
 #include "uca_parameter_reader.hh"
 #include "material.hh"
 #include "uca_simple_mesh.hh"
 #include "unimat_shear_interface.hh"
 #include "linear_coulomb_friction_law.hh"
+
+#include <cmath> // for pi
+#include <limits> // for max of double
+#include <iostream>
 
 using namespace uguca;
 

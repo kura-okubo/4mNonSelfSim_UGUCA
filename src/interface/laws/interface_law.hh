@@ -1,5 +1,5 @@
 /**
- * @file   kernel_collection.hh
+ * @file   interface_law.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,59 +28,56 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __KERNEL_COLLECTION_H__
-#define __KERNEL_COLLECTION_H__
+#ifndef __INTERFACE_LAW_H__
+#define __INTERFACE_LAW_H__
 /* -------------------------------------------------------------------------- */
-#include <string>
-
 #include "uca_common.hh"
-#include "kernel.hh"
+#include "uca_base_mesh.hh"
+#include "nodal_field.hh"
+
+#include <sstream>
 
 __BEGIN_UGUCA__
 
-class KernelCollection {
+class Interface; // <--- don't know if this works --------------------------
+
+class InterfaceLaw {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
 
-  KernelCollection();
-
-  virtual ~KernelCollection();
+  InterfaceLaw(BaseMesh & mesh) : mesh(mesh) {};
+  virtual ~InterfaceLaw() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+  virtual void computeCohesiveForces(NodalField & cohesion,
+                                     bool predicting = false) = 0;
 
-  // read precomputed Kernels from files
-  // default path is replaced by cmake
-  void readPrecomputedKernels(double nu, bool pstress = false,
-			      const std::string & path = global_kernel_path);
+  // dumper function
+  virtual void registerDumpField(const std::string & field_name);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  Kernel * getH00() { return this->H00; }
-  Kernel * getH01() { return this->H01; }
-  Kernel * getH11() { return this->H11; }
-  Kernel * getH22() { return this->H22; }
+ virtual void setInterface(Interface *interface) {
+   this->interface = interface;
+ };
 
-  /* ------------------------------------------------------------------------ */
-  /* Class Members                                                            */
-  /* ------------------------------------------------------------------------ */
-private:
-
-  Kernel * H00;
-  Kernel * H01;
-  Kernel * H11;
-  Kernel * H22;
-
+ /* ------------------------------------------------------------------------ */
+ /* Class Members                                                            */
+ /* ------------------------------------------------------------------------ */
+protected:
+  BaseMesh & mesh;
+  Interface * interface;
 };
 
 __END_UGUCA__
 
-//#include "kernel_collection_impl.cc"
+//#include "interface_law_impl.cc"
 
-#endif /* __KERNEL_COLLECTION_H__ */
+#endif /* __INTERFACE_LAW_H__ */

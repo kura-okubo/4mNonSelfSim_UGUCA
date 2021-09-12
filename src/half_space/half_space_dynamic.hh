@@ -1,5 +1,5 @@
 /**
- * @file   preint_kernel.hh
+ * @file   half_space_dynamic.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,67 +28,69 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifndef __HALF_SPACE_DYNAMIC_H__
+#define __HALF_SPACE_DYNAMIC_H__
 /* -------------------------------------------------------------------------- */
-#ifndef __PREINT_KERNEL_H__
-#define __PREINT_KERNEL_H__
-/* -------------------------------------------------------------------------- */
-#include "uca_common.hh"
-
-#include <vector>
-#include <complex>
-
-#include "kernel.hh"
+#include "half_space_quasi_dynamic.hh"
+#include "preint_kernel.hh"
 #include "limited_history.hh"
 
 __BEGIN_UGUCA__
 
-class PreintKernel {
+/* -------------------------------------------------------------------------- */
+class HalfSpaceDynamic : public HalfSpaceQuasiDynamic {
+  
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  PreintKernel(const Kernel * kernel);
-  virtual ~PreintKernel();
+  HalfSpaceDynamic(FFTableMesh & mesh, int side_factor);
+
+  virtual ~HalfSpaceDynamic();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // compute pre-integration of kernel (only kernel: no other factors)
-  // e.g., integral of H11(q*c_s*t) with time_factor q*c_s
-  void preintegrate(double time_factor,
-		    double time_step);
+  // init convolutions
+  virtual void initConvolutions();
 
-  // muliply preintegrated kernel by factor
-  void multiplyBy(double factor);
+protected:
+  virtual void computeStressFourierCoeff(bool predicting = false,
+					 bool correcting = false);
 
-  // compute convolution of kernel with a history
-  std::complex<double> convolve(const LimitedHistory * U_r,
-				const LimitedHistory * U_i);
+  void computeStressFourierCoeffDynamic(bool predicting,
+					bool correcting);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->values.size(); };
+  // set time step
+  virtual void setTimeStep(double time_step);
 
-  // get direct access to values (only used to testing)
-  std::vector<double> & getValues() { return this->values; };
-
+  // get stable time step
+  virtual double getStableTimeStep();
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  const Kernel * kernel;
 
-  std::vector<double> values;
+  // past values of displacement in frequency domain
+  // each LimitedHistory is for a given wave number q
+  std::vector<std::vector<LimitedHistory *> > U_r;
+  std::vector<std::vector<LimitedHistory *> > U_i;
+
+  // convolutions
+  std::vector<PreintKernel *> H00_pi;
+  std::vector<PreintKernel *> H01_pi;
+  std::vector<PreintKernel *> H11_pi;
+  std::vector<PreintKernel *> H22_pi;
 };
 
 __END_UGUCA__
 
-/* -------------------------------------------------------------------------- */
-/* inline functions                                                           */
-/* -------------------------------------------------------------------------- */
+//#include "half_space_dynamic_impl.cc"
 
-
-#endif /* __PREINT_KERNEL_H__ */
+#endif /* __HALF_SPACE_DYNAMIC_H__ */

@@ -1,5 +1,5 @@
 /**
- * @file   precomputed_kernel.hh
+ * @file   kernel_collection.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,75 +28,60 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifndef __KERNEL_COLLECTION_H__
+#define __KERNEL_COLLECTION_H__
 /* -------------------------------------------------------------------------- */
-#ifndef __PRECOMPUTED_KERNEL_H__
-#define __PRECOMPUTED_KERNEL_H__
-/* -------------------------------------------------------------------------- */
+
 #include "uca_common.hh"
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
-#include <vector>
-
 #include "kernel.hh"
+
+#include <string>
 
 __BEGIN_UGUCA__
 
-class PrecomputedKernel : public Kernel {
+class KernelCollection {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  PrecomputedKernel(const std::string & fname);
-  virtual ~PrecomputedKernel();
+
+  KernelCollection();
+
+  virtual ~KernelCollection();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // read kernel from file generated before with fortran script
-  void readKernelFromFile(const std::string & fname);
+
+  // read precomputed Kernels from files
+  // default path is replaced by cmake
+  void readPrecomputedKernels(double nu, bool pstress = false,
+			      const std::string & path = global_kernel_path);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // get value of Kernel at given T (by interpolation)
-  virtual double at(double T) const;
-
-  // get T for truncation
-  virtual double getTruncation() const { return this->trunc; };
-
-  // get number of nodes
-  unsigned int getSize() const { return this->values.size(); };
-
-  // get delta t
-  double getDt() const { return this->delta_t; };
-
-  // get direct access to values (only used to testing)
-  std::vector<double> & getValues() { return this->values; };
+  Kernel * getH00() { return this->H00; }
+  Kernel * getH01() { return this->H01; }
+  Kernel * getH11() { return this->H11; }
+  Kernel * getH22() { return this->H22; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-protected:
-  // nodal field
-  std::vector<double> values;
+private:
 
-  // truncation of kernel
-  double trunc;
-
-  // delta time of kernel entries
-  double delta_t;
+  Kernel * H00;
+  Kernel * H01;
+  Kernel * H11;
+  Kernel * H22;
 
 };
 
-
-/* -------------------------------------------------------------------------- */
-/* inline functions                                                           */
-/* -------------------------------------------------------------------------- */
-
 __END_UGUCA__
 
-#endif /* __PRECOMPUTED_KERNEL_H__ */
+//#include "kernel_collection_impl.cc"
+
+#endif /* __KERNEL_COLLECTION_H__ */

@@ -32,8 +32,10 @@
 #ifndef __RATE_AND_STATE_LAW_H__
 #define __RATE_AND_STATE_LAW_H__
 /* -------------------------------------------------------------------------- */
-#include <vector>
+
 #include "interface_law.hh"
+
+#include <vector>
 
 /*
   Rate and state slip law in shear direction only.

@@ -28,9 +28,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iostream>
-#include <random>
-#include <vector>
 
 #include "bimat_interface.hh"
 #include "fftable_nodal_field.hh"
@@ -38,6 +35,10 @@
 #include "material.hh"
 #include "nodal_field.hh"
 #include "uca_simple_mesh.hh"
+
+#include <iostream>
+#include <random>
+#include <vector>
 
 using namespace uguca;
 
