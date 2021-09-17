@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   RateAndStateLaw law(
-      mesh, a_default, b_default, Dc, V0, f0, theta_init, std::abs(normal_load),
+      mesh, a_default, b_default, Dc, V0, f0, theta_init,
       RateAndStateLaw::EvolutionLaw::SlipLawWithStrongRateWeakening, n_pc > 0);
   law.setFw(fw);
 

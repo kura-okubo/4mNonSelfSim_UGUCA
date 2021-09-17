@@ -142,7 +142,6 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   RateAndStateLaw law(mesh, a_default, b_default, Dc, V0, f0, theta_init,
-                      std::abs(normal_load),
                       RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0);
   NodalFieldComponent & theta = law.getTheta();
   NodalFieldComponent & a = law.getA();
@@ -174,7 +173,6 @@ int main(int argc, char *argv[]) {
   NodalFieldComponent & ext_normal = interface.getLoad().component(1);
   ext_shear.setAllValuesTo(shear_load);
   ext_normal.setAllValuesTo(normal_load);
-  interface.getLoad().component(1).setAllValuesTo(0.);
 
   // init velocity
   HalfSpace& top = interface.getTop();

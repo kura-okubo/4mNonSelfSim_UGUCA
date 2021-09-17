@@ -62,7 +62,6 @@ public:
        double V0,
        double f0,
        double theta_default,
-       double sigma_default,
        EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
        bool predictor_corrector = true,
        double plate_velocity = 0.0
@@ -74,21 +73,21 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   void computeCohesiveForces(NodalField & cohesion,
-                            bool predicting = false);
+			     bool predicting = false);
 
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
   virtual void init();
 
 protected:
-  virtual void computeTheta(NodalFieldComponent & target, NodalFieldComponent & delta_dot);
+  virtual void computeTheta(NodalFieldComponent & target,
+			    NodalFieldComponent & delta_dot);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
   NodalFieldComponent & getTheta() { return this->theta; };
-  NodalFieldComponent & getSigma() { return this->sigma; };
   NodalFieldComponent & getA() { return this->a; };
   NodalFieldComponent & getB() { return this->b; };
   NodalFieldComponent & getVw();    // for slip law with strong rate weakening
@@ -100,7 +99,7 @@ public:
  protected:
   NodalFieldComponent theta;          // state variable
   NodalFieldComponent theta_pc;       // state variable for predictor
-  NodalFieldComponent sigma;          // normal stress (compression is positive)
+  //NodalFieldComponent sigma;          // normal stress (compression is positive)
   NodalFieldComponent V;              // slip rate
   NodalFieldComponent iterations;     // iterations took in Newton-Raphson algorithm
   NodalFieldComponent rel_error;      // for Newton-Raphson algorithm debugging
