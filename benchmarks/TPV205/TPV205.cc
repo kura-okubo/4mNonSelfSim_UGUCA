@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
   // mesh
   SimpleMesh mesh(length_x,nb_nodes_x,
-		  length_z,nb_nodes_z);
+		  length_z,nb_nodes_z); // need to use SimpleMesh because free surface (see below)
 
   // constitutive interface law
   LinearShearCohesiveLaw law(mesh,
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (world_rank==0) std::cout << "dumping..."<< std::endl;
-
+  
   // free surface
 
   HalfSpace * top = &interface->getTop();
@@ -372,24 +372,26 @@ int main(int argc, char *argv[]) {
     gettimeofday(&t0, NULL);
 
     // free surface
-    int nb_nodes_x = mesh.getNbGlobalNodesX();
-    int nb_nodes_z =  mesh.getNbGlobalNodesZ();
-
-    for (int i = 0; i < nb_nodes_x; ++i) {
-      for (int j = 1; j < nb_nodes_z / 2; ++j) {
-	int ij = i * nb_nodes_z + j;
-	int ijsym = i * nb_nodes_z + nb_nodes_z - j;
-
-	u0_top_p[ijsym] =  u0_top_p[ij];
-	v0_top_p[ijsym] =  v0_top_p[ij];
-	u2_top_p[ijsym] = -u2_top_p[ij];
-	v2_top_p[ijsym] = -v2_top_p[ij];
-
-	if (!is_unimat_interface) {
-	  u0_bot_p[ijsym] =  u0_bot_p[ij];
-	  v0_bot_p[ijsym] =  v0_bot_p[ij];
-	  u2_bot_p[ijsym] = -u2_bot_p[ij];
-	  v2_bot_p[ijsym] = -v2_bot_p[ij];
+    if (world_rank == mesh.getRoot()) { // only works with SimpleMesh
+      int nb_nodes_x = mesh.getNbGlobalNodesX();
+      int nb_nodes_z =  mesh.getNbGlobalNodesZ();
+      
+      for (int i = 0; i < nb_nodes_x; ++i) {
+	for (int j = 1; j < nb_nodes_z / 2; ++j) {
+	  int ij = i * nb_nodes_z + j;
+	  int ijsym = i * nb_nodes_z + nb_nodes_z - j;
+	  
+	  u0_top_p[ijsym] =  u0_top_p[ij];
+	  v0_top_p[ijsym] =  v0_top_p[ij];
+	  u2_top_p[ijsym] = -u2_top_p[ij];
+	  v2_top_p[ijsym] = -v2_top_p[ij];
+	  
+	  if (!is_unimat_interface) {
+	    u0_bot_p[ijsym] =  u0_bot_p[ij];
+	    v0_bot_p[ijsym] =  v0_bot_p[ij];
+	    u2_bot_p[ijsym] = -u2_bot_p[ij];
+	    v2_bot_p[ijsym] = -v2_bot_p[ij];
+	  }
 	}
       }
     }

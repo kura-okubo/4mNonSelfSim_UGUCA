@@ -143,11 +143,11 @@ int main(int argc, char *argv[]) {
 
   // ---------------------------------------------------------------------------
   // mesh
-  SimpleMesh mesh(length_x, nb_nodes_x, length_z, nb_nodes_z);
+  SimpleMesh mesh(length_x, nb_nodes_x, length_z, nb_nodes_z); // need to use SimpleMesh because free surface (see below)
 
   // constitutive interface law
   RateAndStateLaw law(
-      mesh, a_default, b_default, Dc, V0, f0, theta_init, std::abs(normal_load),
+      mesh, a_default, b_default, Dc, V0, f0, theta_init,
       RateAndStateLaw::EvolutionLaw::SlipLawWithStrongRateWeakening, n_pc > 0);
   law.setFw(fw);
 
@@ -295,16 +295,19 @@ int main(int argc, char *argv[]) {
     }
 
     // free surface
-    int nb_nodes_x = mesh.getNbGlobalNodesX();
-    int nb_nodes_z = mesh.getNbGlobalNodesZ();
-    for (int i = 0; i < nb_nodes_x; ++i) {
-      for (int j = 1; j < nb_nodes_z / 2; ++j) {
-        int ij = i * nb_nodes_z + j;
-        int ijsym = i * nb_nodes_z + nb_nodes_z - j;
-        u0_top   (ijsym) =  u0_top   (ij);
-        velo0_top(ijsym) =  velo0_top(ij);
-        u2_top   (ijsym) = -u2_top   (ij);
-        velo2_top(ijsym) = -velo2_top(ij);
+    if (world_rank == mesh.getRoot()) { // only works with SimpleMesh
+      int nb_nodes_x = mesh.getNbGlobalNodesX();
+      int nb_nodes_z = mesh.getNbGlobalNodesZ();
+      for (int i = 0; i < nb_nodes_x; ++i) {
+	for (int j = 1; j < nb_nodes_z / 2; ++j) {
+	  int ij = i * nb_nodes_z + j;
+	  int ijsym = i * nb_nodes_z + nb_nodes_z - j;
+	  
+	  u0_top   (ijsym) =  u0_top   (ij);
+	  velo0_top(ijsym) =  velo0_top(ij);
+	  u2_top   (ijsym) = -u2_top   (ij);
+	  velo2_top(ijsym) = -velo2_top(ij);
+	}
       }
     }
 

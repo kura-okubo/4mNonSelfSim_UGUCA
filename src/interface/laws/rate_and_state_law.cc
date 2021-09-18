@@ -58,14 +58,12 @@ RateAndStateLaw::RateAndStateLaw(
        double V0,
        double f0,
        double theta_default,
-       double sigma_default,
        EvolutionLaw evolution_law,
        bool predictor_corrector,
        double plate_velocity):
   InterfaceLaw(mesh),
   theta(mesh),
   theta_pc(),
-  sigma(mesh),
   V(mesh),
   iterations(mesh),
   rel_error(mesh),
@@ -80,7 +78,6 @@ RateAndStateLaw::RateAndStateLaw(
   Vw()
 {
   this->theta.setAllValuesTo(theta_default);
-  this->sigma.setAllValuesTo(sigma_default);
   this->a.setAllValuesTo(a_default);
   this->b.setAllValuesTo(b_default);
   this->Dc.setAllValuesTo(Dc_default);
@@ -134,7 +131,7 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
   // find forces needed to close normal gap
   NodalFieldComponent & coh1 = cohesion.component(1);
   this->interface->closingNormalGapForce(coh1, predicting);
-  // double * coh_1_p = cohesion[1]->storage();
+  double * coh_1_p = coh1.storage();
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
@@ -152,7 +149,6 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
   const double *a_p = this->a.storage();
   const double *b_p = this->b.storage();
   const double *Dc_p = this->Dc.storage();
-  const double *sigma_p = this->sigma.storage();
   const double *int0top_p = top.getInternal().storage(0);
   const double *int0bot_p = bot.getInternal().storage(0);
   const double *ext0_p = this->interface->getLoad().storage(0);
@@ -195,8 +191,8 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
     // Newton-Raphson
     do {
       ++iter;
-      tau = a_p[i] * sigma_p[i] * std::asinh(Z * (v_prev + Vplate));
-      dtau = a_p[i] * sigma_p[i] * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
+      tau = a_p[i] * std::abs(coh_1_p[i]) * std::asinh(Z * (v_prev + Vplate));
+      dtau = a_p[i] * std::abs(coh_1_p[i]) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
       F = fact_both * (ext0_p[i] - tau) + fact_top * int0top_p[i] +
           fact_bot * int0bot_p[i] - v_prev;
       dF = -fact_both * dtau - 1.0;
@@ -226,7 +222,7 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
     if (iter == max_iter) {
       throw std::runtime_error("Newton-Raphson not converged in RateAndStateLaw::computeCohesiveForces");
     }
-    tau = a_p[i] * sigma_p[i] * std::asinh(Z * (v + Vplate));
+    tau = a_p[i] * std::abs(coh_1_p[i]) * std::asinh(Z * (v + Vplate));
     coh_0_p[i] = tau;
     iterations_p[i] = iter;
     rel_error_p[i] = rel_change;

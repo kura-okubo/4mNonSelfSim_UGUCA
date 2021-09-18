@@ -151,11 +151,10 @@ int main(int argc, char* argv[]) {
 
   // ---------------------------------------------------------------------------
   // mesh
-  SimpleMesh mesh(length_x,nb_nodes_x, length_z,nb_nodes_z);
+  SimpleMesh mesh(length_x,nb_nodes_x, length_z,nb_nodes_z); // need to use SimpleMesh because free surface (see below)
 
   // constitutive interface law
   RateAndStateLaw law(mesh, a_default, b_default, Dc, V0, f0, theta_init,
-                      std::abs(normal_load),
                       RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0);
   NodalFieldComponent & theta = law.getTheta();
   NodalFieldComponent & a = law.getA();
@@ -172,7 +171,7 @@ int main(int argc, char* argv[]) {
   if ((std::abs((mat.getCp() - Cp)) > 1e-15 * Cp) ||
       (std::abs((mat.getCs() - Cs)) > 1e-15 * Cs))
     return -1;
-
+  
   // ---------------------------------------------------------------------------
   // weak interface
   UnimatShearInterface interface(mesh, mat, law);
@@ -243,7 +242,7 @@ int main(int argc, char* argv[]) {
   std::string bname = bname_out.str();
 
   if (world_rank == 0) std::cout << bname << std::endl;
-
+  
   interface.initDump(bname, ".", Dumper::Format::Binary);
 
   interface.registerDumpField("cohesion_0");
@@ -270,7 +269,7 @@ int main(int argc, char* argv[]) {
 
   interface.dump(0, 0);
   s_dump = dump_int / time_step + 1;
-
+  
   NodalFieldComponent & u0_top = top.getDisp().component(0);
   NodalFieldComponent & u2_top = top.getDisp().component(2);
   NodalFieldComponent & velo2_top = top.getVelo().component(2);
@@ -297,18 +296,20 @@ int main(int argc, char* argv[]) {
       ext_shear(i) = shear_load + delta_tau_0 * F * G;
     }
 
-
     // free surface
-    int nb_nodes_x = mesh.getNbGlobalNodesX();
-    int nb_nodes_z =  mesh.getNbGlobalNodesZ();
-    for (int i = 0; i < nb_nodes_x; ++i) {
-      for (int j = 1; j < nb_nodes_z / 2; ++j) {
-	      int ij = i * nb_nodes_z + j;
-	      int ijsym = i * nb_nodes_z + nb_nodes_z - j;
-        u0_top   (ijsym) =  u0_top   (ij);
-        velo0_top(ijsym) =  velo0_top(ij);
-        u2_top   (ijsym) = -u2_top   (ij);
-        velo2_top(ijsym) = -velo2_top(ij);
+    if (world_rank == mesh.getRoot()) { // only works with SimpleMesh
+      int nb_nodes_x = mesh.getNbGlobalNodesX();
+      int nb_nodes_z =  mesh.getNbGlobalNodesZ();
+      for (int i = 0; i < nb_nodes_x; ++i) {
+	for (int j = 1; j < nb_nodes_z / 2; ++j) {
+	  int ij = i * nb_nodes_z + j;
+	  int ijsym = i * nb_nodes_z + nb_nodes_z - j;
+	  
+	  u0_top   (ijsym) =  u0_top   (ij);
+	  velo0_top(ijsym) =  velo0_top(ij);
+	  u2_top   (ijsym) = -u2_top   (ij);
+	  velo2_top(ijsym) = -velo2_top(ij);
+	}
       }
     }
 

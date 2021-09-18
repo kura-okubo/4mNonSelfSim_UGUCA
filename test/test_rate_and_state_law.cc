@@ -58,12 +58,13 @@ int main(){
   Material material(1e9, 0.25, 1000, false);
 
   std::cout << "check constructor" << std::endl;
-  RateAndStateLaw law(mesh, a, b, Dc, V0, f0, theta, sigma,
+  RateAndStateLaw law(mesh, a, b, Dc, V0, f0, theta,
                       RateAndStateLaw::EvolutionLaw::AgingLaw, true, 0);
   UnimatShearInterface interface(mesh, material, law);
   interface.setTimeStep(1e-8);
   interface.getTop().getVelo().component(0).setAllValuesTo(Vinit);
   interface.getLoad().component(0).setAllValuesTo(tau);
+  interface.getLoad().component(1).setAllValuesTo(-sigma);
   std::cout << "constructor correct -> success" << std::endl;
 
   std::cout << "check data" << std::endl;
@@ -81,11 +82,6 @@ int main(){
   NodalFieldComponent & Theta_tmp = law.getTheta();
   if (std::abs(Theta_tmp.at(0) - theta) / theta > tol) {
     std::cout << "wrong theta: " << Theta_tmp.at(0) << std::endl;
-    return 1;  // failure
-  }
-  NodalFieldComponent & Sigma_tmp = law.getSigma();
-  if (std::abs(Sigma_tmp.at(0) - sigma) / sigma > tol) {
-    std::cout << "wrong theta: " << Sigma_tmp.at(0) << std::endl;
     return 1;  // failure
   }
   std::cout << "data correct -> success" << std::endl;
