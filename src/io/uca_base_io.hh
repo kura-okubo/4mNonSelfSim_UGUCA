@@ -1,12 +1,10 @@
 /**
- * @file   uca_dumper.hh
+ * @file   uca_base_io.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Sat Sept 25 2021
+ * @date last modification: Sat Sept 25 2021
  *
  * @brief  TODO
  *
@@ -28,73 +26,50 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __DUMPER_H__
-#define __DUMPER_H__
+#ifndef __BASE_IO_H__
+#define __BASE_IO_H__
 
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "uca_base_io.hh"
-#include "uca_base_mesh.hh"
-#include "nodal_field_component.hh"
 
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <string>
+//#include <fstream>
+//#include <map>
+//#include <sstream>
+//#include <string>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class Dumper : public BaseIO {
-
-  /* ------------------------------------------------------------------------ */
-  /* Typedefs                                                                 */
-  /* ------------------------------------------------------------------------ */
-protected:
-  typedef std::map<std::ofstream *, const NodalFieldComponent *> FileToFieldMap;
+class BaseIO {
+public:
+  enum class Format { ASCII, CSV, Binary };
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  Dumper(BaseMesh & mesh);
-  virtual ~Dumper();
+  BaseIO();
+  virtual ~BaseIO();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void initDump(const std::string &bname,
-			const std::string &path,
-                        const Format format = Format::ASCII);
-
-  virtual void registerDumpField(const std::string & field_name) = 0;
-
-  void registerDumpFields(const std::string & field_names,
-			  char delim = ',');
-
-  void registerForDump(const std::string & field_name,
-                       const NodalFieldComponent & nodal_field);
-
-  void dump(unsigned int step, double time);
-
- protected:
-  virtual void setBaseName(const std::string & bname);
-
-  void setCoords(std::ofstream * cfile);
-
-  void dumpField(std::ofstream * dump_file,
-		 const NodalFieldComponent * nodal_field);
+  // sets variables and creates folder
+  virtual void initIO(const std::string &bname,
+		      const std::string &path,
+		      const Format format = Format::ASCII);
 
 protected:
-  void closeFiles(bool release_memory);
+  
+  virtual void setBaseName(const std::string & bname);
 
   /* ------------------------------------------------------------------------ */
   /* File system related methods                                              */
   /* ------------------------------------------------------------------------ */
 public:
-  //static std::string directorySeparator();
-  //static void createDirectory(std::string path);
+  static std::string directorySeparator();
+  static void createDirectory(std::string path);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -105,56 +80,31 @@ public:
  /* Class Members                                                            */
  /* ------------------------------------------------------------------------ */
 protected:
-  BaseMesh & mesh;
-  //Format dump_format;
-
-  bool parallel_dump = false;
-  
-private:
   // base name
-  //std::string base_name;
+  std::string base_name;
+  std::string folder_name;
 
   // path to dumped files
-  //std::string path;
+  std::string path;
 
-  // has dump been initiated?
-  bool initiated;
-
-  // information based on base_name
-  std::string info_file_name;
-  std::string time_file_name;
-  std::string coord_file_name;
-  std::string field_file_name;
-  std::string proc_file_name;
-  //std::string folder_name;
-
-  // files corresponding to field
-  FileToFieldMap files_and_fields;
-
-  // file with time stamps
-  std::ofstream * time_file;
-
-  // file with coord
-  std::ofstream * coord_file;
-
-  // file with field infos
-  std::ofstream * field_file;
+  // dump format
+  Format dump_format;
 
   // characteristics of dumper
-  //std::string separator = " ";
+  std::string separator;
 
   // files extention
-  //std::string file_extension;
+  std::string file_extension;
 
   // rank string
-  //std::string rank_str = ".proc";
+  std::string rank_str = ".proc";
   
   // precision of dump to text
-  //int precision = 6;
+  int precision = 6;
 };
 
 __END_UGUCA__
 
-//#include "uca_dumper_impl.cc"
+//#include "uca_base_io_impl.cc"
 
-#endif /* __DUMPER_H__ */
+#endif /* __BASE_IO_H__ */

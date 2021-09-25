@@ -38,17 +38,11 @@
 #include <iostream>
 #include <typeinfo>
 
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif
-
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Dumper::Dumper(BaseMesh & mesh) :
+  BaseIO(),
   mesh(mesh) {
   
   // default name and path
@@ -116,27 +110,24 @@ void Dumper::setBaseName(const std::string & bname) {
 void Dumper::initDump(const std::string & bname,
 		      const std::string & path,
                       const Format format) {
+
+  this->initIO(bname, path, format);
   
   // only root dumps global data
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
   
   this->initiated = true;
-  
-  this->setBaseName(bname);
-  this->path = path;
-  this->dump_format = format;
-  this->file_extension = ".out";
 
-  std::string of_string = "output_format ascii";
+  // < --------------------------------------------------- only need of_string
+  std::string of_string = "output_format undefined";
   switch (this->dump_format) {
   case Format::ASCII: {
+    of_string = "output_format ascii";
     break;
   }
   case Format::CSV: {
     of_string = "output_format csv";
-    this->separator = ",";
-    this->file_extension = ".csv";
     break;
   }
   case Format::Binary: {
@@ -149,15 +140,9 @@ void Dumper::initDump(const std::string & bname,
   
   if (rank == root) {
     
-    // create folder for files (works only on linux)
-    // read/write/search permission for owner and group
-    // read/search permissions for others
-    std::string full_path_to_folder = this->path + Dumper::directorySeparator() + this->folder_name;
-    Dumper::createDirectory(full_path_to_folder);
-    
     // info file
     std::string path_to_info_file =
-      this->path + Dumper::directorySeparator() + this->info_file_name;
+      this->path + BaseIO::directorySeparator() + this->info_file_name;
     std::ofstream info_file(path_to_info_file, std::ios::out);
     info_file << "field_description " << this->field_file_name << std::endl;
     info_file << "time_description " << this->time_file_name << std::endl;
@@ -170,7 +155,7 @@ void Dumper::initDump(const std::string & bname,
 
     // time file
     std::string path_to_time_file =
-      this->path + Dumper::directorySeparator() + this->time_file_name;
+      this->path + BaseIO::directorySeparator() + this->time_file_name;
     
     this->time_file = new std::ofstream(path_to_time_file, std::ios::out);
     
@@ -178,7 +163,7 @@ void Dumper::initDump(const std::string & bname,
 
     // coord file
     std::string path_to_coord_file =
-      this->path + Dumper::directorySeparator() + this->coord_file_name;
+      this->path + BaseIO::directorySeparator() + this->coord_file_name;
     
     this->coord_file = new std::ofstream(path_to_coord_file, std::ios::out);
     
@@ -186,7 +171,7 @@ void Dumper::initDump(const std::string & bname,
 
     // field file
     std::string path_to_field_file =
-      this->path + Dumper::directorySeparator() + this->field_file_name;
+      this->path + BaseIO::directorySeparator() + this->field_file_name;
     
     this->field_file = new std::ofstream(path_to_field_file, std::ios::out);
 
@@ -202,7 +187,7 @@ void Dumper::initDump(const std::string & bname,
     // write rank string and number of procs to file
     if (rank == root) {
       std::string path_to_proc_file =
-	this->path + Dumper::directorySeparator() + this->proc_file_name;
+	this->path + BaseIO::directorySeparator() + this->proc_file_name;
       std::ofstream proc_file(path_to_proc_file, std::ios::out);
       proc_file << "coords_name " << parallel_coord_file_name << std::endl;
       proc_file << "rank_string " << this->rank_str << std::endl;
@@ -215,8 +200,8 @@ void Dumper::initDump(const std::string & bname,
 
       // file name: coords.prank
       std::string path_to_coord_file =
-	this->path + Dumper::directorySeparator() + this->folder_name
-	+ Dumper::directorySeparator() + parallel_coord_file_name
+	this->path + BaseIO::directorySeparator() + this->folder_name
+	+ BaseIO::directorySeparator() + parallel_coord_file_name
 	+ this->rank_str + std::to_string(rank);
       std::ofstream p_coord_file(path_to_coord_file, std::ios::out);
       p_coord_file << std::scientific << std::setprecision(this->precision);
@@ -239,8 +224,8 @@ void Dumper::registerForDump(const std::string & field_name,
     rank_name = this->rank_str + std::to_string(rank);
 
   std::string file_name = field_name + this->file_extension + rank_name;
-  std::string path_to_file = this->path + Dumper::directorySeparator() +
-                             this->folder_name + Dumper::directorySeparator() +
+  std::string path_to_file = this->path + BaseIO::directorySeparator() +
+                             this->folder_name + BaseIO::directorySeparator() +
                              file_name;
 
   // open file
@@ -358,19 +343,4 @@ void Dumper::dumpField(std::ofstream * dump_file,
   }
 }
 
-std::string Dumper::directorySeparator() {
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-  return "\\";
-#else
-  return "/";
-#endif
-}
-
-void Dumper::createDirectory(std::string path) {
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-  _mkdir(path.c_str());
-#else
-  mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
 __END_UGUCA__
