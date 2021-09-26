@@ -36,6 +36,8 @@
 #include "uca_dumper.hh"
 #include "half_space.hh"
 #include "uca_fftable_mesh.hh"
+#include "uca_restart.hh"
+
 #include <vector>
 
 __BEGIN_UGUCA__
@@ -105,6 +107,9 @@ public:
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
 
+  // restart
+  virtual void registerToRestart(Restart & restart);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

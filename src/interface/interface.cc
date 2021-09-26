@@ -227,4 +227,10 @@ void Interface::registerDumpField(const std::string & field_name) {
     this->law->registerDumpField(field_name);
 }
 
+/* -------------------------------------------------------------------------- */
+void Interface::registerToRestart(Restart & restart) {
+
+  restart.registerIO(this->cohesion.getName(), this->cohesion);
+}
+
 __END_UGUCA__

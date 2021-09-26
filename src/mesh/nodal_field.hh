@@ -81,6 +81,9 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // get name of nodal field
+  std::string getName() const { return this->name; }
+  
   // get dimension
   int getDim() const { return this->mesh->getDim(); }
   

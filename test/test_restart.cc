@@ -28,8 +28,11 @@
  */
 
 #include "uca_restart.hh"
-#include "uca_fftable_mesh.hh"
+#include "uca_simple_mesh.hh"
 #include "nodal_field_component.hh"
+#include "material.hh"
+#include "linear_shear_cohesive_law.hh"
+#include "bimat_interface.hh"
 
 #include <iostream>
 /*
@@ -56,8 +59,18 @@ int main(int argc, char *argv[]) {
   int Nx = 4;
   double Lz = 2;
   int Nz = 8;
-  FFTableMesh mesh(Lx, Nx, Lz, Nz);
+  SimpleMesh mesh(Lx, Nx, Lz, Nz);
 
+  // materials
+  Material top_mat = Material(1e9, 0.25, 1000);
+  top_mat.readPrecomputedKernels();
+  Material bot_mat = Material(2e9, 0.33, 2000);
+  bot_mat.readPrecomputedKernels();
+
+  LinearShearCohesiveLaw law(mesh, 1., 2e6);
+  
+  BimatInterface interface(mesh, top_mat, bot_mat, law);
+  
   // test init of restart
   std::cout << "start: init" << std::endl;
   Restart restart_dump("rs1",folder);
@@ -133,6 +146,30 @@ int main(int argc, char *argv[]) {
     }
   }
   std::cout << "NodalField correct -> success" << std::endl;
+
+  // test dump and read of interface
+  std::cout << "start: dump and reload Interface" << std::endl;
+  rs_number = 4;
+  double nf4v = 3.2;
+  interface.getCohesion().setAllValuesTo(nf4v);
+  interface.registerToRestart(restart_dump);
+  restart_dump.dump(rs_number);
+  interface.getCohesion().setAllValuesTo(nf4v*2);
+
+  interface.registerToRestart(restart_load);
+  restart_load.load(rs_number);
+
+  // check
+  NodalField & to_check = interface.getCohesion();
+  for (int d=0; d<to_check.getDim(); ++d) {
+    for (int i=0; i<to_check.getNbNodes(); ++i) {
+      if (std::abs((to_check.component(d).at(i) - nf4v) / nf4v) > 1e-6) {
+	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
+	return 1; // failure
+      }
+    }
+  }
+  std::cout << "Interface correct -> success" << std::endl;
 
   
   
