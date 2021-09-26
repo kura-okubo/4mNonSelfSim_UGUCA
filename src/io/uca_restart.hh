@@ -63,8 +63,8 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void registerForDump(const std::string & name,
-		       const NodalFieldComponent & nodal_field);
+  //virtual void registerForDump(const std::string & name,
+  //const NodalFieldComponent & nodal_field);
   
 protected:
   void setBaseName(const std::string & bname);

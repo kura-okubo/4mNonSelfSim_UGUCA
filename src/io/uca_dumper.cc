@@ -29,14 +29,16 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_dumper.hh"
-#include "nodal_field_component.hh"
-#include "static_communicator_mpi.hh"
+//#include "nodal_field_component.hh"
+//#include "static_communicator_mpi.hh"
 #include "uca_custom_mesh.hh"
 
-#include <cstdio>
+//#include <cstdio>
 #include <iomanip>
-#include <iostream>
-#include <typeinfo>
+//#include <iostream>
+//#include <typeinfo>
+
+#include <sstream>
 
 __BEGIN_UGUCA__
 
@@ -45,14 +47,9 @@ Dumper::Dumper(BaseMesh & mesh) :
   BaseIO(),
   mesh(mesh) {
   
-  // default name and path
-  this->setBaseName("standard-bname");
-  this->path = ".";
-  
   this->time_file = NULL;
   this->field_file = NULL;
   
-  this->initiated = false;
   this->parallel_dump = false;
 
   if (typeid(mesh) == typeid(CustomMesh))
@@ -60,23 +57,15 @@ Dumper::Dumper(BaseMesh & mesh) :
 }
 
 /* -------------------------------------------------------------------------- */
-Dumper::~Dumper() {
-  this->closeFiles(true);
-}
+Dumper::~Dumper() {}
 
 /* -------------------------------------------------------------------------- */
 void Dumper::closeFiles(bool release_memory) {
 
+  BaseIO::closeFiles(release_memory);
+  
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
-
-  FileToFieldMap::iterator it = this->files_and_fields.begin();
-  FileToFieldMap::iterator end = this->files_and_fields.end();
-  
-  for (; it != end; ++it) {
-    it->first->close();
-    if (release_memory) delete it->first;
-  }
   
   if (this->initiated) {
     if (rank == root) {
@@ -116,10 +105,7 @@ void Dumper::initDump(const std::string & bname,
   // only root dumps global data
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
-  
-  this->initiated = true;
 
-  // < --------------------------------------------------- only need of_string
   std::string of_string = "output_format undefined";
   switch (this->dump_format) {
   case Format::ASCII: {
@@ -213,12 +199,14 @@ void Dumper::initDump(const std::string & bname,
 }
 
 /* -------------------------------------------------------------------------- */
+// registers field and opens file
 void Dumper::registerForDump(const std::string & field_name,
 			     const NodalFieldComponent & nodal_field) {
 
-  int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int root = this->mesh.getRoot();
+  BaseIO::registerForDump(field_name, nodal_field);
 
+  // define path to file
+  int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   std::string rank_name = "";
   if (this->parallel_dump)
     rank_name = this->rank_str + std::to_string(rank);
@@ -228,29 +216,12 @@ void Dumper::registerForDump(const std::string & field_name,
                              this->folder_name + BaseIO::directorySeparator() +
                              file_name;
 
-  // open file
-  std::ofstream * new_file = new std::ofstream();
-
-  switch (this->dump_format) {
-    case Format::ASCII:
-    case Format::CSV: {
-      new_file->open(path_to_file, std::ios::out);
-      (*new_file) << std::scientific << std::setprecision(this->precision);
-      break;
-    }
-    case Format::Binary: {
-      new_file->open(path_to_file, std::ios::out | std::ios::binary);  // open as binary file
-      break;
-    }
-    default:
-      throw std::runtime_error("Unsupported output format.");
-  }
-
-  // keep reference to file (only if there are nodes)
+  // open file and keep reference to it (only if there are nodes)
   if (this->mesh.getNbLocalNodes() > 0)
-    this->files_and_fields[new_file] = (&nodal_field);
+    this->open_files[field_name] = this->openFile(path_to_file);
 
   // put info into field file
+  int root = this->mesh.getRoot();
   if (rank == root) {
     std::string fname = field_name + this->file_extension;
     (*this->field_file) << field_name << " " << fname << std::endl;
@@ -299,47 +270,14 @@ void Dumper::registerDumpFields(const std::string & field_names,
 /* -------------------------------------------------------------------------- */
 void Dumper::dump(unsigned int step, double time) {
 
+  BaseIO::dump(step,time);
+  
   if (!this->initiated) return;
-
-  FileToFieldMap::iterator it = this->files_and_fields.begin();
-  FileToFieldMap::iterator end = this->files_and_fields.end();
-
-  for (; it!=end; ++it) {
-    this->dumpField(it->first, it->second);
-  }
 
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
   if (rank == root) {
     (*this->time_file) << step << this->separator << time << std::endl;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-void Dumper::dumpField(std::ofstream * dump_file,
-		       const NodalFieldComponent * nodal_field) {
-  if (!this->initiated) return;
-
-  switch (this->dump_format) {
-    case Format::ASCII:
-    case Format::CSV: {
-      for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
-        if (n != 0) (*dump_file) << this->separator;
-        (*dump_file) << nodal_field->at(n);
-      }
-      (*dump_file) << std::endl;
-      break;
-    }
-    case Format::Binary: {
-      float temp = 0.0;
-      for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
-        temp = (float)(nodal_field->at(n));
-        (*dump_file).write((char *)&temp, sizeof(float));
-      }
-      break;
-    }
-    default:
-      throw std::runtime_error("Unsupported output format.");
   }
 }
 

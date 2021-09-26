@@ -35,23 +35,17 @@
 #include "uca_common.hh"
 #include "uca_base_io.hh"
 #include "uca_base_mesh.hh"
-#include "nodal_field_component.hh"
+/*#include "nodal_field_component.hh"
 
 #include <fstream>
 #include <map>
 #include <sstream>
 #include <string>
-
+*/
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 class Dumper : public BaseIO {
-
-  /* ------------------------------------------------------------------------ */
-  /* Typedefs                                                                 */
-  /* ------------------------------------------------------------------------ */
-protected:
-  typedef std::map<std::ofstream *, const NodalFieldComponent *> FileToFieldMap;
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -83,18 +77,9 @@ public:
 
   void setCoords(std::ofstream * cfile);
 
-  void dumpField(std::ofstream * dump_file,
-		 const NodalFieldComponent * nodal_field);
 
 protected:
   void closeFiles(bool release_memory);
-
-  /* ------------------------------------------------------------------------ */
-  /* File system related methods                                              */
-  /* ------------------------------------------------------------------------ */
-public:
-  //static std::string directorySeparator();
-  //static void createDirectory(std::string path);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -106,30 +91,19 @@ public:
  /* ------------------------------------------------------------------------ */
 protected:
   BaseMesh & mesh;
-  //Format dump_format;
 
   bool parallel_dump = false;
   
 private:
-  // base name
-  //std::string base_name;
-
-  // path to dumped files
-  //std::string path;
-
-  // has dump been initiated?
-  bool initiated;
-
   // information based on base_name
   std::string info_file_name;
   std::string time_file_name;
   std::string coord_file_name;
   std::string field_file_name;
   std::string proc_file_name;
-  //std::string folder_name;
 
   // files corresponding to field
-  FileToFieldMap files_and_fields;
+  // FileToFieldMap files_and_fields;
 
   // file with time stamps
   std::ofstream * time_file;
@@ -139,18 +113,6 @@ private:
 
   // file with field infos
   std::ofstream * field_file;
-
-  // characteristics of dumper
-  //std::string separator = " ";
-
-  // files extention
-  //std::string file_extension;
-
-  // rank string
-  //std::string rank_str = ".proc";
-  
-  // precision of dump to text
-  //int precision = 6;
 };
 
 __END_UGUCA__

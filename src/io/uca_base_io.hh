@@ -31,9 +31,10 @@
 
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "nodal_field_component.hh"
 
-//#include <fstream>
-//#include <map>
+#include <fstream>
+#include <map>
 //#include <sstream>
 //#include <string>
 
@@ -43,6 +44,12 @@ __BEGIN_UGUCA__
 class BaseIO {
 public:
   enum class Format { ASCII, CSV, Binary };
+  /* ------------------------------------------------------------------------ */
+  /* Typedefs                                                                 */
+  /* ------------------------------------------------------------------------ */
+protected:
+  typedef std::map<const std::string, const NodalFieldComponent *> FieldMap;
+  typedef std::map<const std::string, std::ofstream *> FileMap;
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -60,10 +67,20 @@ public:
 		      const std::string &path,
 		      const Format format = Format::ASCII);
 
-protected:
-  
-  virtual void setBaseName(const std::string & bname);
+  virtual void registerForDump(const std::string & name,
+			       const NodalFieldComponent & nodal_field);
 
+  virtual void dump(unsigned int step, double time);
+
+protected:
+
+  virtual void setBaseName(const std::string & bname);
+  std::ofstream * openFile(const std::string & path_to_file); 
+  virtual void closeFiles(bool release_memory);
+
+  void dumpField(std::ofstream * dump_file,
+		 const NodalFieldComponent & nodal_field);
+  
   /* ------------------------------------------------------------------------ */
   /* File system related methods                                              */
   /* ------------------------------------------------------------------------ */
@@ -80,6 +97,9 @@ public:
  /* Class Members                                                            */
  /* ------------------------------------------------------------------------ */
 protected:
+  // has dump been initiated?
+  bool initiated;
+
   // base name
   std::string base_name;
   std::string folder_name;
@@ -101,6 +121,12 @@ protected:
   
   // precision of dump to text
   int precision = 6;
+
+  // registered nodal fields
+  FieldMap registered_fields;
+
+  // open files
+  FileMap open_files;
 };
 
 __END_UGUCA__
