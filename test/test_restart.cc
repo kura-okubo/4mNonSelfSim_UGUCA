@@ -43,9 +43,15 @@
 using namespace uguca;
 
 
-int main(){
-  std::cout << "start test: test_restart" << std::endl;
+int main(int argc, char *argv[]) {
 
+  std::string folder = ".";
+  if (argc==2) {
+    folder = argv[1];
+  }
+    
+  std::cout << "start test: test_restart" << std::endl;
+  
   double Lx = 1;
   int Nx = 4;
   double Lz = 2;
@@ -54,8 +60,8 @@ int main(){
 
   // test init of restart
   std::cout << "start: init" << std::endl;
-  Restart restart_dump("test_restart",".");
-  Restart restart_load("test_restart",".");
+  Restart restart_dump("rs1",folder);
+  Restart restart_load("rs1",folder);
   std::cout << "end: init" << std::endl;
 
   // test dump and read of NodalFieldComponent
@@ -85,12 +91,12 @@ int main(){
   rs_number = 2;
   double nf2v = 66.6;
   nf1.setAllValuesTo(nf2v);
-  Restart restart_dump_binary("test_restart_binary",".", BaseIO::Format::Binary);
+  Restart restart_dump_binary("rs_binary",folder, BaseIO::Format::Binary);
   restart_dump_binary.registerIO("nf1", nf1);
   restart_dump_binary.dump(rs_number);
   nf1.setAllValuesTo(nf2v*2); // set different value
 
-  Restart restart_load_binary("test_restart_binary",".",BaseIO::Format::Binary);
+  Restart restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
   restart_load_binary.registerIO("nf1", nf1);
   restart_load_binary.load(rs_number);
 
@@ -103,6 +109,30 @@ int main(){
   }
   std::cout << "NodalFieldComponent bindary correct -> success" << std::endl;
 
+
+  // test dump and read of NodalField
+  std::cout << "start: dump and reload NodalField" << std::endl;
+  rs_number = 3;
+  NodalField nf3(mesh);
+  double nf3v = 77.7;
+  nf3.setAllValuesTo(nf3v);
+  restart_dump.registerIO("nf3", nf3);
+  restart_dump.dump(rs_number);
+  nf3.setAllValuesTo(nf3v*2); // set different value
+
+  restart_load.registerIO("nf3", nf3);
+  restart_load.load(rs_number);
+
+  // check
+  for (int d=0; d<nf3.getDim(); ++d) {
+    for (int i=0; i<nf3.getNbNodes(); ++i) {
+      if (std::abs((nf3.component(d).at(i) - nf3v) / nf3v) > 1e-6) {
+	std::cerr << "should be " << nf3v << ": " << nf3.component(d).at(i) << std::endl;
+	return 1; // failure
+      }
+    }
+  }
+  std::cout << "NodalField correct -> success" << std::endl;
 
   
   

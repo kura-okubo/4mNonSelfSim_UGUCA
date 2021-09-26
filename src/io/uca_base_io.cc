@@ -117,6 +117,15 @@ void BaseIO::registerIO(const std::string & name,
 }
 
 /* -------------------------------------------------------------------------- */
+void BaseIO::registerIO(const std::string & name,
+			NodalField & nodal_field) {
+  for (int d=0; d<nodal_field.getDim(); ++d) {
+    std::string component_name = name + "_" + std::to_string(d);
+    this->registerIO(component_name, nodal_field.component(d));
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 void BaseIO::setBaseName(const std::string & bname) {
   this->base_name = bname;
   this->folder_name = this->base_name;

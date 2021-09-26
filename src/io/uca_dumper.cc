@@ -36,7 +36,7 @@
 //#include <cstdio>
 #include <iomanip>
 //#include <iostream>
-//#include <typeinfo>
+#include <typeinfo>
 
 #include <sstream>
 

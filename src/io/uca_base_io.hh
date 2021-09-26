@@ -32,6 +32,7 @@
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include "nodal_field_component.hh"
+#include "nodal_field.hh"
 
 #include <fstream>
 #include <map>
@@ -69,7 +70,9 @@ public:
 
   virtual void registerIO(const std::string & name,
 			  NodalFieldComponent & nodal_field);
-
+  virtual void registerIO(const std::string & name,
+			  NodalField & nodal_field);
+  
   virtual void dump(unsigned int step, double time = 0.);
   virtual void load(unsigned int step);
 

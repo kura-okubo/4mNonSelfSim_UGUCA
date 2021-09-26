@@ -58,6 +58,7 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+
   virtual void dump(unsigned int step);
   virtual void load(unsigned int step);
   
