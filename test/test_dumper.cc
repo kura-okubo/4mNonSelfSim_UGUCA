@@ -48,8 +48,8 @@ public:
      : Dumper(mesh), field1(mesh), field2(mesh) {}
  virtual void registerDumpField(const std::string& field_name) {
    (void)field_name;  // unused parameter
-   this->registerForDump("field1", this->field1);
-   this->registerForDump("field2", this->field2);
+   this->registerIO("field1", this->field1);
+   this->registerIO("field2", this->field2);
   }
   void closeAllFiles() { this->closeFiles(false); }
   NodalFieldComponent field1;

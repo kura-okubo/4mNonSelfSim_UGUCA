@@ -48,8 +48,8 @@ public:
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
 protected:
-  typedef std::map<const std::string, const NodalFieldComponent *> FieldMap;
-  typedef std::map<const std::string, std::ofstream *> FileMap;
+  typedef std::map<const std::string, NodalFieldComponent *> FieldMap;
+  typedef std::map<const std::string, std::fstream *> FileMap;
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -67,19 +67,24 @@ public:
 		      const std::string &path,
 		      const Format format = Format::ASCII);
 
-  virtual void registerForDump(const std::string & name,
-			       const NodalFieldComponent & nodal_field);
+  virtual void registerIO(const std::string & name,
+			  NodalFieldComponent & nodal_field);
 
-  virtual void dump(unsigned int step, double time);
+  virtual void dump(unsigned int step, double time = 0.);
+  virtual void load(unsigned int step);
 
 protected:
 
   virtual void setBaseName(const std::string & bname);
-  std::ofstream * openFile(const std::string & path_to_file); 
+  std::fstream * openFile(const std::string & path_to_file,
+			  std::fstream::openmode mode); 
   virtual void closeFiles(bool release_memory);
 
-  void dumpField(std::ofstream * dump_file,
+  void dumpField(std::fstream * dump_file,
 		 const NodalFieldComponent & nodal_field);
+  void loadField(std::fstream * load_file,
+		 NodalFieldComponent & nodal_field);
+
   
   /* ------------------------------------------------------------------------ */
   /* File system related methods                                              */

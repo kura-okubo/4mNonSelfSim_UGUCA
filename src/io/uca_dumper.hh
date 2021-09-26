@@ -62,16 +62,16 @@ public:
 			const std::string &path,
                         const Format format = Format::ASCII);
 
-  virtual void registerDumpField(const std::string & field_name) = 0;
-
-  void registerDumpFields(const std::string & field_names,
-			  char delim = ',');
-
-  void registerForDump(const std::string & field_name,
-                       const NodalFieldComponent & nodal_field);
+  void registerIO(const std::string & field_name,
+		  NodalFieldComponent & nodal_field);
 
   void dump(unsigned int step, double time);
 
+  // specific for dumper
+  virtual void registerDumpField(const std::string & field_name) = 0;
+  void registerDumpFields(const std::string & field_names,
+			  char delim = ',');
+  
  protected:
   virtual void setBaseName(const std::string & bname);
 

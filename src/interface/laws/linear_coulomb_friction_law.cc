@@ -182,25 +182,25 @@ void LinearCoulombFrictionLaw::registerDumpField(const std::string & field_name)
 
   // mu_s
   if (field_name == "mu_s") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->mu_s);
   }
 
   // mu_k
   else if (field_name == "mu_k") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->mu_k);
   }
 
   // d_c
   else if (field_name == "d_c") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->d_c);
   }
 
   // reg_cont_pres
   else if (field_name == "reg_cont_pres") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->reg_contact_pressure);
   }
 

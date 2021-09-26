@@ -40,6 +40,7 @@
 */
 #include <stdexcept>
 #include <iomanip>
+#include <sstream>
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
 #include <direct.h>
@@ -110,8 +111,8 @@ void BaseIO::initIO(const std::string &bname,
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseIO::registerForDump(const std::string & name,
-			     const NodalFieldComponent & nodal_field) {
+void BaseIO::registerIO(const std::string & name,
+			NodalFieldComponent & nodal_field) {
   this->registered_fields[name] = (&nodal_field);
 }
 
@@ -122,20 +123,21 @@ void BaseIO::setBaseName(const std::string & bname) {
 }
 
 /* -------------------------------------------------------------------------- */
-std::ofstream * BaseIO::openFile(const std::string & path_to_file) {
+std::fstream * BaseIO::openFile(const std::string & path_to_file,
+				std::fstream::openmode mode) {
 
   // open file
-  std::ofstream * new_file = new std::ofstream();
+  std::fstream * new_file = new std::fstream();
   
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
-      new_file->open(path_to_file, std::ios::out);
+      new_file->open(path_to_file, mode);
       (*new_file) << std::scientific << std::setprecision(this->precision);
       break;
     }
     case Format::Binary: {
-      new_file->open(path_to_file, std::ios::out | std::ios::binary);  // open as binary file
+      new_file->open(path_to_file, mode | std::ios::binary); // open as binary file
       break;
     }
     default:
@@ -155,10 +157,11 @@ void BaseIO::closeFiles(bool release_memory) {
     it->second->close();
     if (release_memory) delete it->second;
   }
+  this->open_files.clear();
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseIO::dumpField(std::ofstream * dump_file,
+void BaseIO::dumpField(std::fstream * dump_file,
 		       const NodalFieldComponent & nodal_field) {
   if (!this->initiated) return;
 
@@ -187,6 +190,36 @@ void BaseIO::dumpField(std::ofstream * dump_file,
   }
 }
 
+/* -------------------------------------------------------------------------- */
+void BaseIO::loadField(std::fstream * load_file,
+		       NodalFieldComponent & nodal_field) {
+  if (!this->initiated) return;
+
+  int nb_nodes = nodal_field.getNbNodes();
+  
+  switch (this->dump_format) {
+    case Format::ASCII:
+    case Format::CSV: {
+      std::string line;
+      std::getline(*load_file,line);
+      std::stringstream ss(line);
+      for (int n = 0; n < nb_nodes; ++n) {
+	ss >> nodal_field.set(n);
+      }
+      break;
+    }
+    case Format::Binary: {
+      for (int n = 0; n < nb_nodes; ++n) {
+	float temp;
+	(*load_file).read((char *)&temp, sizeof(float));
+	nodal_field.set(n) = (float)(temp);
+      }
+      break;
+    }
+    default:
+      throw std::runtime_error("Unsupported output format.");
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::dump(unsigned int, double) {
@@ -198,6 +231,19 @@ void BaseIO::dump(unsigned int, double) {
 
   for (; it!=end; ++it) {
     this->dumpField(this->open_files[it->first], *(it->second));
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+void BaseIO::load(unsigned int) {
+
+  if (!this->initiated) return;
+
+  FieldMap::iterator it = this->registered_fields.begin();
+  FieldMap::iterator end = this->registered_fields.end();
+
+  for (; it!=end; ++it) {
+    this->loadField(this->open_files[it->first], *(it->second));
   }
 }
 

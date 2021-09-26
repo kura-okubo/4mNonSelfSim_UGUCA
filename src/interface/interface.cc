@@ -216,11 +216,11 @@ void Interface::registerDumpField(const std::string & field_name) {
 			     +" cannot be dumped, too high dimension");
 
   if (field_name == "load_"+std::to_string(d))
-    this->registerForDump(field_name,
+    this->registerIO(field_name,
 			  this->load.component(d));
 
   else if (field_name == "cohesion_"+std::to_string(d))
-    this->registerForDump(field_name,
+    this->registerIO(field_name,
 			  this->cohesion.component(d));
 
   else

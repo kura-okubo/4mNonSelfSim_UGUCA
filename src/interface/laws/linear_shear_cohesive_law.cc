@@ -114,19 +114,19 @@ void LinearShearCohesiveLaw::registerDumpField(const std::string & field_name) {
 
   // G_c
   if (field_name == "G_c") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->G_c);
   }
 
   // tau_c
   else if (field_name == "tau_c") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->tau_c);
   }
 
   // tau_r
   else if (field_name == "tau_r") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->tau_r);
   }
 

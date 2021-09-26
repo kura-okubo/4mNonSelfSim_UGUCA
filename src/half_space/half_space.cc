@@ -205,22 +205,22 @@ bool HalfSpace::registerDumpFieldToDumper(const std::string & field_name,
   
   // disp
   if (field_name == "disp_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->disp.component(d));
+    dumper->registerIO(dump_name, this->disp.component(d));
     return true;
   }
   // velo
   else if (field_name == "velo_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->velo.component(d));
+    dumper->registerIO(dump_name, this->velo.component(d));
     return true;
   }
   // residual
   else if (field_name == "residual_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->residual.component(d));
+    dumper->registerIO(dump_name, this->residual.component(d));
     return true;
   }
   // internal
   else if (field_name == "internal_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->internal.component(d));
+    dumper->registerIO(dump_name, this->internal.component(d));
     return true;
   }
 

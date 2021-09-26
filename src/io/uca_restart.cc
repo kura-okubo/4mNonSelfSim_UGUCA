@@ -27,21 +27,15 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_restart.hh"
-/*#include "nodal_field_component.hh"
 #include "static_communicator_mpi.hh"
+/*#include "nodal_field_component.hh"
+
 #include "uca_custom_mesh.hh"
 
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <typeinfo>
-
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif
 */
 __BEGIN_UGUCA__
 
@@ -64,5 +58,55 @@ void Restart::setBaseName(const std::string & bname) {
   this->base_name = bname;
   this->folder_name = this->base_name + "-restart";
 }
+
+/* -------------------------------------------------------------------------- */
+std::string Restart::getFilePath(const std::string & name, unsigned int number) {
+
+  std::string path_to_file = this->path + BaseIO::directorySeparator()
+    + this->folder_name + BaseIO::directorySeparator()
+    + name
+    + this->rank_str + std::to_string(StaticCommunicatorMPI::getInstance()->whoAmI())
+    + ".s" + std::to_string(number)
+    + this->file_extension;
+  
+  return path_to_file;
+}
+
+/* -------------------------------------------------------------------------- */
+void Restart::dump(unsigned int step) {
+
+  if (!this->initiated) return;
+
+  // open files
+  FieldMap::iterator it = this->registered_fields.begin();
+  FieldMap::iterator end = this->registered_fields.end();
+  for (; it!=end; ++it) {
+    this->open_files[it->first] = this->openFile(this->getFilePath(it->first, step),
+						 std::ios::out);
+  }
+  
+  BaseIO::dump(step);
+
+  this->closeFiles(true);
+}
+
+/* -------------------------------------------------------------------------- */
+void Restart::load(unsigned int step) {
+
+  if (!this->initiated) return;
+
+  // open files
+  FieldMap::iterator it = this->registered_fields.begin();
+  FieldMap::iterator end = this->registered_fields.end();
+  for (; it!=end; ++it) {
+    this->open_files[it->first] = this->openFile(this->getFilePath(it->first, step),
+						 std::ios::in);
+  }
+  
+  BaseIO::load(step);
+
+  this->closeFiles(true);
+}
+
 
 __END_UGUCA__

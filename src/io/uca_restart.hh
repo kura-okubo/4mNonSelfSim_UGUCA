@@ -44,11 +44,6 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 class Restart : public BaseIO {
-  /* ------------------------------------------------------------------------ */
-  /* Typedefs                                                                 */
-  /* ------------------------------------------------------------------------ */
-protected:
-  //typedef std::map<std::ofstream *, const NodalFieldComponent *> FileToFieldMap;
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -63,12 +58,13 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  //virtual void registerForDump(const std::string & name,
-  //const NodalFieldComponent & nodal_field);
+  virtual void dump(unsigned int step);
+  virtual void load(unsigned int step);
   
 protected:
   void setBaseName(const std::string & bname);
-
+  std::string getFilePath(const std::string & name, unsigned int number);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

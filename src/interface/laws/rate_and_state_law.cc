@@ -297,27 +297,27 @@ void RateAndStateLaw::computeTheta(NodalFieldComponent & target,
 void RateAndStateLaw::registerDumpField(const std::string &field_name) {
   // theta
   if (field_name == "theta") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->theta);
   }
   // iterations
   else if (field_name == "iterations") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->iterations);
   }
   // rel_error in Newton-Raphson
   else if (field_name == "rel_error") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->rel_error);
   }
   // a
   else if (field_name == "a") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->a);
   }
   // b
   else if (field_name == "b") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->b);
   }
   // do not know this field

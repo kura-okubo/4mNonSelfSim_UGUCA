@@ -105,12 +105,12 @@ void BarrasLaw::registerDumpField(const std::string & field_name) {
 
   // tau_max
   if (field_name == "tau_max") {
-    this->interface->registerForDump(field_name, this->tau_max);
+    this->interface->registerIO(field_name, this->tau_max);
   }
 
   // delta_c
   else if (field_name == "delta_c") {
-    this->interface->registerForDump(field_name, this->delta_c);
+    this->interface->registerIO(field_name, this->delta_c);
   }
 
   // do not know this field

@@ -200,10 +200,10 @@ void Dumper::initDump(const std::string & bname,
 
 /* -------------------------------------------------------------------------- */
 // registers field and opens file
-void Dumper::registerForDump(const std::string & field_name,
-			     const NodalFieldComponent & nodal_field) {
+void Dumper::registerIO(const std::string & field_name,
+			NodalFieldComponent & nodal_field) {
 
-  BaseIO::registerForDump(field_name, nodal_field);
+  BaseIO::registerIO(field_name, nodal_field);
 
   // define path to file
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -218,7 +218,7 @@ void Dumper::registerForDump(const std::string & field_name,
 
   // open file and keep reference to it (only if there are nodes)
   if (this->mesh.getNbLocalNodes() > 0)
-    this->open_files[field_name] = this->openFile(path_to_file);
+    this->open_files[field_name] = this->openFile(path_to_file, std::ios::out);
 
   // put info into field file
   int root = this->mesh.getRoot();
