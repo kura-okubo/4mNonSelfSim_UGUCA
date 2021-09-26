@@ -113,7 +113,10 @@ void BaseIO::initIO(const std::string &bname,
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(const std::string & name,
 			NodalFieldComponent & nodal_field) {
-  this->registered_fields[name] = (&nodal_field);
+  if (this->registered_fields.find(name) == this->registered_fields.end())
+    this->registered_fields[name] = (&nodal_field);
+  else
+    throw std::runtime_error("Field already registered: "+name);
 }
 
 /* -------------------------------------------------------------------------- */

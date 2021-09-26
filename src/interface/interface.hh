@@ -49,13 +49,15 @@ class Interface : public Dumper {
 public:
 
   Interface(FFTableMesh & mesh,
-	    InterfaceLaw & law);
+	    InterfaceLaw & law,
+	    const std::string & name = "interface");
 
   virtual ~Interface() {}
 
 protected:
   // for inheritate object: infinite boundary
-  Interface(FFTableMesh & mesh);
+  Interface(FFTableMesh & mesh,
+	    const std::string & name = "interface");
   
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -130,6 +132,10 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
+  // name of interface (in case there are more)
+  std::string name;
+  
+  // mesh
   FFTableMesh & mesh;
 
   // time step

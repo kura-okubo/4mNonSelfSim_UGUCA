@@ -45,7 +45,8 @@ void NodalField::init(BaseMesh & mesh) {
   // if you want to use less components, simply use the NodalFieldComponent
   this->field.resize(this->mesh->getDim());
   for (int d=0; d<this->mesh->getDim(); ++d) {
-    this->field[d] = new NodalFieldComponent(*(this->mesh),d,this->name);
+    this->field[d] = new NodalFieldComponent(*(this->mesh),d,
+					     this->name+"_"+std::to_string(d));
   }
 
   // done
@@ -118,5 +119,10 @@ void NodalField::multiplyByScalar(const NodalFieldComponent & scalar,
   }
 }
 
+/* -------------------------------------------------------------------------- */
+void NodalField::registerToRestart(Restart & restart) {
+  for (int d=0; d<this->mesh->getDim(); ++d)
+    this->field[d]->registerToRestart(restart);
+}
 
 __END_UGUCA__

@@ -39,11 +39,12 @@ __BEGIN_UGUCA__
 
 BarrasLaw::BarrasLaw(BaseMesh & mesh,
 		     double tau_max_default,
-		     double delta_c_default) :
-  InterfaceLaw(mesh),
-  tau_max(mesh),
-  delta_c(mesh),
-  gap_norm(mesh)
+		     double delta_c_default,
+		     const std::string & name) :
+  InterfaceLaw(mesh,name),
+  tau_max(mesh,name+"_tau_max"),
+  delta_c(mesh,name+"_delta_c"),
+  gap_norm(mesh,name+"_gap_norm")
 {
   this->tau_max.setAllValuesTo(tau_max_default);
   this->delta_c.setAllValuesTo(delta_c_default);
@@ -117,6 +118,17 @@ void BarrasLaw::registerDumpField(const std::string & field_name) {
   else {
     InterfaceLaw::registerDumpField(field_name);
   }
+}
+
+
+/* -------------------------------------------------------------------------- */
+void BarrasLaw::registerToRestart(Restart & restart) {
+
+  this->tau_max.registerToRestart(restart);
+  this->delta_c.registerToRestart(restart);
+  this->gap_norm.registerToRestart(restart);
+  
+  InterfaceLaw::registerToRestart(restart);
 }
 
 __END_UGUCA__

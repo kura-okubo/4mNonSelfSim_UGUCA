@@ -41,8 +41,9 @@ class HalfSpaceQuasiDynamic : public HalfSpace {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceQuasiDynamic(FFTableMesh & mesh, int side_factor) :
-    HalfSpace(mesh, side_factor) {}
+  HalfSpaceQuasiDynamic(FFTableMesh & mesh, int side_factor,
+			const std::string & name = "half_space") :
+    HalfSpace(mesh, side_factor, name) {}
 
   virtual ~HalfSpaceQuasiDynamic() {}
 

@@ -35,6 +35,7 @@
 #include "bimat_interface.hh"
 
 #include <iostream>
+#include <cmath>
 /*
 #include <stdio.h>
 #include <random>
@@ -44,7 +45,6 @@
 */
 
 using namespace uguca;
-
 
 int main(int argc, char *argv[]) {
 
@@ -70,6 +70,8 @@ int main(int argc, char *argv[]) {
   LinearShearCohesiveLaw law(mesh, 1., 2e6);
   
   BimatInterface interface(mesh, top_mat, bot_mat, law);
+  interface.setTimeStep(0.3*interface.getStableTimeStep());
+  interface.init();
   
   // test init of restart
   std::cout << "start: init" << std::endl;
@@ -80,14 +82,14 @@ int main(int argc, char *argv[]) {
   // test dump and read of NodalFieldComponent
   std::cout << "start: dump and reload NodalFieldComponent" << std::endl;
   int rs_number = 1;
-  NodalFieldComponent nf1(mesh);
+  NodalFieldComponent nf1(mesh,"nf1");
+  nf1.registerToRestart(restart_dump);
+  nf1.registerToRestart(restart_load);
+  
   double nf1v = 55.5;
   nf1.setAllValuesTo(nf1v);
-  restart_dump.registerIO("nf1", nf1);
   restart_dump.dump(rs_number);
   nf1.setAllValuesTo(nf1v*2); // set different value
-
-  restart_load.registerIO("nf1", nf1);
   restart_load.load(rs_number);
 
   // check
@@ -101,16 +103,16 @@ int main(int argc, char *argv[]) {
   
   // test binary format
   std::cout << "start: dump and reload NodalFieldComponent in binary" << std::endl;
+  Restart restart_dump_binary("rs_binary",folder,BaseIO::Format::Binary);
+  Restart restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
+  nf1.registerToRestart(restart_dump_binary);
+  nf1.registerToRestart(restart_load_binary);
+
   rs_number = 2;
   double nf2v = 66.6;
   nf1.setAllValuesTo(nf2v);
-  Restart restart_dump_binary("rs_binary",folder, BaseIO::Format::Binary);
-  restart_dump_binary.registerIO("nf1", nf1);
   restart_dump_binary.dump(rs_number);
   nf1.setAllValuesTo(nf2v*2); // set different value
-
-  Restart restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
-  restart_load_binary.registerIO("nf1", nf1);
   restart_load_binary.load(rs_number);
 
   // check
@@ -125,15 +127,15 @@ int main(int argc, char *argv[]) {
 
   // test dump and read of NodalField
   std::cout << "start: dump and reload NodalField" << std::endl;
+  NodalField nf3(mesh, "nf3");
+  nf3.registerToRestart(restart_dump);
+  nf3.registerToRestart(restart_load);
+  
   rs_number = 3;
-  NodalField nf3(mesh);
   double nf3v = 77.7;
   nf3.setAllValuesTo(nf3v);
-  restart_dump.registerIO("nf3", nf3);
   restart_dump.dump(rs_number);
   nf3.setAllValuesTo(nf3v*2); // set different value
-
-  restart_load.registerIO("nf3", nf3);
   restart_load.load(rs_number);
 
   // check

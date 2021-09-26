@@ -41,14 +41,15 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 						   double mu_s_default,
 						   double mu_k_default,
 						   double d_c_default,
-						   double char_reg_time) :
-  InterfaceLaw(mesh),
-  reg_contact_pressure(mesh),
-  mu_s(mesh),
-  mu_k(mesh),
-  d_c(mesh),
-  char_time(mesh),
-  reg_cont_pres_tmp(mesh)
+						   double char_reg_time,
+						   const std::string & name) :
+  InterfaceLaw(mesh,name),
+  reg_contact_pressure(mesh,name+"_reg_cont_pres"),
+  mu_s(mesh,name+"_mu_s"),
+  mu_k(mesh,name+"_mu_k"),
+  d_c(mesh,name+"_d_c"),
+  char_time(mesh,name+"_char_time"),
+  reg_cont_pres_tmp(mesh,name+"_reg_cont_pres_tmp")
 {
   if (d_c_default < 1e-12) {
     std::cerr << "d_c cannot be zero, and it is currently: " << d_c_default << std::endl;
@@ -209,6 +210,19 @@ void LinearCoulombFrictionLaw::registerDumpField(const std::string & field_name)
     InterfaceLaw::registerDumpField(field_name);
   }
 
+}
+
+/* -------------------------------------------------------------------------- */
+void LinearCoulombFrictionLaw::registerToRestart(Restart & restart) {
+
+  this->reg_contact_pressure.registerToRestart(restart);
+  this->mu_s.registerToRestart(restart);
+  this->mu_k.registerToRestart(restart);
+  this->d_c.registerToRestart(restart);
+  this->char_time.registerToRestart(restart);
+  this->reg_cont_pres_tmp.registerToRestart(restart);
+  
+  InterfaceLaw::registerToRestart(restart);
 }
 
 __END_UGUCA__

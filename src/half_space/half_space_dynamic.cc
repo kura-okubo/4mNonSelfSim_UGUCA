@@ -39,8 +39,9 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
-			    int side_factor) :
-  HalfSpaceQuasiDynamic(mesh, side_factor) {
+				   int side_factor,
+				   const std::string & name) :
+  HalfSpaceQuasiDynamic(mesh, side_factor, name) {
   
   // allocated pre-integrated kernels
   this->H00_pi.resize(this->mesh.getNbLocalFFT());
@@ -357,6 +358,21 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
       internal_fd[d][m0_index][1] = 0.;  // imag part
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::registerToRestart(Restart & restart) {
+
+  for (int d=0; d<this->mesh.getDim(); ++d) {
+    for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
+      restart.registerIO(this->name+"_Ur_"+std::to_string(d)+"_"+std::to_string(j),
+			 *(this->U_r[d][j]));
+      restart.registerIO(this->name+"_Ui_"+std::to_string(d)+"_"+std::to_string(j),
+			 *(this->U_i[d][j]));
+    }
+  }
+
+  HalfSpace::registerToRestart(restart);
 }
 
 

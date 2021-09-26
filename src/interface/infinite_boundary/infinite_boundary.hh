@@ -47,6 +47,7 @@ public:
   InfiniteBoundary(FFTableMesh & mesh,
 		   int side_factor,
 		   Material & material,
+		   const std::string & name = "inf_boundary",
 		   const SolverMethod & method = _dynamic);
 
   virtual ~InfiniteBoundary();

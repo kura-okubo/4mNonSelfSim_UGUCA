@@ -34,26 +34,30 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Interface::Interface(FFTableMesh & mesh,
-		     InterfaceLaw & law) :
+		     InterfaceLaw & law,
+		     const std::string & name) :
   Dumper(mesh),
+  name(name),
   mesh(mesh),
   time_step(0.),
-  load(mesh,"load"),
-  cohesion(mesh,"cohesion"),
-  scratch_field(mesh,"scratch"),
+  load(mesh,name+"_load"),
+  cohesion(mesh,name+"_cohesion"),
+  scratch_field(mesh,name+"_scratch"),
   law(&law) {
   
   this->law->setInterface(this);
 }
 
 /* -------------------------------------------------------------------------- */
-Interface::Interface(FFTableMesh & mesh) :
+Interface::Interface(FFTableMesh & mesh,
+		     const std::string & name) :
   Dumper(mesh),
+  name(name),
   mesh(mesh),
   time_step(0.),
-  load(mesh,"load"),
-  cohesion(mesh,"cohesion"),
-  scratch_field(mesh,"scratch"),
+  load(mesh,name+"_load"),
+  cohesion(mesh,name+"_cohesion"),
+  scratch_field(mesh,name+"_scratch"),
   law(NULL) {}
 
 /* -------------------------------------------------------------------------- */
@@ -230,7 +234,14 @@ void Interface::registerDumpField(const std::string & field_name) {
 /* -------------------------------------------------------------------------- */
 void Interface::registerToRestart(Restart & restart) {
 
-  restart.registerIO(this->cohesion.getName(), this->cohesion);
+  this->cohesion.registerToRestart(restart);
+  this->load.registerToRestart(restart);
+  this->scratch_field.registerToRestart(restart);
+
+  for (unsigned int i=0;i<this->half_spaces.size();++i)
+    this->half_spaces[i]->registerToRestart(restart);
+  
+  this->law->registerToRestart(restart);
 }
 
 __END_UGUCA__

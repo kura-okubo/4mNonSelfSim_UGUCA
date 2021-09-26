@@ -34,6 +34,7 @@
 #include "uca_common.hh"
 #include "uca_base_mesh.hh"
 #include "nodal_field.hh"
+#include "uca_restart.hh"
 
 #include <sstream>
 
@@ -47,7 +48,8 @@ class InterfaceLaw {
   /* ------------------------------------------------------------------------ */
 public:
 
-  InterfaceLaw(BaseMesh & mesh) : mesh(mesh) {};
+  InterfaceLaw(BaseMesh & mesh, const std::string & name = "law")
+    : name(name), mesh(mesh) {};
   virtual ~InterfaceLaw() {};
 
   /* ------------------------------------------------------------------------ */
@@ -59,6 +61,9 @@ public:
 
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
+
+  // restart
+  virtual void registerToRestart(Restart &) {};
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -72,6 +77,7 @@ public:
  /* Class Members                                                            */
  /* ------------------------------------------------------------------------ */
 protected:
+  std::string name;
   BaseMesh & mesh;
   Interface * interface;
 };

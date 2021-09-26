@@ -37,14 +37,16 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 HalfSpace::HalfSpace(FFTableMesh & mesh,
-		     int side_factor) :
+		     int side_factor,
+		     const std::string & name) :
+  name(name),
   mesh(mesh),
   time_step(0.),
   side_factor(side_factor),
-  disp(mesh,"displacement"),
-  velo(mesh,"velocity"),
-  internal(mesh,"internal"),
-  residual(mesh,"residual") {}
+  disp(mesh,name+"_disp"),
+  velo(mesh,name+"_velo"),
+  internal(mesh,name+"_internal"),
+  residual(mesh,name+"_residual") {}
 
 /* -------------------------------------------------------------------------- */
 HalfSpace::~HalfSpace() {}
@@ -52,10 +54,11 @@ HalfSpace::~HalfSpace() {}
 /* -------------------------------------------------------------------------- */
 HalfSpace * HalfSpace::newHalfSpace(FFTableMesh & mesh,
 				    int side_factor,
+				    const std::string & name,
 				    const SolverMethod & method) {
   HalfSpace * hs = NULL;
   if (method == _dynamic) {
-    hs = new HalfSpaceDynamic(mesh, side_factor);
+    hs = new HalfSpaceDynamic(mesh, side_factor, name);
   }
   else {
     throw std::runtime_error("HalfSpace: solver method not implemented");
@@ -225,6 +228,21 @@ bool HalfSpace::registerDumpFieldToDumper(const std::string & field_name,
   }
 
   return false;
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpace::registerToRestart(Restart & restart) {
+
+  this->disp.registerToRestart(restart);
+  this->velo.registerToRestart(restart);
+  this->internal.registerToRestart(restart);
+  this->residual.registerToRestart(restart);
+
+  if (this->predictor_corrector) {
+    this->disp_pc.registerToRestart(restart);
+    this->velo_pc.registerToRestart(restart);
+  }
+
 }
 
 __END_UGUCA__

@@ -40,11 +40,12 @@ __BEGIN_UGUCA__
 LinearShearCohesiveLaw::LinearShearCohesiveLaw(BaseMesh & mesh,
 					       double Gc_default,
 					       double tau_c_default,
-					       double tau_r_default) :
-  InterfaceLaw(mesh),
-  G_c(mesh),
-  tau_c(mesh),
-  tau_r(mesh)
+					       double tau_r_default,
+					       const std::string & name) :
+  InterfaceLaw(mesh,name),
+  G_c(mesh,name+"_G_c"),
+  tau_c(mesh,name+"_tau_c"),
+  tau_r(mesh,name+"_tau_r")
 {
   this->G_c.setAllValuesTo(Gc_default);
   this->tau_c.setAllValuesTo(tau_c_default);
@@ -135,6 +136,16 @@ void LinearShearCohesiveLaw::registerDumpField(const std::string & field_name) {
     InterfaceLaw::registerDumpField(field_name);
   }
 
+}
+
+/* -------------------------------------------------------------------------- */
+void LinearShearCohesiveLaw::registerToRestart(Restart & restart) {
+
+  this->G_c.registerToRestart(restart);
+  this->tau_c.registerToRestart(restart);
+  this->tau_r.registerToRestart(restart);
+  
+  InterfaceLaw::registerToRestart(restart);
 }
 
 __END_UGUCA__

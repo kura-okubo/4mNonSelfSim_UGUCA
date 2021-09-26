@@ -76,7 +76,10 @@ public:
   // multiply fields element-wise with scalar
   void multiplyByScalar(const NodalFieldComponent & scalar,
 			int ignore_dir = -1);
-  
+
+  // restart
+  virtual void registerToRestart(Restart & restart);
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

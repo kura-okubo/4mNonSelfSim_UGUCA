@@ -33,6 +33,7 @@
 #include "uca_common.hh"
 #include "nodal_field_component.hh"
 #include "nodal_field.hh"
+#include "limited_history.hh"
 
 #include <fstream>
 #include <map>
@@ -72,6 +73,8 @@ public:
 			  NodalFieldComponent & nodal_field);
   virtual void registerIO(const std::string & name,
 			  NodalField & nodal_field);
+  virtual void registerIO(const std::string & /*name*/,
+			  LimitedHistory & /*lim_history*/) { std::cout << "not implemented yet (uca_base_io.hh)" << std::endl; }
   
   virtual void dump(unsigned int step, double time = 0.);
   virtual void load(unsigned int step);
