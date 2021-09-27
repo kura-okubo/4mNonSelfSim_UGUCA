@@ -2,9 +2,9 @@
 
 ## update an image and push it to the registry
 
-1. go to folder with dockerfile, *e.g.* `cd test/ci/dockerfiles/ubuntu_18_04/`
-2. build new image: `docker build -t registry.gitlab.com/uguca/uguca/ubuntu:18.04 .`
-3. push to gitlab: `docker push registry.gitlab.com/uguca/uguca/ubuntu:18.04`
+1. go to folder with dockerfile, *e.g.* `cd test/ci/dockerfiles/ubuntu_20_04/`
+2. build new image: `docker build -t registry.gitlab.com/uguca/uguca/ubuntu:20.04 .`
+3. push to gitlab: `docker push registry.gitlab.com/uguca/uguca/ubuntu:20.04`
 
 For more info, check: gitlab.com > packages & registries > container registry > CLI Commands
 
@@ -13,7 +13,7 @@ For more info, check: gitlab.com > packages & registries > container registry > 
 
 1. go to base folder of *uguca* `cd uguca`
 2. `mkdir build-docker`
-3. `docker run -it -u 1000:1000 -v $PWD:/uguca -w /uguca/build-docker registry.gitlab.com/uguca/uguca/ubuntu:18.04 bash` 
+3. `docker run -it -u 1000:1000 -v $PWD:/uguca -w /uguca/build-docker registry.gitlab.com/uguca/uguca/ubuntu:20.04 bash` 
 
 (`1000:1000` is assuming that you are first user of local computer)
 
