@@ -32,9 +32,13 @@
 #include "static_communicator_mpi.hh"
 #include "uca_parameter_reader.hh"
 #include "material.hh"
+#include "uca_simple_mesh.hh"
 
 #include "bimat_interface.hh"
 #include "barras_law.hh"
+
+#include <iostream>
+#include <cmath>
 
 using namespace uguca;
 
@@ -64,7 +68,7 @@ int main(int argc, char *argv[]) {
   // mesh
   double length   = data.get<double>("length");
   int nb_elements = data.get<int>("nb_elements");
-  Mesh mesh(length, nb_elements);
+  SimpleMesh mesh(length, nb_elements);
 
   // constitutive interface law
   BarrasLaw law(mesh,
@@ -85,10 +89,8 @@ int main(int argc, char *argv[]) {
   BimatInterface interface(mesh, top_mat, bot_mat, law);
 
   // external loading
-  NodalField * ext_shear = interface.getShearLoad();
-  NodalField * ext_normal = interface.getNormalLoad();
-  ext_shear->setAllValuesTo(data.get<double>("shear_load"));
-  ext_normal->setAllValuesTo(data.get<double>("normal_load"));
+  interface.getLoad().component(0).setAllValuesTo(data.get<double>("shear_load"));
+  interface.getLoad().component(1).setAllValuesTo(data.get<double>("normal_load"));
 
   // time step
   double duration = data.get<double>("duration");
@@ -100,12 +102,12 @@ int main(int argc, char *argv[]) {
   interface.init();
 
   // heterogeneity for nucleation: decreased strength
-  NodalField * X = mesh.getCoords()[0];
-  NodalField * tau_max = law.getTauMax();
+  double * X = mesh.getLocalCoords()[0];
+  NodalFieldComponent & tau_max = law.getTauMax();
   double a0 = data.get<double>("a0");
-  for (int i=0;i<mesh.getNbNodes(); ++i)
-    if (std::abs((*X)(i) - length/2.) < a0/2.)
-      (*tau_max)(i) = 0.;
+  for (int i=0;i<mesh.getNbLocalNodes(); ++i)
+    if (std::abs(X[i] - length/2.) < a0/2.)
+      tau_max(i) = 0.;
 
   // dumping
   interface.initDump("fracture_2d_example",".");
@@ -128,6 +130,6 @@ int main(int argc, char *argv[]) {
       interface.dump(s,s*time_step);
   }
 
-  delete comm;
+  comm->finalize();
   return 0;
 }

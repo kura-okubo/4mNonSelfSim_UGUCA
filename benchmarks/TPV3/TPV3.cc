@@ -30,7 +30,7 @@
  */
 #include <iostream>
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <unistd.h>
 
 #include <sys/time.h>
@@ -42,7 +42,7 @@
 #include "bimat_interface.hh"
 #include "unimat_shear_interface.hh"
 
-#include "uca_mesh.hh"
+#include "uca_simple_mesh.hh"
 
 #include "linear_shear_cohesive_law.hh"
 
@@ -147,8 +147,8 @@ int main(int argc, char *argv[]) {
   double Gc = 0.5*(tau_c-tau_r)*dc;
 
   // mesh
-  Mesh mesh(length_x,nb_nodes_x,
-	    length_z,nb_nodes_z);
+  SimpleMesh mesh(length_x,nb_nodes_x,
+		  length_z,nb_nodes_z);
 
   // constitutive interface law
   LinearShearCohesiveLaw law(mesh,
@@ -197,9 +197,9 @@ int main(int argc, char *argv[]) {
   interface->setTimeStep(time_step);
 
   // external loading
-  interface->getLoad(0)->setAllValuesTo(shear_load);
-  interface->getLoad(1)->setAllValuesTo(0.);//normal_load);
-  interface->getLoad(2)->setAllValuesTo(0.);
+  interface->getLoad().component(0).setAllValuesTo(shear_load);
+  interface->getLoad().component(1).setAllValuesTo(0.);//normal_load);
+  interface->getLoad().component(2).setAllValuesTo(0.);
 
   interface->init();
 
@@ -214,34 +214,34 @@ int main(int argc, char *argv[]) {
 
   //--------------
   // nucleation
-  NodalField * load_0 = interface->getLoad(0);
-  NodalField * tauc = law.getTauc();
-  NodalField * Gamma_c = law.getGc();
+  NodalFieldComponent & load_0 = interface->getLoad().component(0);
+  NodalFieldComponent & tauc = law.getTauc();
+  NodalFieldComponent & Gamma_c = law.getGc();
 
-  std::vector<NodalField *>  coords = mesh.getCoords();
+  double ** coords = mesh.getLocalCoords();
   double tol = 0.1*length_x/nb_nodes_x/2.0;
 
-  for (int i=0; i<mesh.getNbNodes(); i++) {
-    if (std::abs( (*coords[0])(i) - length_x/2.0) < a0/2.0+tol &&
-	std::abs( (*coords[2])(i) - length_z/2.0) < a0/2.0+tol) {
-      (*load_0)(i) = 0.5*(nuc_shear_load+shear_load);
+  for (int i=0; i<mesh.getNbLocalNodes(); i++) {
+    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0+tol &&
+	std::abs( coords[2][i] - length_z/2.0) < a0/2.0+tol) {
+      load_0(i) = 0.5*(nuc_shear_load+shear_load);
     }
   }
 
-  for (int i=0; i<mesh.getNbNodes(); i++) {
-    if (std::abs( (*coords[0])(i) - length_x/2.0) < a0/2.0-tol &&
-	std::abs( (*coords[2])(i) - length_z/2.0) < a0/2.0-tol) {
-	(*load_0)(i) = nuc_shear_load;
+  for (int i=0; i<mesh.getNbLocalNodes(); i++) {
+    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0-tol &&
+	std::abs( coords[2][i] - length_z/2.0) < a0/2.0-tol) {
+	load_0(i) = nuc_shear_load;
     }
   }
 
   //--------------
   // infinite strength zone;
-  for (int i=0; i<mesh.getNbNodes(); i++) {
-    if (std::abs( (*coords[0])(i) - length_x/2.0) > length_x_rpt/2.0-tol ||
-	std::abs( (*coords[2])(i) - length_z/2.0) > length_z_rpt/2.0-tol) {
-	(*Gamma_c)(i) = 1e24*Gc;
-	(*tauc)(i) = 1e24*tau_c;
+  for (int i=0; i<mesh.getNbLocalNodes(); i++) {
+    if (std::abs( coords[0][i] - length_x/2.0) > length_x_rpt/2.0-tol ||
+	std::abs( coords[2][i] - length_z/2.0) > length_z_rpt/2.0-tol) {
+	Gamma_c(i) = 1e24*Gc;
+	tauc(i) = 1e24*tau_c;
     }
   }
 

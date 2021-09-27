@@ -32,8 +32,8 @@ cmake_minimum_required(VERSION 3.1)
 project(uguca)
 enable_language(CXX)
 
-set(UGUCA_MAJOR_VERSION 0)
-set(UGUCA_MINOR_VERSION 9)
+set(UGUCA_MAJOR_VERSION 1)
+set(UGUCA_MINOR_VERSION 0)
 set(UGUCA_PATCH_VERSION 0)
 set(UGUCA_COPYRING "2021 ETH Zurich (David S. Kammer)")
 set(UGUCA_AUTHOR "David S. Kammer")
@@ -52,7 +52,6 @@ set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries.")
 mark_as_advanced(
   BUILD_SHARED_LIBS)
 
-find_package(GSL REQUIRED)
 find_package(FFTW REQUIRED)
 find_package(Git)
 
@@ -98,10 +97,14 @@ set(UGUCA_INCLUDE_DIRS
   "${CMAKE_CURRENT_BINARY_DIR}/src"
 
   "${CMAKE_CURRENT_SOURCE_DIR}/src"
-  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface_laws"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/io"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/mesh"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/half_space"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/laws"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src/interface/infinite_boundary"
   )
 include_directories(${UGUCA_INCLUDE_DIRS})
-include_directories(${GSL_INCLUDE_PATH})
 include_directories(${FFTW_INCLUDE_PATH})
 include_directories(${BLAS_INCLUDE_PATH})
 include_directories(${MPI_INCLUDE_PATH})

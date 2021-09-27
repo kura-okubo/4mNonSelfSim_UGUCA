@@ -32,9 +32,12 @@
 #include "static_communicator_mpi.hh"
 #include "uca_parameter_reader.hh"
 #include "material.hh"
-
+#include "uca_simple_mesh.hh"
 #include "defrig_interface.hh"
 #include "barras_law.hh"
+
+#include <iostream>
+#include <cmath>
 
 using namespace uguca;
 
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
   double z_length   = data.get<double>("z_length");
   int nb_x_elements = data.get<int>("nb_x_elements");
   int nb_z_elements = data.get<int>("nb_z_elements");
-  Mesh mesh(x_length, nb_x_elements,
+  SimpleMesh mesh(x_length, nb_x_elements,
 	    z_length, nb_z_elements);
 
   // constitutive interface law
@@ -84,8 +87,7 @@ int main(int argc, char *argv[]) {
   DefRigInterface interface(mesh, top_mat, law);
 
   // external loading
-  NodalField * ext_normal = interface.getNormalLoad();
-  ext_normal->setAllValuesTo(data.get<double>("normal_load"));
+  interface.getLoad().component(1).setAllValuesTo(data.get<double>("normal_load"));
 
   // time step
   double duration = data.get<double>("duration");
@@ -97,14 +99,14 @@ int main(int argc, char *argv[]) {
   interface.init();
 
   // heterogeneity for nucleation: decreased strength
-  NodalField * X = mesh.getCoords()[0];
-  NodalField * Z = mesh.getCoords()[2];
-  NodalField * tau_max = law.getTauMax();
+  double * X = mesh.getLocalCoords()[0];
+  double * Z = mesh.getLocalCoords()[2];
+  NodalFieldComponent & tau_max = law.getTauMax();
   double a0 = data.get<double>("a0");
-  for (int i=0;i<mesh.getNbNodes(); ++i)
-    if ((std::abs((*X)(i) - x_length/2.) < a0/2.) &&
-	(std::abs((*Z)(i) - z_length/2.) < a0/2.))
-      (*tau_max)(i) = 0.;
+  for (int i=0;i<mesh.getNbLocalNodes(); ++i)
+    if ((std::abs(X[i] - x_length/2.) < a0/2.) &&
+	(std::abs(Z[i] - z_length/2.) < a0/2.))
+      tau_max(i) = 0.;
 
   // dumping
   interface.initDump("fracture_3d_example",".");
@@ -127,6 +129,6 @@ int main(int argc, char *argv[]) {
       interface.dump(s,s*time_step);
   }
 
-  delete comm;
+  comm->finalize();
   return 0;
 }

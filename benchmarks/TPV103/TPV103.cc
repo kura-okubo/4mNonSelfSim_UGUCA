@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <math.h>
+#include <cmath>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -37,6 +37,7 @@
 #include <iostream>
 
 #include "material.hh"
+#include "uca_simple_mesh.hh"
 #include "static_communicator_mpi.hh"
 #include "unimat_shear_interface.hh"
 #include "rate_and_state_law.hh"
@@ -62,7 +63,7 @@ int main(int argc, char *argv[]) {
   double duration = 12.0;
   double dump_int = 0.1;
 
-  unsigned int nb_nodes_x = 1440;
+  unsigned int nb_nodes_x = 720;
   double time_step_factor = 0.35;
 
   unsigned int s_dump = 0;
@@ -142,18 +143,18 @@ int main(int argc, char *argv[]) {
 
   // ---------------------------------------------------------------------------
   // mesh
-  Mesh mesh(length_x, nb_nodes_x, length_z, nb_nodes_z);
+  SimpleMesh mesh(length_x, nb_nodes_x, length_z, nb_nodes_z);
 
   // constitutive interface law
   RateAndStateLaw law(
-      mesh, a_default, b_default, Dc, V0, f0, theta_init, std::abs(normal_load),
+      mesh, a_default, b_default, Dc, V0, f0, theta_init,
       RateAndStateLaw::EvolutionLaw::SlipLawWithStrongRateWeakening, n_pc > 0);
   law.setFw(fw);
 
-  NodalField* theta = law.getTheta();
-  NodalField* a = law.getA();
+  NodalFieldComponent & theta = law.getTheta();
+  NodalFieldComponent & a = law.getA();
   // NodalField* b = law.getB();
-  NodalField* Vw = law.getVw();
+  NodalFieldComponent & Vw = law.getVw();
 
   double mu = Cs * Cs * rho;
   double lambda = Cp * Cp * rho - 2.0 * mu;
@@ -176,23 +177,23 @@ int main(int argc, char *argv[]) {
   // initial conditions
 
   // init external load
-  NodalField* ext_shear = interface.getShearLoad();
-  NodalField* ext_normal = interface.getNormalLoad();
-  ext_shear->setAllValuesTo(shear_load);
-  ext_normal->setAllValuesTo(normal_load);
+  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
+  NodalFieldComponent & ext_normal = interface.getLoad().component(1);
+  ext_shear.setAllValuesTo(shear_load);
+  ext_normal.setAllValuesTo(normal_load);
 
   // init velocity
   HalfSpace& top = interface.getTop();
-  NodalField* velo0_top = top.getVelo(0);
-  velo0_top->setAllValuesTo(V_init / 2);
+  NodalFieldComponent & velo0_top = top.getVelo().component(0);
+  velo0_top.setAllValuesTo(V_init / 2);
 
 
-  const std::vector<NodalField *> coords = mesh.getCoords();
+  double ** coords = mesh.getLocalCoords();
 
   // init a
-  for (int  i = 0; i < mesh.getNbNodes(); ++i) {
-    double x = std::abs((*coords[0])(i) - length_x / 2);
-    double z = std::abs((*coords[2])(i) - length_z / 2);
+  for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
+    double x = std::abs(coords[0][i] - length_x / 2);
+    double z = std::abs(coords[2][i] - length_z / 2);
     double Bx = 0.0;
     if (x <= W) {
       Bx = 1.0;
@@ -205,13 +206,13 @@ int main(int argc, char *argv[]) {
     } else if (z < W / 2 + w) {
       Bz = 0.5 * (1.0 + std::tanh(w / (z - W / 2.0 - w) + w / (z - W / 2.0)));
     }
-    (*a)(i) = 0.01 + delta_a_0 * (1.0 - Bx * Bz);
+    a(i) = 0.01 + delta_a_0 * (1.0 - Bx * Bz);
   }
 
   // init Vw
-  for (int  i = 0; i < mesh.getNbNodes(); ++i) {
-    double x = std::abs((*coords[0])(i) - length_x / 2);
-    double z = std::abs((*coords[2])(i) - length_z / 2);
+  for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
+    double x = std::abs(coords[0][i] - length_x / 2);
+    double z = std::abs(coords[2][i] - length_z / 2);
     double Bx = 0.0;
     if (x <= W) {
       Bx = 1.0;
@@ -224,14 +225,14 @@ int main(int argc, char *argv[]) {
     } else if (z < W / 2 + w) {
       Bz = 0.5 * (1.0 + std::tanh(w / (z - W / 2.0 - w) + w / (z - W / 2.0)));
     }
-    (*Vw)(i) = Vw_default + delta_Vw_0 * (1.0 - Bx * Bz);
+    Vw(i) = Vw_default + delta_Vw_0 * (1.0 - Bx * Bz);
   }
 
 
   // init theta
-  for (int  i = 0; i < mesh.getNbNodes(); ++i) {
-      (*theta)(i) = (*a)(i) * std::log(2.0 * V0 / V_init *
-				 std::sinh(shear_load / std::abs(normal_load) / (*a)(i)));
+  for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
+      theta(i) = a(i) * std::log(2.0 * V0 / V_init *
+				 std::sinh(shear_load / std::abs(normal_load) / a(i)));
   }
 
   // time step
@@ -295,9 +296,9 @@ int main(int argc, char *argv[]) {
     }
     // nucleation
     double t = time_step * s;
-    for (int i = 0; i < mesh.getNbNodes(); ++i) {
-      double x = std::abs((*coords[0])(i) - length_x / 2);
-      double z = std::abs((*coords[2])(i) - length_z / 2);
+    for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
+      double x = std::abs(coords[0][i] - length_x / 2);
+      double z = std::abs(coords[2][i] - length_z / 2);
       double r = std::sqrt(x * x + z * z);
       double F = 0.0;
       if (r < R)
@@ -305,7 +306,7 @@ int main(int argc, char *argv[]) {
       double G = 1.0;
       if (t < T)
 	G = std::exp((t - T) * (t - T) / t / (t - 2.0 * T));
-      (*ext_shear)(i) = shear_load + delta_tau_0 * F * G;
+      ext_shear(i) = shear_load + delta_tau_0 * F * G;
     }
 
 

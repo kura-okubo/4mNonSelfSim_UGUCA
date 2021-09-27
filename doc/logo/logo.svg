@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994952"
-     inkscape:cx="295.33315"
-     inkscape:cy="10.061051"
+     inkscape:zoom="0.70000002"
+     inkscape:cx="414.40688"
+     inkscape:cy="24.385245"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -44,7 +44,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -112,23 +112,33 @@
        sodipodi:nodetypes="ccccccccc"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
-    <flowRoot
-       xml:space="preserve"
-       id="flowRoot858-3-5-1-7"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#1f407a;fill-opacity:1;stroke:none;stroke-width:0.3224771"
+    <g
+       aria-label="uguca"
        transform="matrix(1.3003015,0,0,1.3003015,130.11218,122.2149)"
-       inkscape:export-xdpi="300"
-       inkscape:export-ydpi="300"><flowRegion
-         id="flowRegion860-2-4-5-5"
-         style="fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"><rect
-           id="rect862-1-2-6-3"
-           width="322.74374"
-           height="93.43911"
-           x="-58.083771"
-           y="89.476357"
-           style="fill:#1f407a;fill-opacity:1;stroke-width:0.3224771" /></flowRegion><flowPara
-         id="flowPara864-7-2-50-5"
-         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771">uguca</flowPara></flowRoot>    <path
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#1f407a;fill-opacity:1;stroke:none;stroke-width:0.3224771"
+       id="flowRoot858-3-5-1-7">
+      <path
+         d="m -56.483984,118.34719 v -13.08 h 2.96 v 13.16 q 0,5.24 3.76,5.24 2.12,0 3.12,-1.32 1.04,-1.32 1.04,-4.16 v -12.92 h 3.04 v 19.52 h -2.96 v -1.92 q -1.16,2.4 -5.44,2.4 -5.52,0 -5.52,-6.92 z"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"
+         id="path856" />
+      <path
+         d="m -39.374609,115.18719 q 0,-5.32 2.12,-7.8 2.16,-2.52 6,-2.52 3.4,0 5.64,3.08 v -2.68 h 2.76 v 16.04 q 0,11.16 -9.12,11.16 -5.72,0 -6.8,-5.88 h 1.8 q 1.52,4.32 5.36,4.32 5.68,0 5.68,-8.08 v -0.4 q -1.92,2.84 -5.88,2.84 -7.56,0 -7.56,-10.08 z m 8.04,-8.72 q -4.92,0 -4.92,8.6 0,8.6 4.8,8.6 5.56,0 5.56,-8.6 0,-8.6 -5.44,-8.6 z"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"
+         id="path858" />
+      <path
+         d="m -19.687109,118.34719 v -13.08 h 2.96 v 13.16 q 0,5.24 3.76,5.24 2.12,0 3.1199996,-1.32 1.04,-1.32 1.04,-4.16 v -12.92 h 3.04 v 19.52 h -2.96 v -1.92 q -1.16,2.4 -5.4399996,2.4 -5.52,0 -5.52,-6.92 z"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"
+         id="path860" />
+      <path
+         d="m -2.5777344,115.02719 q 0,-10.16 8.48,-10.16 7.2800004,0 7.2800004,6.88 h -1.44 q -0.08,-2.76 -1.52,-4 -1.4000004,-1.28 -4.1600004,-1.28 -2.88,0 -4.28,2.04 -1.39999997,2.04 -1.39999997,6.44 0,8.72 5.19999997,8.72 6.4000004,0 6.4000004,-5.6 h 1.44 q 0,7.2 -8.2400004,7.2 -7.76,0 -7.76,-10.24 z"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"
+         id="path862" />
+      <path
+         d="m 16.641016,119.74719 q 0,-4 7.04,-5.8 5.44,-1.36 5.44,-2.68 v -0.72 q 0,-2.36 -1.24,-3.2 -1.2,-0.88 -3.36,-0.88 -2.76,0 -4.12,1.12 -1.32,1.08 -1.32,3.48 h -1.52 v -0.12 q 0,-6.08 6.8,-6.08 7.76,0 7.76,5.24 v 11.24 q 0,2.32 1.48,2.32 0.08,0 0.76,-0.2 v 1.52 l -0.12,0.04 q -0.08,0 -0.28,0.04 -0.16,0.04 -0.4,0.08 -0.24,0.08 -0.56,0.08 -0.28,0.04 -0.56,0.04 -2.76,0 -3.2,-2.72 -2.32,2.72 -5.84,2.72 -6.76,0 -6.76,-5.52 z m 3,0.64 q 0,3.28 3.32,3.28 0.88,0 1.72,-0.16 0.84,-0.16 1.96,-0.6 1.12,-0.48 1.8,-1.6 0.68,-1.12 0.68,-2.76 v -4.72 q -0.16,0 -5.48,1.8 -4,1.32 -4,4.76 z"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"
+         id="path864" />
+    </g>
+    <path
        style="fill:none;stroke:#1f407a;stroke-width:1.84631741;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 1.4356119,293.52273 8.7816721,0.0194 v -43.7545 c 0,13.61271 -0.2705447,25.80585 4.201584,26.22673 4.738157,0.44593 11.467597,-2.42506 12.931101,-12.9028 11.128839,10.18366 20.891485,12.18666 20.891485,12.18666"
        id="path1047-0-6-1"
@@ -136,5 +146,21 @@
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300"
        sodipodi:nodetypes="cccscc" />
-  </g>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot858-3-5-1-7-3"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#1f407a;fill-opacity:1;stroke:none;stroke-width:0.3224771"
+       transform="matrix(1.3003015,0,0,1.3003015,133.05093,213.79057)"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300"><flowRegion
+         id="flowRegion860-2-4-5-5-6"
+         style="fill:#1f407a;fill-opacity:1;stroke-width:0.3224771"><rect
+           id="rect862-1-2-6-3-7"
+           width="322.74374"
+           height="93.43911"
+           x="-58.083771"
+           y="89.476357"
+           style="fill:#1f407a;fill-opacity:1;stroke-width:0.3224771" /></flowRegion><flowPara
+         id="flowPara864-7-2-50-5-5"
+         style="font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;font-family:Suruma;-inkscape-font-specification:'Suruma Medium';fill:#1f407a;fill-opacity:1;stroke-width:0.3224771">uguca</flowPara></flowRoot>  </g>
 </svg>

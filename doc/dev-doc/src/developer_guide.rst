@@ -6,12 +6,12 @@ Code architecture
 
 The key classes for uguca are schematically illustrated in the following figure
 
-.. image:: ../figs/uguca_architecture_v1.png
+.. image:: ../figs/uguca_architecture_v2.png
    :align: left
 
 The central class is the ``Interface`` class. It contains the ``Mesh``, the one or two ``HalfSpaces``, the ``InterfaceLaw`` governing the failure, and the ``cohesion`` nodal array. It contains further members, but we only highlight the key members here. ``Interface`` is an abstract class. The developer needs to inherit from it in order to implement a specific interface behavior (see below). Various types of interfaces have been implemented.
 
-The ``Mesh`` contains the discretization of the interface. Hence, it is defined by the spatial dimension ``dim``, which could be 2 or 3. Further, it has lengths indicating the size of the interface, and ``coords``, which are the coordinates of the nodes.
+The `Mesh` is of type ``FFTableMesh``, which contains the discretization of the interface and the wave numbers in Fourier space. It is defined by the spatial dimension ``dim``, which could be 2 or 3. Further, it has lengths indicating the size of the interface, and ``coords``, which are the coordinates of the nodes. The ``DistributedFFTableMesh`` distributes the wave numbers on different processes using MPI. The user will be using either the ``SimpleMesh``, which is serial in space but parallel in Fourier space, or the ``CustomMesh``, which also allows to distribute real space based on user input. 
 
 The ``HalfSpace`` object represents an elastic half-space. Hence, it contains a ``Material``, and the displacement ``disp``, and velocity ``velo`` nodal values of the boundary of the half-space.
 

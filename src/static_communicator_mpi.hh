@@ -37,6 +37,7 @@
 #include <cstdio>
 
 #ifdef UCA_USE_MPI
+#define OMPI_SKIP_MPICXX 1 // avoid warnings related to 'cast between incompatible function types of ompi_mpi_cxx_op_intercept'
 #include <mpi.h>
 #else
 typedef int MPI_Op;
@@ -44,6 +45,8 @@ static const MPI_Op MPI_MAX=0;
 #endif
 
 __BEGIN_UGUCA__
+
+typedef double fftw_complex[2];
 
 
 /*

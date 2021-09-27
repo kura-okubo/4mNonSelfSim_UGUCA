@@ -8,7 +8,6 @@ RUN apt-get -qq update && apt-get -y -qq install \
     cmake \
     g++ \
     git \
-    libgsl-dev \
     libatlas-base-dev \
     libfftw3-dev \
     libopenmpi-dev \

@@ -30,7 +30,7 @@
  */
 #include <iostream>
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <unistd.h>
 
 #include <sys/time.h>

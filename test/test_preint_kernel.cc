@@ -28,13 +28,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <iomanip> // for std::setprecision
-#include <limits> // for std::numeric_limits<>
 
 #include "preint_kernel.hh"
 #include "precomputed_kernel.hh"
 #include "limited_history.hh"
+
 #include <cmath>
+#include <iomanip> // for std::setprecision
+#include <limits> // for std::numeric_limits<>
 
 using namespace uguca;
 

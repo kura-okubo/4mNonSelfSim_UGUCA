@@ -29,24 +29,24 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "half_space_dynamic.hh"
+#include "interface.hh"
+#include "interface_law.hh"
+#include "linear_shear_cohesive_law.hh"
+#include "uca_simple_mesh.hh"
+#include "nodal_field.hh"
+
 #include <cmath>
 #include <iostream>
 #include <random>
 #include <vector>
 
-#include "half_space.hh"
-#include "interface.hh"
-#include "interface_law.hh"
-#include "linear_shear_cohesive_law.hh"
-#include "uca_mesh.hh"
-#include "nodal_field.hh"
-
 using namespace uguca;
 
 class TestInterfaceLaw : public InterfaceLaw {
 public:
-  TestInterfaceLaw(Mesh & mesh): InterfaceLaw(mesh) {}
-  void computeCohesiveForces(std::vector<NodalField *> &,
+  TestInterfaceLaw(SimpleMesh & mesh): InterfaceLaw(mesh) {}
+  void computeCohesiveForces(NodalField &,
 			     bool = false) {
     computeCohesiveForcesCalled = true;
   }
@@ -57,9 +57,9 @@ public:
   bool registerDumpFieldCalled = false;
 };
 
-class TestHalfSpace : public HalfSpace {
+class TestHalfSpace : public HalfSpaceDynamic {
 public:
-  TestHalfSpace(Mesh & mesh, int side_factor) : HalfSpace(mesh, side_factor) {}
+  TestHalfSpace(SimpleMesh & mesh, int side_factor) : HalfSpaceDynamic(mesh, side_factor) {}
   void computeDisplacement(bool = false) {
     computeDisplacementCalled = true;
   }
@@ -67,7 +67,7 @@ public:
                                 bool = false) {
     computeStressFourierCoeffCalled = true;
   }
-  void computeResidual(std::vector<NodalField *> &) {
+  void computeResidual(NodalField &) {
     computeResidualCalled = true;
   }
   void computeVelocity(bool = false) {
@@ -79,7 +79,7 @@ public:
   void backwardFFT() {
     backwardFFTCalled = true;
   }
-  void gatherCostumMeshForwardFFT(std::vector<NodalField *> &,
+  void gatherCostumMeshForwardFFT(NodalField &,
                                   bool = false) {
     gatherCostumMeshForwardFFTCalled = true;
   }
@@ -107,23 +107,23 @@ public:
 
 class TestInterface : public Interface {
 public:
- TestInterface(Mesh &mesh, InterfaceLaw &law, Material &material)
+ TestInterface(SimpleMesh &mesh, InterfaceLaw &law, Material &material)
      : Interface(mesh, law), top(mesh, 1) {
-   half_space.push_back(&top);
+   half_spaces.push_back(&top);
    top.setMaterial(&material);
    constructed = true;
  }
   // pure virtual functions
-  void closingNormalGapForce(NodalField *, bool = false) {
+  void closingNormalGapForce(NodalFieldComponent &, bool = false) {
     throw "TestInterface::closingNormalGapForce() is not implemented.";
   }
-  void maintainShearGapForce(std::vector<NodalField *> &) {
+  void maintainShearGapForce(NodalField &) {
     throw "TestInterface::maintainShearGapForce() is not implemented.";
   }
-  void computeGap(std::vector<NodalField *> &, bool = false) {
+  void computeGap(NodalField &, bool = false) {
     throw "TestInterface::computeGap() is not implemented.";
   }
-  void computeGapVelocity(std::vector<NodalField *> &,
+  void computeGapVelocity(NodalField &,
                           bool = false) {
     throw "TestInterface::computeGapVelocity() is not implemented.";
   }
@@ -154,7 +154,7 @@ int main(){
   int Nx = 3;
   double Lz = 0.3;
   int Nz = 2;
-  Mesh mesh(Lx, Nx, Lz, Nz);
+  SimpleMesh mesh(Lx, Nx, Lz, Nz);
   // --------------------------------------------------------------
   // interface law
   // --------------------------------------------------------------
@@ -275,43 +275,6 @@ int main(){
   }
   // --------------------------------------------------------------
 
-  // Check Interface::setDynamic
-  // --------------------------------------------------------------
-  std::cout << "check Interface::setDynamic" << std::endl;
-  interface.setDynamic(false);
-  if (!top.getDynamic()) {
-    std::cout << "Interface::setDynamic correct -> success" << std::endl;
-    interface.setDynamic(true);
-  } else {
-    std::cout << "Interface::setDynamic failed" << std::endl;
-    return 1;  // failed
-  }
-  // --------------------------------------------------------------
-
-  // Check Interface::gatherCostumMeshForwardFFT
-  // --------------------------------------------------------------
-  std::cout << "check gatherCostumMeshForwardFFT" << std::endl;
-  interface.gatherCostumMeshForwardFFT();
-  if (top.gatherCostumMeshForwardFFTCalled) {
-    std::cout << "gatherCostumMeshForwardFFT correct -> success" << std::endl;
-  } else {
-    std::cout << "gatherCostumMeshForwardFFT failed" << std::endl;
-    return 1;  // failed
-  }
-  // --------------------------------------------------------------
-
-  // Check Interface::backwardFFTscatterCostumMesh
-  // --------------------------------------------------------------
-  std::cout << "check backwardFFTscatterCostumMesh" << std::endl;
-  interface.backwardFFTscatterCostumMesh();
-  if (top.backwardFFTscatterCostumMeshCalled) {
-    std::cout << "backwardFFTscatterCostumMesh correct -> success" << std::endl;
-  } else {
-    std::cout << "backwardFFTscatterCostumMesh failed" << std::endl;
-    return 1;  // failed
-  }
-  // --------------------------------------------------------------
-
   // Check Interface::advanceTimeStep
   // --------------------------------------------------------------
   std::cout << "check Interface::advanceTimeStep" << std::endl;
@@ -342,84 +305,25 @@ int main(){
   }
   // --------------------------------------------------------------
 
-  // Check Interface::computeNorm
-  // --------------------------------------------------------------
-  std::cout << "check Interface::computeNorm" << std::endl;
-  NodalField f0(mesh.getNbNodes());
-  NodalField f1(mesh.getNbNodes());
-  NodalField f2(mesh.getNbNodes());
-  NodalField ans(mesh.getNbNodes());
-  f0.setAllValuesTo(1);
-  f1.setAllValuesTo(2);
-  f2.setAllValuesTo(3);
-  std::vector<NodalField *> field;
-  field.push_back(&f0);
-  field.push_back(&f1);
-  field.push_back(&f2);
-  bool checks_out = true;
-  double tol = 1e-16;
-  double ref_ans = std::sqrt(1 * 1 + 2 * 2 + 3 * 3);
-  interface.computeNorm(field, ans, false);
-  for (int i = 0; i < mesh.getNbNodes(); ++i) {
-    if (std::abs(ans(i) - ref_ans) > tol) {
-      checks_out = false;
-      break;
-    }
-  }
-  ref_ans = std::sqrt(1 * 1 + 3 * 3);
-  interface.computeNorm(field, ans, true);
-  for (int i = 0; i < mesh.getNbNodes(); ++i) {
-    if (std::abs(ans(i) - ref_ans) > tol) {
-      checks_out = false;
-      break;
-    }
-  }
-  if (checks_out) {
-    std::cout << "Interface::computeNorm correct -> success" << std::endl;
-  } else {
-    std::cout << "Interface::computeNorm failed" << std::endl;
-    return 1;  // failed
-  }
-  // --------------------------------------------------------------
-
-  // Check Interface::multiplyFieldByScalar
-  // --------------------------------------------------------------
-  std::cout << "check Interface::multiplyFieldByScalar" << std::endl;
-  checks_out = true;
-  tol = 1e-16;
-  ref_ans = 0;
-  ans.setAllValuesTo(0);
-  interface.multiplyFieldByScalar(field, ans, false);
-  for (size_t j = 0; j < field.size(); ++j) {
-    for (int i = 0; i < mesh.getNbNodes(); ++i) {
-      if (std::abs((*field[j])(i) - ref_ans) > tol) {
-        checks_out = false;
-        break;
-      }
-    }
-  }
-  if (checks_out) {
-    std::cout << "Interface::multiplyFieldByScalar correct -> success"
-              << std::endl;
-  } else {
-    std::cout << "Interface::multiplyFieldByScalar failed" << std::endl;
-    return 1;  // failed
-  }
-  // --------------------------------------------------------------
-
   // Check Interface::combineLoadAndCohesion
   // --------------------------------------------------------------
+  NodalField field(mesh);
+  field.component(0).setAllValuesTo(1);
+  field.component(1).setAllValuesTo(2);
+  field.component(2).setAllValuesTo(3);
+
   std::cout << "check Interface::combineLoadAndCohesion" << std::endl;
   for (int i = 0; i < 3; ++i) {
-    interface.getLoad(i)->setAllValuesTo(3);
-    interface.getCohesion(i)->setAllValuesTo(42);
+    interface.getLoad().component(i).setAllValuesTo(3);
+    interface.getCohesion().component(i).setAllValuesTo(42);
   }
   interface.combineLoadAndCohesion(field);
-  checks_out = true;
-  ref_ans = 3 - 42;
+  bool checks_out = true;
+  double tol = 1e-16;
+  double ref_ans = 3 - 42;
   for (size_t j = 0; j < 3; ++j) {
-    for (int i = 0; i < mesh.getNbNodes(); ++i) {
-      if (std::abs((*field[j])(i) - ref_ans) > tol) {
+    for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
+      if (std::abs(field.component(j).at(i) - ref_ans) > tol) {
         checks_out = false;
         break;
       }

@@ -14,9 +14,10 @@ class ExampleInterface : public Interface {
   /* ------------------------------------------------------------------------ */
 public:
 
-  ExampleInterface(Mesh & mesh,
+  ExampleInterface(FFTableMesh & mesh,
 		   Material & top_material,
-		   InterfaceLaw & law);
+		   InterfaceLaw & law,
+		   const SolverMethod & method = _dynamic);
 
   virtual ~ExampleInterface();
 
@@ -26,18 +27,18 @@ public:
 public:
 
   // compute force needed to close normal gap
-  virtual void closingNormalGapForce(NodalField * close_force,
+  virtual void closingNormalGapForce(NodalFieldComponent & close_force,
 				     bool predicting = false);
 
   // compute force needed to maintain current shear gap
-  virtual void maintainShearGapForce(std::vector<NodalField *> & maintain_force);
+  virtual void maintainShearGapForce(NodalField & maintain_force);
 
   // compute gap in displacement
-  virtual void computeGap(std::vector<NodalField *> & gap,
+  virtual void computeGap(NodalField & gap,
 			  bool predicting = false);
 
   // compute gap relative velocity
-  virtual void computeGapVelocity(std::vector<NodalField *> & gap_velo,
+  virtual void computeGapVelocity(NodalField & gap_velo,
 				  bool predicting = false);
 
   // dumper function
@@ -48,13 +49,10 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
 
-  virtual HalfSpace & getTop() { return this->top; };
+  virtual HalfSpace & getTop() { return *(this->top); }
   virtual HalfSpace & getBot() {
-#ifdef UCA_VERBOSE
-    std::cout << "Warning: UnimatShearInterface::getBot() returns the same "
-	      << "HalfSpace as UnimatShearInterface::getTop()" << std::endl;
-#endif /* UCA_VERBOSE */
-    return this->top; };
+    throw "ExampleInterface::getBot() is not implemented.";
+  }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -62,10 +60,10 @@ public:
 private:
 
   // half spaces
-  HalfSpace top;
+  HalfSpace * top;
   
   // YOU CAN ADD NEW FIELDS HERE
-  std::vector<NodalField *> & example_field
+  NodalField & example_field;
 };
 
 __END_UGUCA__

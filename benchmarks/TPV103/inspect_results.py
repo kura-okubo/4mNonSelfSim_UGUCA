@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from __future__ import division
 from glob import glob
@@ -23,8 +23,8 @@ def inspect_results(full_path, bname):
     location = station.split('faultst')[1].split('/')[-2]
     location = location.split('dp')
     x = int(location[0]) * 100
-    y = int(location[1]) * 100
-    compare_station(full_path, bname, x, y)
+    z = int(location[1]) * 100
+    compare_station(full_path, bname, x, z)
   compare_cplot(full_path, bname)
 
 
@@ -46,13 +46,13 @@ def compare_cplot(full_path, bname):
   nt = len(t)
   xx, zz = np.meshgrid(x, z, indexing='ij')
 
-  tau0 = read_data_cplot('%s-DataFiles/cohesion_0.out' %
-                         full_path, nb_nodes_x, nb_nodes_z, nt)
+  delta_dot = read_data_cplot('%s-DataFiles/top_velo_0.out' %
+                         full_path, nb_nodes_x, nb_nodes_z, nt) * 2
 
   rpt_arrival = np.zeros(xx.shape)
   for j in range(nb_nodes_x):
     for k in range(nb_nodes_z):
-      i = np.argmax(tau0[:, j, k])
+      i = np.argmax(delta_dot[:, j, k] > 1e-3)
       rpt_arrival[j, k] = t[i]
 
   fig, ax = plt.subplots(1)
@@ -89,33 +89,33 @@ def compare_cplot(full_path, bname):
   plt.savefig('{}_{}.pdf'.format(bname, stname))
 
 
-def compare_station(full_path, bname, x_interest, y_interest):
+def compare_station(full_path, bname, x_interest, z_interest):
   spec = bname.split('_')
   nb_nodes_x = int(spec[1][2::])
-  nb_nodes_y = int(spec[2][2::])
+  nb_nodes_z = int(spec[2][2::])
   domain_factor = float(spec[3][1::])
-  nb_nodes = nb_nodes_x * nb_nodes_y
+  nb_nodes = nb_nodes_x * nb_nodes_z
   length_x_rpt = 36e3
-  length_y_rpt = 18e3
+  length_z_rpt = 18e3
   length_x = domain_factor * length_x_rpt
-  length_y = domain_factor * length_y_rpt
+  length_z = domain_factor * length_z_rpt
   dx = length_x / nb_nodes_x
-  dy = length_y / nb_nodes_y
+  dz = length_z / nb_nodes_z
   x = np.arange(nb_nodes_x) * dx - length_x / 2
-  y = 7.5e3 + length_y / 2 - np.arange(nb_nodes_y) * dy
+  z = 7.5e3 + length_z / 2 - np.arange(nb_nodes_z) * dz
   idx_x = np.argmin(np.abs(x - x_interest))
-  idx_y = np.argmin(np.abs(y - y_interest))
-  idx = (idx_x - 1) * nb_nodes_y + idx_y
-  print('Warning: (%.2e, %.2e) != (%e, %e)' %
-        (x_interest, y_interest, x[idx_x], y[idx_y]))
+  idx_z = np.argmin(np.abs(z - z_interest))
+  idx = (idx_x - 1) * nb_nodes_z + idx_z
+  print('Double check: (%.2e, %.2e) = (%e, %e) ?' %
+        (x_interest, z_interest, x[idx_x], z[idx_z]))
 
   t = np.fromfile('%s.time' % full_path, sep=' ')
   t = t[1:-1:2]
   nt = len(t)
-  delta     = read_data('%s-DataFiles/top_disp_0.out' % full_path, nb_nodes_x,nb_nodes_y, nt, idx_x,idx_y) * 2
-  delta_dot = read_data('%s-DataFiles/top_velo_0.out' % full_path, nb_nodes_x,nb_nodes_y, nt, idx_x,idx_y) * 2
-  cohesion  = read_data('%s-DataFiles/cohesion_0.out' % full_path, nb_nodes_x,nb_nodes_y, nt, idx_x,idx_y)
-  psi       = read_data('%s-DataFiles/theta.out'      % full_path, nb_nodes_x,nb_nodes_y, nt, idx_x,idx_y)
+  delta     = read_data('%s-DataFiles/top_disp_0.out' % full_path, nb_nodes_x,nb_nodes_z, nt, idx_x,idx_z) * 2
+  delta_dot = read_data('%s-DataFiles/top_velo_0.out' % full_path, nb_nodes_x,nb_nodes_z, nt, idx_x,idx_z) * 2
+  cohesion  = read_data('%s-DataFiles/cohesion_0.out' % full_path, nb_nodes_x,nb_nodes_z, nt, idx_x,idx_z)
+  psi       = read_data('%s-DataFiles/theta.out'      % full_path, nb_nodes_x,nb_nodes_z, nt, idx_x,idx_z)
 
   params = {
     'text.latex.preamble': r'''\usepackage{siunitx}',
@@ -145,7 +145,7 @@ def compare_station(full_path, bname, x_interest, y_interest):
   ax4.set_xlabel(r'$t$ (sec)')
   ax4.set_ylabel(r'$\psi$ (m/s)')
 
-  data_dir = './ref/faultst%03ddp%03d/*' % (x_interest / 100, y_interest / 100)
+  data_dir = './ref/faultst%03ddp%03d/*' % (x_interest / 100, z_interest / 100)
   refs = glob(data_dir)
   for ref in refs:
     author = ref.split('/')[-1].split('.')[0]
@@ -157,7 +157,7 @@ def compare_station(full_path, bname, x_interest, y_interest):
 
   ax2.legend(loc='upper right', ncol=1, fontsize=7)
   # plt.show()
-  plt.savefig('%s_%03ddp%03d.pdf' % (bname, x_interest / 100, y_interest / 100))
+  plt.savefig('%s_%03ddp%03d.pdf' % (bname, x_interest / 100, z_interest / 100))
 
 
 
@@ -211,7 +211,7 @@ def read_scec_cplot(path):
 
 
 if __name__ == '__main__':
-  usage = """./TPV103_inspect_results.py <path_to_bname>"""
+  usage = """./inspect_results.py <path_to_bname>"""
   if len(sys.argv) != 2:
       sys.exit(usage)
   try:

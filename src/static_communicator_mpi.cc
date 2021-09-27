@@ -34,8 +34,6 @@
 
 __BEGIN_UGUCA__
 
-typedef double fftw_complex[2];
-
 #ifdef UCA_USE_MPI
 class MPITypeWrapper {
 public:
