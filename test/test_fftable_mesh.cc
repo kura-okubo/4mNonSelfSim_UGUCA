@@ -33,6 +33,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <stdexcept>
 
 using namespace uguca;
 
