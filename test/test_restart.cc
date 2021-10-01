@@ -33,9 +33,11 @@
 #include "material.hh"
 #include "linear_shear_cohesive_law.hh"
 #include "bimat_interface.hh"
+#include "half_space_dynamic.hh"
 
 #include <iostream>
 #include <cmath>
+#include <cstring>
 /*
 #include <stdio.h>
 #include <random>
@@ -45,6 +47,7 @@
 */
 
 using namespace uguca;
+
 
 int main(int argc, char *argv[]) {
 
@@ -153,11 +156,22 @@ int main(int argc, char *argv[]) {
   std::cout << "start: dump and reload Interface" << std::endl;
   rs_number = 4;
   double nf4v = 3.2;
+  double nf4v2 = 1.2;
   interface.getCohesion().setAllValuesTo(nf4v);
+  HalfSpaceDynamic & top = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
+  double * Ur00 = top.getLimitedHistoryReal(0,1).getValues();
+  int Ur00_size = top.getLimitedHistoryReal(0,1).getSize();
+  memset(Ur00,nf4v,Ur00_size*sizeof(double));
+  double * Ui00 = top.getLimitedHistoryImag(0,1).getValues();
+  int Ui00_size = top.getLimitedHistoryImag(0,1).getSize();
+  memset(Ui00,nf4v2,Ui00_size*sizeof(double));
+  
   interface.registerToRestart(restart_dump);
   restart_dump.dump(rs_number);
   interface.getCohesion().setAllValuesTo(nf4v*2);
-
+  memset(Ur00,2*nf4v,Ur00_size*sizeof(double));
+  memset(Ui00,2*nf4v2,Ui00_size*sizeof(double));
+  
   interface.registerToRestart(restart_load);
   restart_load.load(rs_number);
 
@@ -169,6 +183,26 @@ int main(int argc, char *argv[]) {
 	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
 	return 1; // failure
       }
+    }
+  }
+
+  HalfSpaceDynamic & top_to_check = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
+  Ur00 = top_to_check.getLimitedHistoryReal(0,1).getValues();
+  Ur00_size = top_to_check.getLimitedHistoryReal(0,1).getSize();
+  Ui00 = top_to_check.getLimitedHistoryImag(0,1).getValues();
+  Ui00_size = top_to_check.getLimitedHistoryImag(0,1).getSize();
+  
+  for (int i=0; i<Ur00_size; ++i) {
+    if (std::abs((Ur00[i] - nf4v) / nf4v) > 1e-6) {
+      std::cerr << "Ur should be " << nf4v << ": " << Ur00[i] << std::endl;
+      return 1; // failure
+    }
+  }
+  
+  for (int i=0; i<Ui00_size; ++i) {
+    if (std::abs((Ui00[i] - nf4v2) / nf4v2) > 1e-6) {
+      std::cerr << "Ui should be " << nf4v2 << ": " << Ui00[i] << std::endl;
+      return 1; // failure
     }
   }
   std::cout << "Interface correct -> success" << std::endl;

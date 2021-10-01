@@ -129,6 +129,15 @@ void BaseIO::registerIO(const std::string & name,
 }
 
 /* -------------------------------------------------------------------------- */
+void BaseIO::registerIO(const std::string & name,
+			LimitedHistory & lim_history) {
+  if (this->registered_histories.find(name) == this->registered_histories.end())
+    this->registered_histories[name] = (&lim_history);
+  else
+    throw std::runtime_error("Limited History already registered: "+name);
+}
+
+/* -------------------------------------------------------------------------- */
 void BaseIO::setBaseName(const std::string & bname) {
   this->base_name = bname;
   this->folder_name = this->base_name;
@@ -178,21 +187,59 @@ void BaseIO::dumpField(std::fstream * dump_file,
   if (!this->initiated) return;
 
   int nb_nodes = nodal_field.getNbNodes();
+  const double * nf_data = nodal_field.storage();
+
+  this->write(dump_file, nf_data, nb_nodes);
+}
+
+/* -------------------------------------------------------------------------- */
+void BaseIO::dumpHistory(std::fstream * dump_file,
+			 const LimitedHistory & limited_history) {
+  if (!this->initiated) return;
+
+  // write nb_history points and index_now
+  switch (this->dump_format) {
+    case Format::ASCII:
+    case Format::CSV: {
+      std::cout << limited_history.getNbHistoryPoints() << std::endl;
+      (*dump_file) << limited_history.getNbHistoryPoints() << this->separator;
+      (*dump_file) << limited_history.getIndexNow() << std::endl;
+      break;
+    }
+    case Format::Binary: {
+      float temp = (float)(limited_history.getNbHistoryPoints());
+      (*dump_file).write((char *)&temp, sizeof(float));
+      temp = (float)(limited_history.getIndexNow());
+      (*dump_file).write((char *)&temp, sizeof(float));
+      break;
+    }
+    default:
+      throw std::runtime_error("Unsupported output format.");
+  }
+
+  int size = limited_history.getSize();
+  const double * lh_data = limited_history.getValues();
+  this->write(dump_file, lh_data, size);
+}
+
+/* -------------------------------------------------------------------------- */
+void BaseIO::write(std::fstream * dump_file,
+		   const double * data, int size) {
   
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
-      for (int n = 0; n < nb_nodes; ++n) {
+      for (int n = 0; n < size; ++n) {
         if (n != 0) (*dump_file) << this->separator;
-        (*dump_file) << nodal_field.at(n);
+        (*dump_file) << data[n];
       }
       (*dump_file) << std::endl;
       break;
     }
     case Format::Binary: {
       float temp = 0.0;
-      for (int n = 0; n < nb_nodes; ++n) {
-        temp = (float)(nodal_field.at(n));
+      for (int n = 0; n < size; ++n) {
+        temp = (float)(data[n]);
         (*dump_file).write((char *)&temp, sizeof(float));
       }
       break;
@@ -202,12 +249,58 @@ void BaseIO::dumpField(std::fstream * dump_file,
   }
 }
 
+
 /* -------------------------------------------------------------------------- */
 void BaseIO::loadField(std::fstream * load_file,
 		       NodalFieldComponent & nodal_field) {
   if (!this->initiated) return;
 
   int nb_nodes = nodal_field.getNbNodes();
+  double * nf_data = nodal_field.storage();
+
+  this->read(load_file, nf_data, nb_nodes);
+}
+
+/* -------------------------------------------------------------------------- */
+void BaseIO::loadHistory(std::fstream * load_file,
+			 LimitedHistory & limited_history) {
+  if (!this->initiated) return;
+
+  // read nb_history points and index_now
+  switch (this->dump_format) {
+    case Format::ASCII:
+    case Format::CSV: {
+      std::string line;
+      std::getline(*load_file,line);
+      std::stringstream ss(line);
+      double temp;
+      ss >> temp;
+      limited_history.setNbHistoryPoints((int)temp);
+      ss >> temp;
+      limited_history.setIndexNow((int)temp);
+      break;
+    }
+    case Format::Binary: {
+      float temp;
+      (*load_file).read((char *)&temp, sizeof(float));
+      limited_history.setNbHistoryPoints((int)temp);
+      (*load_file).read((char *)&temp, sizeof(float));
+      limited_history.setNbHistoryPoints((int)temp);
+      break;
+    }
+    default:
+      throw std::runtime_error("Unsupported output format.");
+  }
+  
+  int size = limited_history.getSize();
+  double * lh_data = limited_history.getValues();
+  this->read(load_file, lh_data, size);
+}
+
+/* -------------------------------------------------------------------------- */
+void BaseIO::read(std::fstream * load_file,
+		  double * data,
+		  int size) {
   
   switch (this->dump_format) {
     case Format::ASCII:
@@ -215,16 +308,16 @@ void BaseIO::loadField(std::fstream * load_file,
       std::string line;
       std::getline(*load_file,line);
       std::stringstream ss(line);
-      for (int n = 0; n < nb_nodes; ++n) {
-	ss >> nodal_field.set(n);
+      for (int n = 0; n < size; ++n) {
+	ss >> data[n];
       }
       break;
     }
     case Format::Binary: {
-      for (int n = 0; n < nb_nodes; ++n) {
+      for (int n = 0; n < size; ++n) {
 	float temp;
 	(*load_file).read((char *)&temp, sizeof(float));
-	nodal_field.set(n) = (float)(temp);
+	data[n] = (float)(temp);
       }
       break;
     }
@@ -238,11 +331,18 @@ void BaseIO::dump(unsigned int, double) {
 
   if (!this->initiated) return;
 
-  FieldMap::iterator it = this->registered_fields.begin();
-  FieldMap::iterator end = this->registered_fields.end();
+  FieldMap::iterator f_it = this->registered_fields.begin();
+  FieldMap::iterator f_end = this->registered_fields.end();
 
-  for (; it!=end; ++it) {
-    this->dumpField(this->open_files[it->first], *(it->second));
+  for (; f_it!=f_end; ++f_it) {
+    this->dumpField(this->open_files[f_it->first], *(f_it->second));
+  }
+
+  HistoryMap::iterator h_it = this->registered_histories.begin();
+  HistoryMap::iterator h_end = this->registered_histories.end();
+
+  for (; h_it!=h_end; ++h_it) {
+    this->dumpHistory(this->open_files[h_it->first], *(h_it->second));
   }
 }
 
@@ -251,11 +351,18 @@ void BaseIO::load(unsigned int) {
 
   if (!this->initiated) return;
 
-  FieldMap::iterator it = this->registered_fields.begin();
-  FieldMap::iterator end = this->registered_fields.end();
+  FieldMap::iterator f_it = this->registered_fields.begin();
+  FieldMap::iterator f_end = this->registered_fields.end();
 
-  for (; it!=end; ++it) {
-    this->loadField(this->open_files[it->first], *(it->second));
+  for (; f_it!=f_end; ++f_it) {
+    this->loadField(this->open_files[f_it->first], *(f_it->second));
+  }
+
+  HistoryMap::iterator h_it = this->registered_histories.begin();
+  HistoryMap::iterator h_end = this->registered_histories.end();
+
+  for (; h_it!=h_end; ++h_it) {
+    this->loadHistory(this->open_files[h_it->first], *(h_it->second));
   }
 }
 

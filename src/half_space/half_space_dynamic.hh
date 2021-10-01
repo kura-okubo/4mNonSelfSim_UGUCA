@@ -75,6 +75,10 @@ public:
 
   // get stable time step
   virtual double getStableTimeStep();
+
+  // get limited history
+  LimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
+  LimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

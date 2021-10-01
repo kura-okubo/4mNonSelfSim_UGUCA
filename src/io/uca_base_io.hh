@@ -51,6 +51,7 @@ public:
   /* ------------------------------------------------------------------------ */
 protected:
   typedef std::map<const std::string, NodalFieldComponent *> FieldMap;
+  typedef std::map<const std::string, LimitedHistory *> HistoryMap;
   typedef std::map<const std::string, std::fstream *> FileMap;
 
   /* ------------------------------------------------------------------------ */
@@ -73,8 +74,8 @@ public:
 			  NodalFieldComponent & nodal_field);
   virtual void registerIO(const std::string & name,
 			  NodalField & nodal_field);
-  virtual void registerIO(const std::string & /*name*/,
-			  LimitedHistory & /*lim_history*/) { std::cout << "not implemented yet (uca_base_io.hh)" << std::endl; }
+  virtual void registerIO(const std::string & name,
+			  LimitedHistory & lim_history);
   
   virtual void dump(unsigned int step, double time = 0.);
   virtual void load(unsigned int step);
@@ -91,6 +92,14 @@ protected:
   void loadField(std::fstream * load_file,
 		 NodalFieldComponent & nodal_field);
 
+  void dumpHistory(std::fstream * dump_file,
+		   const LimitedHistory & limited_history);
+  void loadHistory(std::fstream * dump_file,
+		   LimitedHistory & limited_history);
+
+  // writing data
+  void write(std::fstream * dump_file, const double * data, int size);
+  void read(std::fstream * dump_file, double * data, int size);
   
   /* ------------------------------------------------------------------------ */
   /* File system related methods                                              */
@@ -136,6 +145,9 @@ protected:
   // registered nodal fields
   FieldMap registered_fields;
 
+  // registered limited history
+  HistoryMap registered_histories;
+  
   // open files
   FileMap open_files;
 };

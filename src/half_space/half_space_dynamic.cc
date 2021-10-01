@@ -370,8 +370,16 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  int m0_rank = this->mesh.getMode0Rank();
+  int m0_index = this->mesh.getMode0Index();
+  
   for (int d=0; d<this->mesh.getDim(); ++d) {
     for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
+
+      // ignore mode 0
+      if ((prank == m0_rank) && (j == m0_index)) continue;
+
       restart.registerIO(this->name+"_Ur_"+std::to_string(d)+"_"+std::to_string(j),
 			 *(this->U_r[d][j]));
       restart.registerIO(this->name+"_Ui_"+std::to_string(d)+"_"+std::to_string(j),

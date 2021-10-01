@@ -78,11 +78,17 @@ void Restart::dump(unsigned int step) {
   if (!this->initiated) return;
 
   // open files
-  FieldMap::iterator it = this->registered_fields.begin();
-  FieldMap::iterator end = this->registered_fields.end();
-  for (; it!=end; ++it) {
-    this->open_files[it->first] = this->openFile(this->getFilePath(it->first, step),
-						 std::ios::out);
+  FieldMap::iterator f_it = this->registered_fields.begin();
+  FieldMap::iterator f_end = this->registered_fields.end();
+  for (; f_it!=f_end; ++f_it) {
+    this->open_files[f_it->first] = this->openFile(this->getFilePath(f_it->first, step),
+						   std::ios::out);
+  }
+  HistoryMap::iterator h_it = this->registered_histories.begin();
+  HistoryMap::iterator h_end = this->registered_histories.end();
+  for (; h_it!=h_end; ++h_it) {
+    this->open_files[h_it->first] = this->openFile(this->getFilePath(h_it->first, step),
+						   std::ios::out);
   }
   
   BaseIO::dump(step);
@@ -96,13 +102,19 @@ void Restart::load(unsigned int step) {
   if (!this->initiated) return;
 
   // open files
-  FieldMap::iterator it = this->registered_fields.begin();
-  FieldMap::iterator end = this->registered_fields.end();
-  for (; it!=end; ++it) {
-    this->open_files[it->first] = this->openFile(this->getFilePath(it->first, step),
-						 std::ios::in);
+  FieldMap::iterator f_it = this->registered_fields.begin();
+  FieldMap::iterator f_end = this->registered_fields.end();
+  for (; f_it!=f_end; ++f_it) {
+    this->open_files[f_it->first] = this->openFile(this->getFilePath(f_it->first, step),
+						   std::ios::in);
   }
-  
+  HistoryMap::iterator h_it = this->registered_histories.begin();
+  HistoryMap::iterator h_end = this->registered_histories.end();
+  for (; h_it!=h_end; ++h_it) {
+    this->open_files[h_it->first] = this->openFile(this->getFilePath(h_it->first, step),
+						   std::ios::in);
+  }
+    
   BaseIO::load(step);
 
   this->closeFiles(true);
