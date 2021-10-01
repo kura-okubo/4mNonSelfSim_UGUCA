@@ -201,7 +201,6 @@ void BaseIO::dumpHistory(std::fstream * dump_file,
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
-      std::cout << limited_history.getNbHistoryPoints() << std::endl;
       (*dump_file) << limited_history.getNbHistoryPoints() << this->separator;
       (*dump_file) << limited_history.getIndexNow() << std::endl;
       break;
@@ -285,7 +284,7 @@ void BaseIO::loadHistory(std::fstream * load_file,
       (*load_file).read((char *)&temp, sizeof(float));
       limited_history.setNbHistoryPoints((int)temp);
       (*load_file).read((char *)&temp, sizeof(float));
-      limited_history.setNbHistoryPoints((int)temp);
+      limited_history.setIndexNow((int)temp);
       break;
     }
     default:

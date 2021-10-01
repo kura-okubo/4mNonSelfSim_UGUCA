@@ -38,13 +38,6 @@
 #include <iostream>
 #include <cmath>
 #include <cstring>
-/*
-#include <stdio.h>
-#include <random>
-#include <sstream>
-#include <string>
-#include <vector>
-*/
 
 using namespace uguca;
 
@@ -161,21 +154,43 @@ int main(int argc, char *argv[]) {
   HalfSpaceDynamic & top = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
   double * Ur00 = top.getLimitedHistoryReal(0,1).getValues();
   int Ur00_size = top.getLimitedHistoryReal(0,1).getSize();
-  memset(Ur00,nf4v,Ur00_size*sizeof(double));
+  std::fill_n(Ur00,Ur00_size,nf4v);
   double * Ui00 = top.getLimitedHistoryImag(0,1).getValues();
   int Ui00_size = top.getLimitedHistoryImag(0,1).getSize();
-  memset(Ui00,nf4v2,Ui00_size*sizeof(double));
-  
+  std::fill_n(Ui00,Ui00_size,nf4v2);
+  unsigned int nb_history_correct = top.getLimitedHistoryReal(0,1).getNbHistoryPoints();
+  unsigned int index_now_correct = top.getLimitedHistoryReal(0,1).getIndexNow();
+
+  // dump the solution
   interface.registerToRestart(restart_dump);
+  interface.registerToRestart(restart_dump_binary);
   restart_dump.dump(rs_number);
+  restart_dump_binary.dump(rs_number);
+
+  // fill with other information
+  top.getLimitedHistoryReal(0,1).addCurrentValue(44.);
   interface.getCohesion().setAllValuesTo(nf4v*2);
-  memset(Ur00,2*nf4v,Ur00_size*sizeof(double));
-  memset(Ui00,2*nf4v2,Ui00_size*sizeof(double));
+  std::fill_n(Ur00,Ur00_size,2*nf4v);
+  std::fill_n(Ui00,Ui00_size,2*nf4v2);
   
+  // reload from dump
   interface.registerToRestart(restart_load);
   restart_load.load(rs_number);
 
-  // check
+  // check ACII
+  if (nb_history_correct != top.getLimitedHistoryReal(0,1).getNbHistoryPoints()) {
+    std::cerr << "should be " << nb_history_correct
+	      << ": " << top.getLimitedHistoryReal(0,1).getNbHistoryPoints()
+	      << std::endl;
+    return 1; // failure
+  }
+  if (index_now_correct != top.getLimitedHistoryReal(0,1).getIndexNow()) {
+    std::cerr << "should be " << index_now_correct
+	      << ": " << top.getLimitedHistoryReal(0,1).getIndexNow()
+	      << std::endl;
+    return 1; // failure
+  }
+      
   NodalField & to_check = interface.getCohesion();
   for (int d=0; d<to_check.getDim(); ++d) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
@@ -205,9 +220,59 @@ int main(int argc, char *argv[]) {
       return 1; // failure
     }
   }
-  std::cout << "Interface correct -> success" << std::endl;
 
+  // fill with other information
+  top.getLimitedHistoryReal(0,1).addCurrentValue(44.);
+  interface.getCohesion().setAllValuesTo(nf4v*2);
+  std::fill_n(Ur00,Ur00_size,2*nf4v);
+  std::fill_n(Ui00,Ui00_size,2*nf4v2);
+
+  // reload from dump
+  interface.registerToRestart(restart_load_binary);
+  restart_load_binary.load(rs_number);
+
+  // check binary
+  if (nb_history_correct != top.getLimitedHistoryReal(0,1).getNbHistoryPoints()) {
+    std::cerr << "nb_history_points should be " << nb_history_correct
+	      << ": " << top.getLimitedHistoryReal(0,1).getNbHistoryPoints()
+	      << std::endl;
+    return 1; // failure
+  }
+  if (index_now_correct != top.getLimitedHistoryReal(0,1).getIndexNow()) {
+    std::cerr << "index_now should be " << index_now_correct
+	      << ": " << top.getLimitedHistoryReal(0,1).getIndexNow()
+	      << std::endl;
+    return 1; // failure
+  }
+
+  for (int d=0; d<to_check.getDim(); ++d) {
+    for (int i=0; i<to_check.getNbNodes(); ++i) {
+      if (std::abs((to_check.component(d).at(i) - nf4v) / nf4v) > 1e-6) {
+	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
+	return 1; // failure
+      }
+    }
+  }
+
+  Ur00 = top_to_check.getLimitedHistoryReal(0,1).getValues();
+  Ur00_size = top_to_check.getLimitedHistoryReal(0,1).getSize();
+  Ui00 = top_to_check.getLimitedHistoryImag(0,1).getValues();
+  Ui00_size = top_to_check.getLimitedHistoryImag(0,1).getSize();
   
+  for (int i=0; i<Ur00_size; ++i) {
+    if (std::abs((Ur00[i] - nf4v) / nf4v) > 1e-6) {
+      std::cerr << "Ur should be " << nf4v << ": " << Ur00[i] << std::endl;
+      return 1; // failure
+    }
+  }
+  
+  for (int i=0; i<Ui00_size; ++i) {
+    if (std::abs((Ui00[i] - nf4v2) / nf4v2) > 1e-6) {
+      std::cerr << "Ui should be " << nf4v2 << ": " << Ui00[i] << std::endl;
+      return 1; // failure
+    }
+  }
+  std::cout << "Interface correct -> success" << std::endl;
   
   std::cout << "all checks passed -> overall success" << std::endl;
   return 0; // success
