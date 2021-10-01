@@ -35,13 +35,7 @@
 #include "uca_common.hh"
 #include "uca_base_io.hh"
 #include "uca_base_mesh.hh"
-/*#include "nodal_field_component.hh"
 
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <string>
-*/
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */

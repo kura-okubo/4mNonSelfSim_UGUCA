@@ -29,15 +29,6 @@
 #include "uca_base_io.hh"
 #include "static_communicator_mpi.hh"
 
-/*#include "nodal_field_component.hh"
-#include "static_communicator_mpi.hh"
-#include "uca_custom_mesh.hh"
-
-#include <cstdio>
-
-#include <iostream>
-#include <typeinfo>
-*/
 #include <stdexcept>
 #include <iomanip>
 #include <sstream>

@@ -29,15 +29,10 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_dumper.hh"
-//#include "nodal_field_component.hh"
-//#include "static_communicator_mpi.hh"
 #include "uca_custom_mesh.hh"
 
-//#include <cstdio>
 #include <iomanip>
-//#include <iostream>
 #include <typeinfo>
-
 #include <sstream>
 
 __BEGIN_UGUCA__

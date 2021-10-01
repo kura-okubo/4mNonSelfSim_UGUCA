@@ -37,8 +37,6 @@
 
 #include <fstream>
 #include <map>
-//#include <sstream>
-//#include <string>
 
 __BEGIN_UGUCA__
 

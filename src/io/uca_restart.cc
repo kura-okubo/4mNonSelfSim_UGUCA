@@ -28,15 +28,7 @@
  */
 #include "uca_restart.hh"
 #include "static_communicator_mpi.hh"
-/*#include "nodal_field_component.hh"
 
-#include "uca_custom_mesh.hh"
-
-#include <cstdio>
-#include <iomanip>
-#include <iostream>
-#include <typeinfo>
-*/
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
