@@ -36,6 +36,7 @@
 #include <cstring>
 #include <typeinfo>
 #include <stdexcept>
+#include <iostream>
 
 __BEGIN_UGUCA__
 
@@ -54,11 +55,24 @@ FFTableNodalFieldComponent::FFTableNodalFieldComponent(FFTableMesh & mesh,
 
 /* -------------------------------------------------------------------------- */
 FFTableNodalFieldComponent::~FFTableNodalFieldComponent() {
+#ifdef UCA_VERBOSE
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  std::cout << "FFTableNFC del (prank="
+	    << prank << "): " << this->name << std::endl;
+#endif // UCA_VERBOSE
   delete[] this->fd_field;
 }
 
 /* -------------------------------------------------------------------------- */
 void FFTableNodalFieldComponent::init(FFTableMesh & mesh) {
+
+#ifdef UCA_VERBOSE
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  std::cout << "FFTableNFC init (prank="
+	    << prank << "): " << this->name
+	    << " : " << mesh.getNbLocalFFTAlloc() << std::endl;
+#endif // UCA_VERBOSE
+  
   this->fd_field = new fftw_complex[mesh.getNbLocalFFTAlloc()];
   
   // init freq dom field with zeros

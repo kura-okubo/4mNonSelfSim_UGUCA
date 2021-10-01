@@ -50,6 +50,13 @@ HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
   if (this->mesh.getDim()==3)
     this->H22_pi.resize(this->mesh.getNbLocalFFT());
 
+#ifdef UCA_VERBOSE
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  std::cout << "HSD construct (prank="
+	    << prank << "): " << this->name
+	    << " : " << this->mesh.getNbLocalFFT() << std::endl;
+#endif // UCA_VERBOSE
+  
   // allocate displacement history
   this->U_r.resize(this->mesh.getDim());
   this->U_i.resize(this->mesh.getDim());

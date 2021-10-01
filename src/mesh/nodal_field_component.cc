@@ -30,6 +30,7 @@
  */
 #include "nodal_field_component.hh"
 #include "uca_restart.hh"
+#include "static_communicator_mpi.hh"
 
 #include <stdexcept>
 #include <iostream>
@@ -38,8 +39,15 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 NodalFieldComponent::~NodalFieldComponent() {
-  if (this->initialized)
+  if (this->initialized) {
+#ifdef UCA_VERBOSE
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  std::cout << "NFC del (prank="
+	    << prank << "): " << this->name << std::endl;
+#endif // UCA_VERBOSE
+
     delete[] this->field;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -49,6 +57,13 @@ void NodalFieldComponent::init(BaseMesh & mesh) {
     throw std::runtime_error("NodalFieldComponent: do not initialize twice\n");
 
   this->mesh = &mesh;
+
+#ifdef UCA_VERBOSE
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  std::cout << "NFC init (prank="
+	    << prank << "): " << this->name
+	    << " : " << mesh.getNbLocalNodesAlloc() << std::endl;
+#endif // UCA_VERBOSE
   
   // if nb_nodes==0 -> use 1
   //unsigned int size = std::max(this->mesh->getNbLocalNodesAlloc(),1);
