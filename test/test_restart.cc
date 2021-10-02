@@ -38,6 +38,7 @@
 #include <iostream>
 #include <cmath>
 #include <cstring>
+#include <stdexcept>
 
 using namespace uguca;
 
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]) {
   double Lz = 2;
   int Nz = 8;
   SimpleMesh mesh(Lx, Nx, Lz, Nz);
-
+  
   // materials
   Material top_mat = Material(1e9, 0.25, 1000);
   top_mat.readPrecomputedKernels();
@@ -145,6 +146,10 @@ int main(int argc, char *argv[]) {
   }
   std::cout << "NodalField correct -> success" << std::endl;
 
+  // ---------------------------------------------------------------------------------------
+  //   INTERFACE
+  // ---------------------------------------------------------------------------------------
+  
   // test dump and read of interface
   std::cout << "start: dump and reload Interface" << std::endl;
   rs_number = 4;
@@ -273,6 +278,79 @@ int main(int argc, char *argv[]) {
     }
   }
   std::cout << "Interface correct -> success" << std::endl;
+
+
+  // load into wrong simulation
+  SimpleMesh wrong_mesh(Lx, 2*Nx, Lz, 2*Nz);
+  Restart wrong_restart_load("rs1",folder);
+  Restart wrong_restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
+  
+  NodalFieldComponent wrong_nf1(wrong_mesh,"nf1");
+  wrong_nf1.registerToRestart(wrong_restart_load);
+  wrong_nf1.registerToRestart(wrong_restart_load_binary);
+  
+  rs_number = 1;
+  bool caught_exception = true;
+  try {
+    wrong_restart_load.load(rs_number);
+    caught_exception = false;
+  }
+  catch (std::runtime_error &e) {
+    std::cout << "caught exception -> success" << std::endl;
+  }
+  if (!caught_exception) {
+    std::cerr << "did not find wrong load of NFC" << std::endl;
+    return 1; // failure
+  }
+
+  caught_exception = true;
+  try {
+    wrong_restart_load_binary.load(rs_number);
+    caught_exception = false;
+  }
+  catch (std::runtime_error &e) {
+    std::cout << "caught exception -> success" << std::endl;
+  }
+  if (!caught_exception) {
+    std::cerr << "did not find wrong load of NFC (binary)" << std::endl;
+    return 1; // failure
+  }
+
+  
+  LinearShearCohesiveLaw wrong_law(wrong_mesh, 1., 2e6);
+  BimatInterface wrong_interface(wrong_mesh, top_mat, bot_mat, wrong_law);
+  wrong_interface.setTimeStep(0.3*wrong_interface.getStableTimeStep());
+  wrong_interface.init();
+  wrong_interface.registerToRestart(wrong_restart_load);
+  wrong_interface.registerToRestart(wrong_restart_load_binary);
+  
+  rs_number = 4;
+  caught_exception = true;
+  try {
+    wrong_restart_load.load(rs_number);
+    caught_exception = false;
+  }
+  catch (std::runtime_error &e) {
+    std::cout << "caught exception -> success" << std::endl;
+  }
+  if (!caught_exception) {
+    std::cerr << "did not find wrong load of interface" << std::endl;
+    return 1; // failure
+  }
+
+  caught_exception = true;
+  try {
+    wrong_restart_load_binary.load(rs_number);
+    caught_exception = false;
+  }
+  catch (std::runtime_error &e) {
+    std::cout << "caught exception -> success" << std::endl;
+  }
+  if (!caught_exception) {
+    std::cerr << "did not find wrong load of interface (binary)" << std::endl;
+    return 1; // failure
+  }
+
   
   std::cout << "all checks passed -> overall success" << std::endl;
   return 0; // success

@@ -129,7 +129,7 @@ protected:
   Format dump_format;
 
   // characteristics of dumper
-  std::string separator;
+  char separator;
 
   // files extention
   std::string file_extension;

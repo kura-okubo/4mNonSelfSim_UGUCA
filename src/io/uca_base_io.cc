@@ -49,7 +49,7 @@ BaseIO::BaseIO() :
   folder_name("uninitialized"),
   path("."),
   dump_format(Format::ASCII),
-  separator(" "),
+  separator(' '),
   file_extension(".out") {
 }
 
@@ -71,17 +71,17 @@ void BaseIO::initIO(const std::string &bname,
 
   switch (this->dump_format) {
   case Format::ASCII: {
-    this->separator = " ";
+    this->separator = ' ';
     this->file_extension = ".out";
     break;
   }
   case Format::CSV: {
-    this->separator = ",";
+    this->separator = ',';
     this->file_extension = ".csv";
     break;
   }
   case Format::Binary: {
-    this->separator = " ";
+    this->separator = ' ';
     this->file_extension = ".out";
     break;
   }
@@ -192,12 +192,15 @@ void BaseIO::dumpHistory(std::fstream * dump_file,
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
+      (*dump_file) << limited_history.getSize() << this->separator;
       (*dump_file) << limited_history.getNbHistoryPoints() << this->separator;
       (*dump_file) << limited_history.getIndexNow() << std::endl;
       break;
     }
     case Format::Binary: {
-      float temp = (float)(limited_history.getNbHistoryPoints());
+      float temp = (float)(limited_history.getSize());
+      (*dump_file).write((char *)&temp, sizeof(float));
+      temp = (float)(limited_history.getNbHistoryPoints());
       (*dump_file).write((char *)&temp, sizeof(float));
       temp = (float)(limited_history.getIndexNow());
       (*dump_file).write((char *)&temp, sizeof(float));
@@ -265,6 +268,9 @@ void BaseIO::loadHistory(std::fstream * load_file,
       std::stringstream ss(line);
       double temp;
       ss >> temp;
+      if (temp != limited_history.getSize()) 
+	throw std::runtime_error("reloaded Limited History is of incorrect size");
+      ss >> temp;
       limited_history.setNbHistoryPoints((int)temp);
       ss >> temp;
       limited_history.setIndexNow((int)temp);
@@ -272,6 +278,9 @@ void BaseIO::loadHistory(std::fstream * load_file,
     }
     case Format::Binary: {
       float temp;
+      (*load_file).read((char *)&temp, sizeof(float));
+      if (temp != limited_history.getSize()) 
+	throw std::runtime_error("reloaded Limited History is of incorrect size");
       (*load_file).read((char *)&temp, sizeof(float));
       limited_history.setNbHistoryPoints((int)temp);
       (*load_file).read((char *)&temp, sizeof(float));
@@ -298,14 +307,32 @@ void BaseIO::read(std::fstream * load_file,
       std::string line;
       std::getline(*load_file,line);
       std::stringstream ss(line);
+      // count number of entries
+      int count = 0;
+      double temp = 0.;
+      while (ss >> temp) {
+	count++;
+      }
+      if (count != size) 
+	throw std::runtime_error("BaseIO read: wrong number of entries "+std::to_string(count)+"!="+std::to_string(size));
+      // get values
+      ss = std::stringstream(line); // rewind line
       for (int n = 0; n < size; ++n) {
 	ss >> data[n];
       }
       break;
     }
     case Format::Binary: {
+      float temp = 0.;
+      std::fstream * to_count = load_file;
+      int count = 0;
+      while ((*to_count).read((char *)&temp, sizeof(float))) {
+	count++;
+      }
+      if (count != size) 
+	throw std::runtime_error("BaseIO read: wrong number of entries "+std::to_string(count)+"!="+std::to_string(size));
+      // get values
       for (int n = 0; n < size; ++n) {
-	float temp;
 	(*load_file).read((char *)&temp, sizeof(float));
 	data[n] = (float)(temp);
       }
