@@ -135,7 +135,9 @@ void BaseIO::registerIO(NodalFieldComponent & nodal_field) {
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(NodalField & nodal_field) {
-  this->registerIO(nodal_field.getName(), nodal_field);
+  for (int d=0; d<nodal_field.getDim(); ++d) {
+    this->registerIO(nodal_field.component(d));
+  }
 }
 
 /* -------------------------------------------------------------------------- */

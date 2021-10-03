@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
   interface.registerDumpFields(data.get<std::string>("dump_fields"));
   unsigned int dump_int = std::max(1, nb_time_steps/data.get<int>("nb_dumps"));
 
-  // setup of restart
-  Restart restart(data.get<std::string>("restart_name"),".");
+  // setup of restart to dump
+  Restart restart(data.get<std::string>("sim_name"),".");
   interface.registerToRestart(restart);
   unsigned int restart_int = std::max(1, nb_time_steps/data.get<int>("nb_restarts"));
   
@@ -125,7 +125,10 @@ int main(int argc, char *argv[]) {
   // check if restart from file is required
   if (data.has<int>("restart_step")) {
     s = data.get<int>("restart_step");
-    restart.load(s);
+    // different from dumper not to overwrite it
+    Restart restart_load = restart;
+    restart_load.initIO(data.get<std::string>("restart_name"),".");
+    restart_load.load(s);
   }
   else { // only dump when not restarted
     interface.dump(0,0);
