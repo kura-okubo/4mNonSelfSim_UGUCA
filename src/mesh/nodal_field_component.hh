@@ -39,8 +39,6 @@
 
 __BEGIN_UGUCA__
 
-class Restart;
-
 class NodalFieldComponent {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -88,9 +86,6 @@ public:
 
   void zeros();
   void setAllValuesTo(double value);
-
-  // restart
-  virtual void registerToRestart(Restart & restart);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */

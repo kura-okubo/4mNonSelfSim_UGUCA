@@ -233,14 +233,14 @@ bool HalfSpace::registerDumpFieldToDumper(const std::string & field_name,
 /* -------------------------------------------------------------------------- */
 void HalfSpace::registerToRestart(Restart & restart) {
 
-  this->disp.registerToRestart(restart);
-  this->velo.registerToRestart(restart);
-  this->internal.registerToRestart(restart);
-  this->residual.registerToRestart(restart);
+  restart.registerIO(this->disp);
+  restart.registerIO(this->velo);
+  restart.registerIO(this->internal);
+  restart.registerIO(this->residual);
 
   if (this->predictor_corrector) {
-    this->disp_pc.registerToRestart(restart);
-    this->velo_pc.registerToRestart(restart);
+    restart.registerIO(this->disp_pc);
+    restart.registerIO(this->velo_pc);
   }
 
 }

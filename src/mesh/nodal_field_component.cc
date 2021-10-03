@@ -29,7 +29,6 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "nodal_field_component.hh"
-#include "uca_restart.hh"
 #include "static_communicator_mpi.hh"
 
 #include <stdexcept>
@@ -85,11 +84,6 @@ void NodalFieldComponent::setAllValuesTo(double value) {
     throw std::runtime_error("NodalFieldComponent: not initialize yet\n");
 
   std::fill_n(this->field,this->mesh->getNbLocalNodes(),value);
-}
-
-/* -------------------------------------------------------------------------- */
-void NodalFieldComponent::registerToRestart(Restart & restart) {
-  restart.registerIO(this->name, *this);
 }
 
 __END_UGUCA__

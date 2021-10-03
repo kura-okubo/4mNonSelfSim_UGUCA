@@ -234,9 +234,9 @@ void Interface::registerDumpField(const std::string & field_name) {
 /* -------------------------------------------------------------------------- */
 void Interface::registerToRestart(Restart & restart) {
 
-  this->cohesion.registerToRestart(restart);
-  this->load.registerToRestart(restart);
-  this->scratch_field.registerToRestart(restart);
+  restart.registerIO(this->cohesion);
+  restart.registerIO(this->load);
+  restart.registerIO(this->scratch_field);
 
   for (unsigned int i=0;i<this->half_spaces.size();++i)
     this->half_spaces[i]->registerToRestart(restart);

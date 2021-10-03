@@ -141,9 +141,9 @@ void LinearShearCohesiveLaw::registerDumpField(const std::string & field_name) {
 /* -------------------------------------------------------------------------- */
 void LinearShearCohesiveLaw::registerToRestart(Restart & restart) {
 
-  this->G_c.registerToRestart(restart);
-  this->tau_c.registerToRestart(restart);
-  this->tau_r.registerToRestart(restart);
+  restart.registerIO(this->G_c);
+  restart.registerIO(this->tau_c);
+  restart.registerIO(this->tau_r);
   
   InterfaceLaw::registerToRestart(restart);
 }

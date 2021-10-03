@@ -119,10 +119,5 @@ void NodalField::multiplyByScalar(const NodalFieldComponent & scalar,
   }
 }
 
-/* -------------------------------------------------------------------------- */
-void NodalField::registerToRestart(Restart & restart) {
-  for (int d=0; d<this->mesh->getDim(); ++d)
-    this->field[d]->registerToRestart(restart);
-}
 
 __END_UGUCA__

@@ -35,6 +35,8 @@
 
 __BEGIN_UGUCA__
 
+class Interface;
+
 /* -------------------------------------------------------------------------- */
 class Restart : public BaseIO {
 

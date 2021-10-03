@@ -129,6 +129,16 @@ void BaseIO::registerIO(const std::string & name,
 }
 
 /* -------------------------------------------------------------------------- */
+void BaseIO::registerIO(NodalFieldComponent & nodal_field) {
+  this->registerIO(nodal_field.getName(), nodal_field);
+}
+
+/* -------------------------------------------------------------------------- */
+void BaseIO::registerIO(NodalField & nodal_field) {
+  this->registerIO(nodal_field.getName(), nodal_field);
+}
+
+/* -------------------------------------------------------------------------- */
 void BaseIO::setBaseName(const std::string & bname) {
   this->base_name = bname;
   this->folder_name = this->base_name;

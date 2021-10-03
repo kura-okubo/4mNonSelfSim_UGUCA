@@ -215,12 +215,12 @@ void LinearCoulombFrictionLaw::registerDumpField(const std::string & field_name)
 /* -------------------------------------------------------------------------- */
 void LinearCoulombFrictionLaw::registerToRestart(Restart & restart) {
 
-  this->reg_contact_pressure.registerToRestart(restart);
-  this->mu_s.registerToRestart(restart);
-  this->mu_k.registerToRestart(restart);
-  this->d_c.registerToRestart(restart);
-  this->char_time.registerToRestart(restart);
-  this->reg_cont_pres_tmp.registerToRestart(restart);
+  restart.registerIO(this->reg_contact_pressure);
+  restart.registerIO(this->mu_s);
+  restart.registerIO(this->mu_k);
+  restart.registerIO(this->d_c);
+  restart.registerIO(this->char_time);
+  restart.registerIO(this->reg_cont_pres_tmp);
   
   InterfaceLaw::registerToRestart(restart);
 }

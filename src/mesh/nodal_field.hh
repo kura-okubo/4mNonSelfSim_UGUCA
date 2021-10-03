@@ -77,9 +77,6 @@ public:
   void multiplyByScalar(const NodalFieldComponent & scalar,
 			int ignore_dir = -1);
 
-  // restart
-  virtual void registerToRestart(Restart & restart);
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

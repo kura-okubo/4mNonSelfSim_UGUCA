@@ -331,13 +331,13 @@ void RateAndStateLaw::registerDumpField(const std::string &field_name) {
 /* -------------------------------------------------------------------------- */
 void RateAndStateLaw::registerToRestart(Restart & restart) {
 
-  this->theta.registerToRestart(restart);
-  this->theta_pc.registerToRestart(restart);
-  this->V.registerToRestart(restart);
-  this->a.registerToRestart(restart);
-  this->b.registerToRestart(restart);
-  this->Dc.registerToRestart(restart);
-  this->Vw.registerToRestart(restart);
+  restart.registerIO(this->theta);
+  restart.registerIO(this->theta_pc);
+  restart.registerIO(this->V);
+  restart.registerIO(this->a);
+  restart.registerIO(this->b);
+  restart.registerIO(this->Dc);
+  restart.registerIO(this->Vw);
   
   InterfaceLaw::registerToRestart(restart);
 }

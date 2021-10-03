@@ -74,6 +74,9 @@ public:
 			  NodalField & nodal_field);
   virtual void registerIO(const std::string & name,
 			  LimitedHistory & lim_history);
+
+  virtual void registerIO(NodalFieldComponent & nodal_field);
+  virtual void registerIO(NodalField & nodal_field);
   
   virtual void dump(unsigned int step, double time = 0.);
   virtual void load(unsigned int step);

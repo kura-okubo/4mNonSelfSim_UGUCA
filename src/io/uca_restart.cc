@@ -28,6 +28,7 @@
  */
 #include "uca_restart.hh"
 #include "static_communicator_mpi.hh"
+#include "interface.hh"
 
 __BEGIN_UGUCA__
 

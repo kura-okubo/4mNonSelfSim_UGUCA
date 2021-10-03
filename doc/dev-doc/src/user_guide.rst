@@ -68,9 +68,11 @@ The interface does dump various interface fields, *e.g.*, interface cohesion, di
 
 **Restart**
 
-The ``Restart`` object allows the user to write restart files. It needs first to be initialized with a name and path. The interface and possibly other evolving ``NodalField`` need to be registered to the ``Restart`` object with the ``.registerIO(...)`` method. Restart files can then be written with the ``.dump(...)`` method.
+The ``Restart`` object allows the user to write restart files. It needs first to be initialized with a name and path. The interface needs to be registered to the ``Restart`` object with the ``.registerToRestart(...)`` method. If additional ``NodalFields``, which evolve over time, need to be register, you may use the ``.registerIO(...)`` method of the ``Restart`` object. Finally, restart files can then be written with the ``.dump(...)`` method.
 
 The ``fracture_2d_example`` demonstrates the full use of uguca restart. You may run it with the ``fracture_2d_example.sh`` script and then restart it with the ``fracture_2d_example.restart.sh`` script.
+
+Please note that you can only restart an example on the same number of procs (i.e., mpirun) as was used for the example that created the restart files. 
 
 **Time Integration**
 

@@ -124,9 +124,9 @@ void BarrasLaw::registerDumpField(const std::string & field_name) {
 /* -------------------------------------------------------------------------- */
 void BarrasLaw::registerToRestart(Restart & restart) {
 
-  this->tau_max.registerToRestart(restart);
-  this->delta_c.registerToRestart(restart);
-  this->gap_norm.registerToRestart(restart);
+  restart.registerIO(this->tau_max);
+  restart.registerIO(this->delta_c);
+  restart.registerIO(this->gap_norm);
   
   InterfaceLaw::registerToRestart(restart);
 }
