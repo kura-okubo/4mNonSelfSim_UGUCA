@@ -1,5 +1,5 @@
 # simulation name
-string sim_name = fracture_2d_example
+string sim_name = fracture_2d_example_restarted
 
 # geometry and discretization
 double length = 1.
@@ -36,4 +36,5 @@ int nb_dumps = 200
 
 # restart
 string restart_name = fracture_2d_example
-int nb_restarts = 4
+int restart_step = 214
+int nb_restarts = 1

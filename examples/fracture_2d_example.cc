@@ -110,13 +110,29 @@ int main(int argc, char *argv[]) {
       tau_max(i) = 0.;
 
   // dumping
-  interface.initDump("fracture_2d_example",".");
+  interface.initDump(data.get<std::string>("sim_name"),".");
   interface.registerDumpFields(data.get<std::string>("dump_fields"));
-  interface.dump(0,0);
   unsigned int dump_int = std::max(1, nb_time_steps/data.get<int>("nb_dumps"));
 
+  // setup of restart
+  Restart restart(data.get<std::string>("restart_name"),".");
+  interface.registerToRestart(restart);
+  unsigned int restart_int = std::max(1, nb_time_steps/data.get<int>("nb_restarts"));
+  
   // time stepping
-  for (int s=1; s<=nb_time_steps; ++s) {
+  int s=1;
+
+  // check if restart from file is required
+  if (data.has<int>("restart_step")) {
+    s = data.get<int>("restart_step");
+    restart.load(s);
+  }
+  else { // only dump when not restarted
+    interface.dump(0,0);
+  }
+  
+  for (; s<=nb_time_steps; ++s) {
+    
     if (world_rank==0) {
       std::cout << "s=" << s << "/" << nb_time_steps << "\r";
       std::cout.flush();
@@ -128,8 +144,15 @@ int main(int argc, char *argv[]) {
     // dump
     if (s % dump_int == 0)
       interface.dump(s,s*time_step);
+
+    // dump restart
+    if (s % restart_int == 0)
+      restart.dump(s);
   }
 
+  // dump restart
+  restart.dump(nb_time_steps);
+  
   comm->finalize();
   return 0;
 }
