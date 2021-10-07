@@ -64,7 +64,8 @@ public:
        double theta_default,
        EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
        bool predictor_corrector = true,
-       double plate_velocity = 0.0
+       double plate_velocity = 0.0,
+       const std::string & name = "rslaw"
        );
   virtual ~RateAndStateLaw();
 
@@ -79,6 +80,9 @@ public:
   virtual void registerDumpField(const std::string & field_name);
   virtual void init();
 
+  // restart
+  virtual void registerToRestart(Restart & restart);
+  
 protected:
   virtual void computeTheta(NodalFieldComponent & target,
 			    NodalFieldComponent & delta_dot);

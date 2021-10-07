@@ -37,6 +37,7 @@
 #include "fftable_nodal_field.hh"
 #include "uca_fftable_mesh.hh"
 #include "uca_dumper.hh"
+#include "uca_restart.hh"
 
 __BEGIN_UGUCA__
 
@@ -47,13 +48,15 @@ class HalfSpace {
   /* ------------------------------------------------------------------------ */
 public:
   // side factor top=1 bot=-1
-  HalfSpace(FFTableMesh & mesh, int side_factor);
+  HalfSpace(FFTableMesh & mesh, int side_factor,
+	    const std::string & name = "half_space");
 
   virtual ~HalfSpace();
 
   // allocate HalfSpace of type
   static HalfSpace * newHalfSpace(FFTableMesh & mesh,
 				  int side_factor,
+				  const std::string & name,
 				  const SolverMethod & method);
   
   /* ------------------------------------------------------------------------ */
@@ -78,6 +81,9 @@ public:
   bool registerDumpFieldToDumper(const std::string & field_name, // what to dump
 				 const std::string & dump_name, // how to name it
 				 Dumper * const dumper);
+
+  // restart
+  virtual void registerToRestart(Restart & restart);
 
 protected:
   // apply fft forward on displacement
@@ -140,6 +146,10 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
+  // name
+  std::string name;
+
+  // mesh
   FFTableMesh & mesh;
 
   // time step

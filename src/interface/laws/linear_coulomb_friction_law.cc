@@ -41,14 +41,15 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 						   double mu_s_default,
 						   double mu_k_default,
 						   double d_c_default,
-						   double char_reg_time) :
-  InterfaceLaw(mesh),
-  reg_contact_pressure(mesh),
-  mu_s(mesh),
-  mu_k(mesh),
-  d_c(mesh),
-  char_time(mesh),
-  reg_cont_pres_tmp(mesh)
+						   double char_reg_time,
+						   const std::string & name) :
+  InterfaceLaw(mesh,name),
+  reg_contact_pressure(mesh,name+"_reg_cont_pres"),
+  mu_s(mesh,name+"_mu_s"),
+  mu_k(mesh,name+"_mu_k"),
+  d_c(mesh,name+"_d_c"),
+  char_time(mesh,name+"_char_time"),
+  reg_cont_pres_tmp(mesh,name+"_reg_cont_pres_tmp")
 {
   if (d_c_default < 1e-12) {
     std::cerr << "d_c cannot be zero, and it is currently: " << d_c_default << std::endl;
@@ -182,25 +183,25 @@ void LinearCoulombFrictionLaw::registerDumpField(const std::string & field_name)
 
   // mu_s
   if (field_name == "mu_s") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->mu_s);
   }
 
   // mu_k
   else if (field_name == "mu_k") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->mu_k);
   }
 
   // d_c
   else if (field_name == "d_c") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->d_c);
   }
 
   // reg_cont_pres
   else if (field_name == "reg_cont_pres") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->reg_contact_pressure);
   }
 
@@ -209,6 +210,19 @@ void LinearCoulombFrictionLaw::registerDumpField(const std::string & field_name)
     InterfaceLaw::registerDumpField(field_name);
   }
 
+}
+
+/* -------------------------------------------------------------------------- */
+void LinearCoulombFrictionLaw::registerToRestart(Restart & restart) {
+
+  restart.registerIO(this->reg_contact_pressure);
+  restart.registerIO(this->mu_s);
+  restart.registerIO(this->mu_k);
+  restart.registerIO(this->d_c);
+  restart.registerIO(this->char_time);
+  restart.registerIO(this->reg_cont_pres_tmp);
+  
+  InterfaceLaw::registerToRestart(restart);
 }
 
 __END_UGUCA__

@@ -76,11 +76,14 @@ public:
   // multiply fields element-wise with scalar
   void multiplyByScalar(const NodalFieldComponent & scalar,
 			int ignore_dir = -1);
-  
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // get name of nodal field
+  std::string getName() const { return this->name; }
+  
   // get dimension
   int getDim() const { return this->mesh->getDim(); }
   

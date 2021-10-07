@@ -29,36 +29,22 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_dumper.hh"
-#include "nodal_field_component.hh"
-#include "static_communicator_mpi.hh"
 #include "uca_custom_mesh.hh"
 
-#include <cstdio>
 #include <iomanip>
-#include <iostream>
 #include <typeinfo>
-
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-#include <direct.h>
-#else
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif
+#include <sstream>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Dumper::Dumper(BaseMesh & mesh) :
+  BaseIO(),
   mesh(mesh) {
-  
-  // default name and path
-  this->setBaseName("standard-bname");
-  this->path = ".";
   
   this->time_file = NULL;
   this->field_file = NULL;
   
-  this->initiated = false;
   this->parallel_dump = false;
 
   if (typeid(mesh) == typeid(CustomMesh))
@@ -66,23 +52,15 @@ Dumper::Dumper(BaseMesh & mesh) :
 }
 
 /* -------------------------------------------------------------------------- */
-Dumper::~Dumper() {
-  this->closeFiles(true);
-}
+Dumper::~Dumper() {}
 
 /* -------------------------------------------------------------------------- */
 void Dumper::closeFiles(bool release_memory) {
 
+  BaseIO::closeFiles(release_memory);
+  
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
-
-  FileToFieldMap::iterator it = this->files_and_fields.begin();
-  FileToFieldMap::iterator end = this->files_and_fields.end();
-  
-  for (; it != end; ++it) {
-    it->first->close();
-    if (release_memory) delete it->first;
-  }
   
   if (this->initiated) {
     if (rank == root) {
@@ -116,27 +94,21 @@ void Dumper::setBaseName(const std::string & bname) {
 void Dumper::initDump(const std::string & bname,
 		      const std::string & path,
                       const Format format) {
+
+  this->initIO(bname, path, format);
   
   // only root dumps global data
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
-  
-  this->initiated = true;
-  
-  this->setBaseName(bname);
-  this->path = path;
-  this->dump_format = format;
-  this->file_extension = ".out";
 
-  std::string of_string = "output_format ascii";
+  std::string of_string = "output_format undefined";
   switch (this->dump_format) {
   case Format::ASCII: {
+    of_string = "output_format ascii";
     break;
   }
   case Format::CSV: {
     of_string = "output_format csv";
-    this->separator = ",";
-    this->file_extension = ".csv";
     break;
   }
   case Format::Binary: {
@@ -149,15 +121,9 @@ void Dumper::initDump(const std::string & bname,
   
   if (rank == root) {
     
-    // create folder for files (works only on linux)
-    // read/write/search permission for owner and group
-    // read/search permissions for others
-    std::string full_path_to_folder = this->path + Dumper::directorySeparator() + this->folder_name;
-    Dumper::createDirectory(full_path_to_folder);
-    
     // info file
     std::string path_to_info_file =
-      this->path + Dumper::directorySeparator() + this->info_file_name;
+      this->path + BaseIO::directorySeparator() + this->info_file_name;
     std::ofstream info_file(path_to_info_file, std::ios::out);
     info_file << "field_description " << this->field_file_name << std::endl;
     info_file << "time_description " << this->time_file_name << std::endl;
@@ -170,7 +136,7 @@ void Dumper::initDump(const std::string & bname,
 
     // time file
     std::string path_to_time_file =
-      this->path + Dumper::directorySeparator() + this->time_file_name;
+      this->path + BaseIO::directorySeparator() + this->time_file_name;
     
     this->time_file = new std::ofstream(path_to_time_file, std::ios::out);
     
@@ -178,7 +144,7 @@ void Dumper::initDump(const std::string & bname,
 
     // coord file
     std::string path_to_coord_file =
-      this->path + Dumper::directorySeparator() + this->coord_file_name;
+      this->path + BaseIO::directorySeparator() + this->coord_file_name;
     
     this->coord_file = new std::ofstream(path_to_coord_file, std::ios::out);
     
@@ -186,7 +152,7 @@ void Dumper::initDump(const std::string & bname,
 
     // field file
     std::string path_to_field_file =
-      this->path + Dumper::directorySeparator() + this->field_file_name;
+      this->path + BaseIO::directorySeparator() + this->field_file_name;
     
     this->field_file = new std::ofstream(path_to_field_file, std::ios::out);
 
@@ -202,7 +168,7 @@ void Dumper::initDump(const std::string & bname,
     // write rank string and number of procs to file
     if (rank == root) {
       std::string path_to_proc_file =
-	this->path + Dumper::directorySeparator() + this->proc_file_name;
+	this->path + BaseIO::directorySeparator() + this->proc_file_name;
       std::ofstream proc_file(path_to_proc_file, std::ios::out);
       proc_file << "coords_name " << parallel_coord_file_name << std::endl;
       proc_file << "rank_string " << this->rank_str << std::endl;
@@ -215,8 +181,8 @@ void Dumper::initDump(const std::string & bname,
 
       // file name: coords.prank
       std::string path_to_coord_file =
-	this->path + Dumper::directorySeparator() + this->folder_name
-	+ Dumper::directorySeparator() + parallel_coord_file_name
+	this->path + BaseIO::directorySeparator() + this->folder_name
+	+ BaseIO::directorySeparator() + parallel_coord_file_name
 	+ this->rank_str + std::to_string(rank);
       std::ofstream p_coord_file(path_to_coord_file, std::ios::out);
       p_coord_file << std::scientific << std::setprecision(this->precision);
@@ -228,44 +194,29 @@ void Dumper::initDump(const std::string & bname,
 }
 
 /* -------------------------------------------------------------------------- */
-void Dumper::registerForDump(const std::string & field_name,
-			     const NodalFieldComponent & nodal_field) {
+// registers field and opens file
+void Dumper::registerIO(const std::string & field_name,
+			NodalFieldComponent & nodal_field) {
 
+  // define path to file
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int root = this->mesh.getRoot();
-
   std::string rank_name = "";
   if (this->parallel_dump)
     rank_name = this->rank_str + std::to_string(rank);
 
   std::string file_name = field_name + this->file_extension + rank_name;
-  std::string path_to_file = this->path + Dumper::directorySeparator() +
-                             this->folder_name + Dumper::directorySeparator() +
+  std::string path_to_file = this->path + BaseIO::directorySeparator() +
+                             this->folder_name + BaseIO::directorySeparator() +
                              file_name;
 
-  // open file
-  std::ofstream * new_file = new std::ofstream();
-
-  switch (this->dump_format) {
-    case Format::ASCII:
-    case Format::CSV: {
-      new_file->open(path_to_file, std::ios::out);
-      (*new_file) << std::scientific << std::setprecision(this->precision);
-      break;
-    }
-    case Format::Binary: {
-      new_file->open(path_to_file, std::ios::out | std::ios::binary);  // open as binary file
-      break;
-    }
-    default:
-      throw std::runtime_error("Unsupported output format.");
+  // open file and keep reference to it (only if there are nodes)
+  if (this->mesh.getNbLocalNodes() > 0) {
+    BaseIO::registerIO(field_name, nodal_field);
+    this->open_files[field_name] = this->openFile(path_to_file, std::ios::out);
   }
 
-  // keep reference to file (only if there are nodes)
-  if (this->mesh.getNbLocalNodes() > 0)
-    this->files_and_fields[new_file] = (&nodal_field);
-
   // put info into field file
+  int root = this->mesh.getRoot();
   if (rank == root) {
     std::string fname = field_name + this->file_extension;
     (*this->field_file) << field_name << " " << fname << std::endl;
@@ -314,14 +265,9 @@ void Dumper::registerDumpFields(const std::string & field_names,
 /* -------------------------------------------------------------------------- */
 void Dumper::dump(unsigned int step, double time) {
 
+  BaseIO::dump(step,time);
+  
   if (!this->initiated) return;
-
-  FileToFieldMap::iterator it = this->files_and_fields.begin();
-  FileToFieldMap::iterator end = this->files_and_fields.end();
-
-  for (; it!=end; ++it) {
-    this->dumpField(it->first, it->second);
-  }
 
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int root = this->mesh.getRoot();
@@ -330,47 +276,4 @@ void Dumper::dump(unsigned int step, double time) {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-void Dumper::dumpField(std::ofstream * dump_file,
-		       const NodalFieldComponent * nodal_field) {
-  if (!this->initiated) return;
-
-  switch (this->dump_format) {
-    case Format::ASCII:
-    case Format::CSV: {
-      for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
-        if (n != 0) (*dump_file) << this->separator;
-        (*dump_file) << nodal_field->at(n);
-      }
-      (*dump_file) << std::endl;
-      break;
-    }
-    case Format::Binary: {
-      float temp = 0.0;
-      for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
-        temp = (float)(nodal_field->at(n));
-        (*dump_file).write((char *)&temp, sizeof(float));
-      }
-      break;
-    }
-    default:
-      throw std::runtime_error("Unsupported output format.");
-  }
-}
-
-std::string Dumper::directorySeparator() {
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-  return "\\";
-#else
-  return "/";
-#endif
-}
-
-void Dumper::createDirectory(std::string path) {
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-  _mkdir(path.c_str());
-#else
-  mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
-}
 __END_UGUCA__

@@ -60,7 +60,8 @@ public:
 			   double mu_s_default,
 			   double mu_k_default,
 			   double d_c_default,
-			   double char_reg_time = 0.);
+			   double char_reg_time = 0.,
+			   const std::string & name = "lcflaw");
 
   virtual ~LinearCoulombFrictionLaw() {};
 
@@ -74,8 +75,11 @@ public:
   void computeRegContactPressure(NodalFieldComponent & cohesion_1,
 				 NodalFieldComponent & reg_cont_pres);
 
- // dumper function
- virtual void registerDumpField(const std::string & field_name);
+  // dumper function
+  virtual void registerDumpField(const std::string & field_name);
+
+  // restart
+  virtual void registerToRestart(Restart & restart);
 
  /* ------------------------------------------------------------------------ */
  /* Accessors                                                                */

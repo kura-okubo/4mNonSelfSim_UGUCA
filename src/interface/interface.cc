@@ -34,26 +34,30 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Interface::Interface(FFTableMesh & mesh,
-		     InterfaceLaw & law) :
+		     InterfaceLaw & law,
+		     const std::string & name) :
   Dumper(mesh),
+  name(name),
   mesh(mesh),
   time_step(0.),
-  load(mesh,"load"),
-  cohesion(mesh,"cohesion"),
-  scratch_field(mesh,"scratch"),
+  load(mesh,name+"_load"),
+  cohesion(mesh,name+"_cohesion"),
+  scratch_field(mesh,name+"_scratch"),
   law(&law) {
   
   this->law->setInterface(this);
 }
 
 /* -------------------------------------------------------------------------- */
-Interface::Interface(FFTableMesh & mesh) :
+Interface::Interface(FFTableMesh & mesh,
+		     const std::string & name) :
   Dumper(mesh),
+  name(name),
   mesh(mesh),
   time_step(0.),
-  load(mesh,"load"),
-  cohesion(mesh,"cohesion"),
-  scratch_field(mesh,"scratch"),
+  load(mesh,name+"_load"),
+  cohesion(mesh,name+"_cohesion"),
+  scratch_field(mesh,name+"_scratch"),
   law(NULL) {}
 
 /* -------------------------------------------------------------------------- */
@@ -216,15 +220,28 @@ void Interface::registerDumpField(const std::string & field_name) {
 			     +" cannot be dumped, too high dimension");
 
   if (field_name == "load_"+std::to_string(d))
-    this->registerForDump(field_name,
+    this->registerIO(field_name,
 			  this->load.component(d));
 
   else if (field_name == "cohesion_"+std::to_string(d))
-    this->registerForDump(field_name,
+    this->registerIO(field_name,
 			  this->cohesion.component(d));
 
   else
     this->law->registerDumpField(field_name);
+}
+
+/* -------------------------------------------------------------------------- */
+void Interface::registerToRestart(Restart & restart) {
+
+  restart.registerIO(this->cohesion);
+  restart.registerIO(this->load);
+  restart.registerIO(this->scratch_field);
+
+  for (unsigned int i=0;i<this->half_spaces.size();++i)
+    this->half_spaces[i]->registerToRestart(restart);
+  
+  this->law->registerToRestart(restart);
 }
 
 __END_UGUCA__

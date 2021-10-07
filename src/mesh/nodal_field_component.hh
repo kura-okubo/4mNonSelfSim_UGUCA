@@ -44,14 +44,15 @@ class NodalFieldComponent {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent(int direction=0, const std::string & name = "unnamed") :
+  NodalFieldComponent(const std::string & name = "unnamed") :
     name(name),
     initialized(false),
     mesh(NULL),
-    direction(direction),
+    direction(0),
     field(NULL) {}
 
-  NodalFieldComponent(BaseMesh & mesh, int direction=0,
+  NodalFieldComponent(BaseMesh & mesh,
+		      int direction=0,
 		      const std::string & name = "unnamed") :
     name(name),
     initialized(false),
@@ -59,6 +60,17 @@ public:
     direction(direction),
     field(NULL)
   { this->init(mesh); }
+
+  NodalFieldComponent(BaseMesh & mesh,
+		      const std::string & name,
+		      int direction=0) :
+    name(name),
+    initialized(false),
+    mesh(NULL),
+    direction(direction),
+    field(NULL)
+  { this->init(mesh); }
+
   
   virtual ~NodalFieldComponent();
 

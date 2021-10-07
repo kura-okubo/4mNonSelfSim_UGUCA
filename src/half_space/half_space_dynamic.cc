@@ -39,8 +39,9 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
-			    int side_factor) :
-  HalfSpaceQuasiDynamic(mesh, side_factor) {
+				   int side_factor,
+				   const std::string & name) :
+  HalfSpaceQuasiDynamic(mesh, side_factor, name) {
   
   // allocated pre-integrated kernels
   this->H00_pi.resize(this->mesh.getNbLocalFFT());
@@ -49,6 +50,13 @@ HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
   if (this->mesh.getDim()==3)
     this->H22_pi.resize(this->mesh.getNbLocalFFT());
 
+#ifdef UCA_VERBOSE
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  std::cout << "HSD construct (prank="
+	    << prank << "): " << this->name
+	    << " : " << this->mesh.getNbLocalFFT() << std::endl;
+#endif // UCA_VERBOSE
+  
   // allocate displacement history
   this->U_r.resize(this->mesh.getDim());
   this->U_i.resize(this->mesh.getDim());
@@ -357,6 +365,29 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
       internal_fd[d][m0_index][1] = 0.;  // imag part
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::registerToRestart(Restart & restart) {
+
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  int m0_rank = this->mesh.getMode0Rank();
+  int m0_index = this->mesh.getMode0Index();
+  
+  for (int d=0; d<this->mesh.getDim(); ++d) {
+    for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
+
+      // ignore mode 0
+      if ((prank == m0_rank) && (j == m0_index)) continue;
+
+      restart.registerIO(this->name+"_Ur_"+std::to_string(d)+"_"+std::to_string(j),
+			 *(this->U_r[d][j]));
+      restart.registerIO(this->name+"_Ui_"+std::to_string(d)+"_"+std::to_string(j),
+			 *(this->U_i[d][j]));
+    }
+  }
+
+  HalfSpace::registerToRestart(restart);
 }
 
 

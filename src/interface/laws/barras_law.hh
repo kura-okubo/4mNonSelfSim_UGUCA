@@ -51,17 +51,21 @@ class BarrasLaw : public InterfaceLaw {
 public:
 
   BarrasLaw(BaseMesh & mesh,
-	    double tau_max_default, double delta_c_default);
+	    double tau_max_default, double delta_c_default,
+	    const std::string & name = "blaw");
   virtual ~BarrasLaw() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
- void computeCohesiveForces(NodalField & cohesion,
-                            bool predicting = false);
+  void computeCohesiveForces(NodalField & cohesion,
+			     bool predicting = false);
   
- virtual void registerDumpField(const std::string & field_name);
+  virtual void registerDumpField(const std::string & field_name);
+  
+  // restart
+  virtual void registerToRestart(Restart & restart);
 
  /* ------------------------------------------------------------------------ */
  /* Accessors                                                                */

@@ -73,13 +73,17 @@ int main() {
 
   // initialization
   interface.init();
-
+  
   // dumping
   interface.initDump("basic_example","."); // args: name, path
   interface.registerDumpField("cohesion_0");
   interface.dump(0,0); // args: time-step, time
   unsigned int dump_int = std::max(1, nb_time_steps/300);
 
+  // restart
+  Restart restart("basic_example", "."); // args: name, path
+  interface.registerToRestart(restart);
+  
   // time stepping
   for (int s=1; s<=nb_time_steps; ++s) {
     interface.advanceTimeStep();
@@ -87,6 +91,9 @@ int main() {
       interface.dump(s,s*time_step); // args: time-step, time
   }
 
+  // write restart files
+  restart.dump(nb_time_steps); // args: step
+  
   StaticCommunicatorMPI::getInstance()->finalize();
   return 0;
 }

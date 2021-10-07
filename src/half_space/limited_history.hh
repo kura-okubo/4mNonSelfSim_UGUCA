@@ -67,6 +67,10 @@ public:
   unsigned int getIndexNow() const {return this->index_now; }
   double * getValues() const {return this->values; }
 
+  // for restart
+  void setNbHistoryPoints(int hp) { this->nb_history_points = hp; }
+  void setIndexNow(int idx) { this->index_now = idx; }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

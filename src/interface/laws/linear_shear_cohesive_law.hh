@@ -56,7 +56,8 @@ public:
   LinearShearCohesiveLaw(BaseMesh & mesh,
 			 double Gc_default,
 			 double tau_c_default,
-			 double tau_r_default = 0.);
+			 double tau_r_default = 0.,
+			 const std::string & name = "lsclaw");
 
   virtual ~LinearShearCohesiveLaw() {};
 
@@ -67,8 +68,11 @@ public:
  void computeCohesiveForces(NodalField & cohesion,
                             bool predicting = false);
 
- // dumper function
- virtual void registerDumpField(const std::string & field_name);
+  // dumper function
+  virtual void registerDumpField(const std::string & field_name);
+
+  // restart
+  virtual void registerToRestart(Restart & restart);
 
  /* ------------------------------------------------------------------------ */
  /* Accessors                                                                */

@@ -37,14 +37,16 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 HalfSpace::HalfSpace(FFTableMesh & mesh,
-		     int side_factor) :
+		     int side_factor,
+		     const std::string & name) :
+  name(name),
   mesh(mesh),
   time_step(0.),
   side_factor(side_factor),
-  disp(mesh,"displacement"),
-  velo(mesh,"velocity"),
-  internal(mesh,"internal"),
-  residual(mesh,"residual") {}
+  disp(mesh,name+"_disp"),
+  velo(mesh,name+"_velo"),
+  internal(mesh,name+"_internal"),
+  residual(mesh,name+"_residual") {}
 
 /* -------------------------------------------------------------------------- */
 HalfSpace::~HalfSpace() {}
@@ -52,10 +54,11 @@ HalfSpace::~HalfSpace() {}
 /* -------------------------------------------------------------------------- */
 HalfSpace * HalfSpace::newHalfSpace(FFTableMesh & mesh,
 				    int side_factor,
+				    const std::string & name,
 				    const SolverMethod & method) {
   HalfSpace * hs = NULL;
   if (method == _dynamic) {
-    hs = new HalfSpaceDynamic(mesh, side_factor);
+    hs = new HalfSpaceDynamic(mesh, side_factor, name);
   }
   else {
     throw std::runtime_error("HalfSpace: solver method not implemented");
@@ -205,26 +208,41 @@ bool HalfSpace::registerDumpFieldToDumper(const std::string & field_name,
   
   // disp
   if (field_name == "disp_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->disp.component(d));
+    dumper->registerIO(dump_name, this->disp.component(d));
     return true;
   }
   // velo
   else if (field_name == "velo_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->velo.component(d));
+    dumper->registerIO(dump_name, this->velo.component(d));
     return true;
   }
   // residual
   else if (field_name == "residual_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->residual.component(d));
+    dumper->registerIO(dump_name, this->residual.component(d));
     return true;
   }
   // internal
   else if (field_name == "internal_" + std::to_string(d)) {
-    dumper->registerForDump(dump_name, this->internal.component(d));
+    dumper->registerIO(dump_name, this->internal.component(d));
     return true;
   }
 
   return false;
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpace::registerToRestart(Restart & restart) {
+
+  restart.registerIO(this->disp);
+  restart.registerIO(this->velo);
+  restart.registerIO(this->internal);
+  restart.registerIO(this->residual);
+
+  if (this->predictor_corrector) {
+    restart.registerIO(this->disp_pc);
+    restart.registerIO(this->velo_pc);
+  }
+
 }
 
 __END_UGUCA__

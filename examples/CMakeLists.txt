@@ -39,6 +39,10 @@ configure_file(fracture_2d_example.in fracture_2d_example.in COPYONLY)
 configure_file(fracture_2d_example.sh fracture_2d_example.sh COPYONLY)
 configure_file(fracture_2d_example_plot.py fracture_2d_example_plot.py COPYONLY)
 configure_file(fracture_2d_example_fig.py fracture_2d_example_fig.py COPYONLY)
+# restart example of 2d fracture example
+configure_file(fracture_2d_example.restart.in fracture_2d_example.restart.in COPYONLY)
+configure_file(fracture_2d_example.restart.sh fracture_2d_example.restart.sh COPYONLY)
+configure_file(fracture_2d_example_plot.restart.py fracture_2d_example_plot.restart.py COPYONLY)
 
 # 3d fracture example
 add_simulation(fracture_3d_example fracture_3d_example.cc)

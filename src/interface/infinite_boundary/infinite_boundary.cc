@@ -37,11 +37,12 @@ __BEGIN_UGUCA__
 InfiniteBoundary::InfiniteBoundary(FFTableMesh & mesh,
 				   int side_factor,
 				   Material & material,
+				   const std::string & name,
 				   const SolverMethod & method) :
-  Interface(mesh),
+  Interface(mesh,name),
   external(mesh,"external") {
 
-  this->hs = HalfSpace::newHalfSpace(mesh, side_factor, method);
+  this->hs = HalfSpace::newHalfSpace(mesh, side_factor, this->name+"_hs", method);
   
   this->half_spaces.resize(1);
   this->half_spaces[0] = this->hs;

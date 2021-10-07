@@ -60,18 +60,19 @@ RateAndStateLaw::RateAndStateLaw(
        double theta_default,
        EvolutionLaw evolution_law,
        bool predictor_corrector,
-       double plate_velocity):
-  InterfaceLaw(mesh),
-  theta(mesh),
+       double plate_velocity,
+       const std::string & name):
+  InterfaceLaw(mesh,name),
+  theta(mesh,name+"_theta"),
   theta_pc(),
-  V(mesh),
-  iterations(mesh),
-  rel_error(mesh),
+  V(mesh,name+"_V"),
+  iterations(mesh,name+"_iter"),
+  rel_error(mesh,name+"_rel_error"),
   V0(V0),
   f0(f0),
-  a(mesh),
-  b(mesh),
-  Dc(mesh),
+  a(mesh,name+"_a"),
+  b(mesh,name+"_b"),
+  Dc(mesh,name+"_Dc"),
   predictor_corrector(predictor_corrector),
   evolution_law(evolution_law),
   Vplate(plate_velocity),
@@ -297,27 +298,27 @@ void RateAndStateLaw::computeTheta(NodalFieldComponent & target,
 void RateAndStateLaw::registerDumpField(const std::string &field_name) {
   // theta
   if (field_name == "theta") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->theta);
   }
   // iterations
   else if (field_name == "iterations") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->iterations);
   }
   // rel_error in Newton-Raphson
   else if (field_name == "rel_error") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->rel_error);
   }
   // a
   else if (field_name == "a") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->a);
   }
   // b
   else if (field_name == "b") {
-    this->interface->registerForDump(field_name,
+    this->interface->registerIO(field_name,
 				     this->b);
   }
   // do not know this field
@@ -327,6 +328,21 @@ void RateAndStateLaw::registerDumpField(const std::string &field_name) {
 
 }
 
+/* -------------------------------------------------------------------------- */
+void RateAndStateLaw::registerToRestart(Restart & restart) {
+
+  restart.registerIO(this->theta);
+  restart.registerIO(this->theta_pc);
+  restart.registerIO(this->V);
+  restart.registerIO(this->a);
+  restart.registerIO(this->b);
+  restart.registerIO(this->Dc);
+  restart.registerIO(this->Vw);
+  
+  InterfaceLaw::registerToRestart(restart);
+}
+
+/* -------------------------------------------------------------------------- */
 NodalFieldComponent & RateAndStateLaw::getVw() {
   if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening)
     return this->Vw;

@@ -32,6 +32,7 @@
 #include "limited_history.hh"
 
 #include <iostream>
+#include <stdexcept>
 
 using namespace uguca;
 

@@ -36,6 +36,8 @@
 #include "uca_dumper.hh"
 #include "half_space.hh"
 #include "uca_fftable_mesh.hh"
+#include "uca_restart.hh"
+
 #include <vector>
 
 __BEGIN_UGUCA__
@@ -47,13 +49,15 @@ class Interface : public Dumper {
 public:
 
   Interface(FFTableMesh & mesh,
-	    InterfaceLaw & law);
+	    InterfaceLaw & law,
+	    const std::string & name = "interface");
 
   virtual ~Interface() {}
 
 protected:
   // for inheritate object: infinite boundary
-  Interface(FFTableMesh & mesh);
+  Interface(FFTableMesh & mesh,
+	    const std::string & name = "interface");
   
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -105,6 +109,9 @@ public:
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
 
+  // restart
+  virtual void registerToRestart(Restart & restart);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -125,6 +132,10 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
+  // name of interface (in case there are more)
+  std::string name;
+  
+  // mesh
   FFTableMesh & mesh;
 
   // time step

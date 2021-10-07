@@ -44,7 +44,8 @@ class HalfSpaceDynamic : public HalfSpaceQuasiDynamic {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceDynamic(FFTableMesh & mesh, int side_factor);
+  HalfSpaceDynamic(FFTableMesh & mesh, int side_factor,
+		   const std::string & name = "half_space");
 
   virtual ~HalfSpaceDynamic();
 
@@ -54,6 +55,9 @@ public:
 public:
   // init convolutions
   virtual void initConvolutions();
+
+  // restart
+  virtual void registerToRestart(Restart & restart);
 
 protected:
   virtual void computeStressFourierCoeff(bool predicting = false,
@@ -71,6 +75,10 @@ public:
 
   // get stable time step
   virtual double getStableTimeStep();
+
+  // get limited history
+  LimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
+  LimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
