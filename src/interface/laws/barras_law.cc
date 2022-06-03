@@ -98,7 +98,8 @@ void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in shear direction
-  cohesion.multiplyByScalar(alpha_field, 1);
+  int ignore_dir = 1;
+  cohesion.multiplyByScalar(alpha_field, ignore_dir);
 }
 
 /* --------------------------------------------------------------------------*/
