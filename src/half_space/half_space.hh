@@ -85,6 +85,9 @@ public:
   // restart
   virtual void registerToRestart(Restart & restart);
 
+  // quasi dyn
+  virtual void setSteadyState() = 0;
+  
 protected:
   // apply fft forward on displacement
   virtual void forwardFFT(bool predicting = false);

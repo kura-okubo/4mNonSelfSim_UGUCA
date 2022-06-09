@@ -58,7 +58,9 @@ public:
 
   // restart
   virtual void registerToRestart(Restart & restart);
-
+  // quasi dyn
+  virtual void setSteadyState();
+  
 protected:
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false);

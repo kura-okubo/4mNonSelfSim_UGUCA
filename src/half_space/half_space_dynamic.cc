@@ -389,6 +389,25 @@ void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 
   HalfSpace::registerToRestart(restart);
 }
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::setSteadyState() {
 
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  int m0_rank = this->mesh.getMode0Rank();
+  int m0_index = this->mesh.getMode0Index();
+  
+  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
+
+    
+    // ignore mode 0
+    if ((prank == m0_rank) && (j == m0_index)) continue;
+
+    for (int d = 0; d < this->mesh.getDim(); ++d) {
+
+      this->U_r[d][j]->setSteadyState();
+      this->U_i[d][j]->setSteadyState();
+    }
+  }
+}
 
 __END_UGUCA__
