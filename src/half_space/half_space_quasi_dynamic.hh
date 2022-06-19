@@ -42,10 +42,9 @@ class HalfSpaceQuasiDynamic : public HalfSpace {
   /* ------------------------------------------------------------------------ */
 public:
   HalfSpaceQuasiDynamic(FFTableMesh & mesh, int side_factor,
-			const std::string & name = "half_space") :
-    HalfSpace(mesh, side_factor, name) {}
+			const std::string & name = "half_space")
 
-  virtual ~HalfSpaceQuasiDynamic() {}
+  virtual ~HalfSpaceQuasiDynamic()
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -75,6 +74,11 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
+  // convolutions
+  std::vector<PreintKernel *> H00_pi;
+  std::vector<PreintKernel *> H01_pi;
+  std::vector<PreintKernel *> H11_pi;
+  std::vector<PreintKernel *> H22_pi;
 
 };
 
