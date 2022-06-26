@@ -30,6 +30,7 @@
  */
 
 #include "static_communicator_mpi.hh"
+#include "uca_input_section.hh"
 #include "uca_parameter_reader.hh"
 #include "material.hh"
 #include "uca_simple_mesh.hh"
@@ -72,17 +73,17 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   BarrasLaw law(mesh,
-		data.get<double>("tauc"),
-		data.get<double>("dc"));
+		data.get<double>("tauc", "interface"),
+		data.get<double>("dc", "interface"));
 
   // materials
-  Material top_mat = Material(data.get<double>("E_top"),
-			      data.get<double>("nu_top"),
-			      data.get<double>("rho_top"));
+  Material top_mat = Material(data.get<double>("E","top"),
+			      data.get<double>("nu","top"),
+			      data.get<double>("rho","top"));
   top_mat.readPrecomputedKernels();
-  Material bot_mat = Material(data.get<double>("E_bot"),
-			      data.get<double>("nu_bot"),
-			      data.get<double>("rho_bot"));
+  Material bot_mat = Material(data.get<double>("E","bot"),
+			      data.get<double>("nu","bot"),
+			      data.get<double>("rho","bot"));
   bot_mat.readPrecomputedKernels();
 
   // interface
