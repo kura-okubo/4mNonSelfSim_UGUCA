@@ -1,5 +1,14 @@
 string_1 = burger
 bool_1 = True
+
+mimi[
 double_1 = 2.2
+]
+
+section tata [
 int_1 = 3
-uint_1 = 4
+]
+
+section toto[
+  uint_1 = 4
+]

@@ -43,6 +43,7 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 ParameterReader::ParameterReader() {
+  // create default section
   this->sections.insert(std::pair<std::string,std::shared_ptr<InputSection>>(ParameterReader::general,
 									     std::make_shared<InputSection>()));
 }
@@ -52,7 +53,12 @@ void ParameterReader::readInputFile(std::string file_name) {
 
   char comment_char = '#';
   char equal_char = '=';
+  char section_start_char = '[';
+  char section_end_char = ']';
 
+  // start with general section
+  std::string current_section = ParameterReader::general;
+  
   // open a file called file name
   std::ifstream infile;
   infile.open(file_name.c_str());
@@ -76,46 +82,110 @@ void ParameterReader::readInputFile(std::string file_name) {
     if (clean_line.empty())
       continue;
 
-    std::stringstream sstr(clean_line);
-
-    std::string keyword;
-    std::string equal;
-    std::string value;
-
-    // get keyword
-    sstr >> keyword;
-    size_t equal_p = keyword.find_first_of(equal_char);
-    if (equal_p != std::string::npos) {
-      equal = keyword.substr(equal_p,std::string::npos);
-      keyword = keyword.substr(0,equal_p);
+    // this is a line with a parameter
+    if (clean_line.find(equal_char) != std::string::npos) {
+    
+      std::stringstream sstr(clean_line);
+      
+      std::string keyword;
+      std::string equal;
+      std::string value;
+      
+      // get keyword
+      sstr >> keyword;
+      size_t equal_p = keyword.find_first_of(equal_char);
+      if (equal_p != std::string::npos) {
+	equal = keyword.substr(equal_p,std::string::npos);
+	keyword = keyword.substr(0,equal_p);
+      }
+      
+      // get equal
+      if (equal.empty())
+	sstr >> equal;
+      if (equal.length() != 1) {
+	value = equal.substr(1,std::string::npos);
+	equal = equal[0];
+      }
+      if (equal[0] != equal_char) {
+	std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+	continue;
+      }
+      
+      // get value
+      if (value.empty())
+	sstr >> value;
+      
+      // no value
+      if (value.empty()) {
+	std::cerr << " *** WARNING *** No value given! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+	continue;
+      }
+      
+      // put value in map
+      this->getSection(current_section).insert(keyword, value);
     }
+    // this is the start of a section
+    else if (clean_line.find(section_start_char) != std::string::npos) {
+      std::stringstream sstr(clean_line);
+      
+      std::string sec_type;
+      std::string sec_name;
+      std::string sec_open;
 
-    // get equal
-    if (equal.empty())
-      sstr >> equal;
-    if (equal.length() != 1) {
-      value = equal.substr(1,std::string::npos);
-      equal = equal[0];
+      sstr >> sec_type;
+
+      size_t open_p = sec_type.find_first_of(section_start_char);
+      if (open_p != std::string::npos) { // one word without space to [
+	sec_open = sec_type[open_p];
+	sec_name = sec_type.substr(0,open_p);
+	sec_type = ""; // type is not used so far
+      }
+      else { // two words
+	sstr >> sec_name;
+	open_p = sec_name.find_first_of(section_start_char);
+	if (open_p != std::string::npos) { // no space to [
+	  sec_open = sec_name[open_p];
+	  sec_name = sec_name.substr(0,open_p);
+	}
+	else {
+	  sstr >> sec_open;
+	}
+      }
+
+      // check syntax correct
+      if ((sec_open.length() != 1) || sec_open[0] != section_start_char) {
+	std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+	continue;
+      }
+
+      // use name to store section
+      current_section = sec_name;
+
+      // create new section
+      if (this->sections.find(current_section) == this->sections.end()) {
+	this->sections.insert(std::pair<std::string,std::shared_ptr<InputSection>>(current_section,
+										   std::make_shared<InputSection>()));
+      }
     }
-    if (equal[0] != equal_char) {
-      std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
+    // this is the end of a section
+    else if (clean_line.find(section_end_char) != std::string::npos) {
+
+      if (clean_line.length() != 1) {
+	std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+      }
+      
+      // everything outside a section goes into the general section
+      current_section = ParameterReader::general;
+    }
+    // don't know what this line is
+    else {
+      std::cerr << " *** WARNING *** Don't know what to do with this line. Ignore it: ";
       std::cerr << clean_line << std::endl;
-      continue;
     }
-
-    // get value
-    if (value.empty())
-      sstr >> value;
-
-    // no value
-    if (value.empty()) {
-      std::cerr << " *** WARNING *** No value given! Ignore line: ";
-      std::cerr << clean_line << std::endl;
-      continue;
-    }
-
-    // put value in map
-    this->getSection(ParameterReader::general).insert(keyword, value);
   }
 }
 
@@ -126,12 +196,17 @@ void ParameterReader::writeInputFile(std::string file_name) const {
   std::ofstream outfile;
   outfile.open(file_name.c_str());
 
-  InputSection & is = this->getSection(ParameterReader::general);
-  const std::map<std::string,std::string> & data = is.getData();
+  for (auto const& sec : this->sections) {
 
-  for (std::map<std::string, std::string>::const_iterator it = data.begin();
-       it != data.end(); ++it)
-    outfile << it->first << " = " << it->second << std::endl;
+    outfile << "section " << sec.first << " [" << std::endl;
+
+    const std::map<std::string,std::string> & data = sec.second->getData();
+    for (auto const& e : data) {
+      outfile << "  " << e.first << " = " << e.second << std::endl;
+    }
+
+    outfile << "]" << std::endl << std::endl;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

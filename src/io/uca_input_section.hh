@@ -72,7 +72,7 @@ public:
   bool has(std::string key) const;
 
   /// access to data
-  const std::map<std::string,std::string> & getData() { return this->data; }
+  const std::map<std::string,std::string> & getData() const { return this->data; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

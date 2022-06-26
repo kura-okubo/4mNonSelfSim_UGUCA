@@ -74,15 +74,15 @@ int main(){
     std::cerr << "wrong bool" << std::endl;
     return 1; // failure
   }
-  if (pr2.get<double>("double_1") != 2.2) {
+  if (pr2.get<double>("double_1","mimi") != 2.2) {
     std::cerr << "wrong double" << std::endl;
     return 1; // failure
   }
-  if (pr2.get<int>("int_1") != 3) {
+  if (pr2.get<int>("int_1","tata") != 3) {
     std::cerr << "wrong int" << std::endl;
     return 1; // failure
   }
-  if (pr2.get<unsigned int>("uint_1") != 4) {
+  if (pr2.get<unsigned int>("uint_1","toto") != 4) {
     std::cerr << "wrong uint" << std::endl;
     return 1; // failure
   }
