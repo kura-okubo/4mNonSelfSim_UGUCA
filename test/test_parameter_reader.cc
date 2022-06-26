@@ -54,11 +54,11 @@ int main(){
 
   // check 'has' function
   std::cout << "test 'has' function" << std::endl;
-  if (!pr2.has<std::string>("string_1")) {
+  if (!pr2.has("string_1")) {
     std::cerr << "should have been true." << std::endl;
     return 1; // failure
   }
-  if (pr2.has<std::string>("string_2")) {
+  if (pr2.has("string_2")) {
     std::cerr << "should have been false." << std::endl;
     return 1; // failure
   }

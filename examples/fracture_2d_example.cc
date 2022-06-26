@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   int s=1;
 
   // check if restart from file is required
-  if (data.has<int>("restart_step")) {
+  if (data.has("restart_step")) {
     s = data.get<int>("restart_step");
     // different from dumper not to overwrite it
     Restart restart_load = restart;

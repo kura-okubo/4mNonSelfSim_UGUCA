@@ -1,5 +1,5 @@
-string string_1 = burger
-bool bool_1 = True
-double double_1 = 2.2
-int int_1 = 3
-uint uint_1 = 4
+string_1 = burger
+bool_1 = True
+double_1 = 2.2
+int_1 = 3
+uint_1 = 4
