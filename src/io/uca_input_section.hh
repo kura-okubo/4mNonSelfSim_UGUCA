@@ -51,11 +51,6 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  /// read input file
-  void readInputFile(std::string file_name);
-
-  /// write input file
-  void writeInputFile(std::string file_name) const;
 
 private:
   /// get value returns string and checks
@@ -76,6 +71,9 @@ public:
   /// check if key is in data
   bool has(std::string key) const;
 
+  /// access to data
+  const std::map<std::string,std::string> & getData() { return this->data; }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

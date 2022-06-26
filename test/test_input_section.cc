@@ -30,6 +30,7 @@
 #include "uca_input_section.hh"
 
 #include <iostream>
+#include <cmath>
 
 using namespace uguca;
 
@@ -129,6 +130,13 @@ int main() {
     return 1; // failure
   }
   std::cout << "'get' method works -> success" << std::endl;
+
+  std::cout << "check 'getData' method" << std::endl;
+  const std::map<std::string, std::string> data = is.getData();
+  for (auto const& x : data) {
+    std::cout << x.first << ":" << x.second << std::endl;
+  }
+  std::cout << "'getData' method works -> success" << std::endl;
   
   std::cout << "all checks passed -> overall success" << std::endl;
   return 0; // success
