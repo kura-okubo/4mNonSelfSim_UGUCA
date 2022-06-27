@@ -24,7 +24,7 @@ material bot [
 ]
 
 # interface properties
-law interface [
+interface cohesion [
   tauc = 3.5e6
   dc = 2e-5
 ]
