@@ -44,7 +44,7 @@ class InputSection {
   /* ------------------------------------------------------------------------ */
 public:
 
-  InputSection() {};
+  InputSection(std::string type = "section") : type(type) {};
   virtual ~InputSection() {};
 
   /* ------------------------------------------------------------------------ */
@@ -71,6 +71,8 @@ public:
   /// check if key is in data
   bool has(std::string key) const;
 
+  const std::string getType() const { return this->type; }
+  
   /// access to data
   const std::map<std::string,std::string> & getData() const { return this->data; }
   
@@ -78,7 +80,9 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-
+  /// information on type of input section
+  std::string type;
+  
   /// data stored as strings
   std::map<std::string,std::string> data;
 };

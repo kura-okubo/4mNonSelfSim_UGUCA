@@ -140,7 +140,7 @@ void ParameterReader::readInputFile(std::string file_name) {
       if (open_p != std::string::npos) { // one word without space to [
 	sec_open = sec_type[open_p];
 	sec_name = sec_type.substr(0,open_p);
-	sec_type = ""; // type is not used so far
+	sec_type = "section";
       }
       else { // two words
 	sstr >> sec_name;
@@ -167,7 +167,7 @@ void ParameterReader::readInputFile(std::string file_name) {
       // create new section
       if (this->sections.find(current_section) == this->sections.end()) {
 	this->sections.insert(std::pair<std::string,std::shared_ptr<InputSection>>(current_section,
-										   std::make_shared<InputSection>()));
+										   std::make_shared<InputSection>(sec_type)));
       }
     }
     // this is the end of a section
@@ -198,7 +198,7 @@ void ParameterReader::writeInputFile(std::string file_name) const {
 
   for (auto const& sec : this->sections) {
 
-    outfile << "section " << sec.first << " [" << std::endl;
+    outfile << sec.second->getType() << " " << sec.first << " [" << std::endl;
 
     const std::map<std::string,std::string> & data = sec.second->getData();
     for (auto const& e : data) {

@@ -5,7 +5,7 @@ mimi[
 double_1 = 2.2
 ]
 
-section tata [
+material tata [
 int_1 = 3
 ]
 
