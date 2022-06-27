@@ -1,0 +1,138 @@
+/**
+ * @file   linear_normal_cohesive_law.cc
+ *
+ * @author David S. Kammer <dkammer@ethz.ch>
+ *
+ * @date creation: Fri Jun 3 2022
+ * @date last modification: Fri Jun 3 2022
+ *
+ * @brief  linear cohesive law for fracture
+ *
+ *
+ * Copyright (C) 2021 ETH Zurich (David S. Kammer)
+ *
+ * This file is part of uguca.
+ *
+ * uguca is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * uguca is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
+ */
+#include "linear_normal_cohesive_law.hh"
+#include "interface.hh"
+
+#include <cmath>
+
+__BEGIN_UGUCA__
+
+/* -------------------------------------------------------------------------- */
+
+LinearNormalCohesiveLaw::LinearNormalCohesiveLaw(BaseMesh & mesh,
+						 double Gc_default,
+						 double sigma_c_default,
+						 const std::string & name) :
+  InterfaceLaw(mesh,name),
+  G_c(mesh,name+"_G_c"),
+  sigma_c(mesh,name+"_sigma_c")
+{
+  this->G_c.setAllValuesTo(Gc_default);
+  this->sigma_c.setAllValuesTo(sigma_c_default);
+}
+
+/* -------------------------------------------------------------------------- */
+void LinearNormalCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
+						    bool predicting) {
+
+  // find forces needed to close normal gap
+  NodalFieldComponent & coh1 = cohesion.component(1);
+  this->interface->closingNormalGapForce(coh1, predicting);
+
+  // find force needed to maintain shear gap
+  this->interface->maintainShearGapForce(cohesion);
+
+  // get norm of normal cohesion
+  NodalFieldComponent normal_trac_norm(this->mesh, "normal_trac_norm");
+  cohesion.computeNorm(normal_trac_norm, 0);
+  double * sigma_normal = normal_trac_norm.storage();
+
+  // find current gap
+  NodalField gap(this->mesh, "gap");
+  this->interface->computeGap(gap, predicting);
+
+  // compute norm of normal gap
+  NodalFieldComponent normal_gap_norm(this->mesh, "normal_gap_norm");
+  gap.computeNorm(normal_gap_norm, 0);
+  double * normal_gap = normal_gap_norm.storage();
+
+  // interface properties
+  double * Gc = this->G_c.storage();
+  double * sigmac = this->sigma_c.storage();
+
+  //double * p_coh1 = coh1.storage();
+
+  // to be filled
+  NodalFieldComponent alpha_field(this->mesh, "alpha");
+  double * alpha = alpha_field.storage();
+
+  // coh1 > 0 is a adhesive force
+  // coh1 < 0 is a contact pressure
+  for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
+
+    if ((Gc[0] < 1e-12) || (sigmac[n] < 1e-12)) {
+      alpha[n] = 0.;
+    }
+    else {
+    
+      double slope = pow(sigmac[n],2) / 2. / Gc[n];
+      double strength = std::max(sigmac[n] - normal_gap[n] * slope, 0.);
+
+      // maximal normal cohesive force given by strength.
+      // keep orientation of normal force
+      alpha[n] = std::min(1.,std::abs(strength / sigma_normal[n]));
+    }
+  }
+
+  // only in normal direction
+  cohesion.multiplyByScalar(alpha_field, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+void LinearNormalCohesiveLaw::registerDumpField(const std::string & field_name) {
+
+  // G_c
+  if (field_name == "G_c") {
+    this->interface->registerIO(field_name,
+				this->G_c);
+  }
+
+  // sigma_c
+  else if (field_name == "sigma_c") {
+    this->interface->registerIO(field_name,
+				this->sigma_c);
+  }
+
+  // do not know this field
+  else {
+    InterfaceLaw::registerDumpField(field_name);
+  }
+
+}
+
+/* -------------------------------------------------------------------------- */
+void LinearNormalCohesiveLaw::registerToRestart(Restart & restart) {
+
+  restart.registerIO(this->G_c);
+  restart.registerIO(this->sigma_c);
+  
+  InterfaceLaw::registerToRestart(restart);
+}
+
+__END_UGUCA__
