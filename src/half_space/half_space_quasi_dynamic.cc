@@ -225,7 +225,7 @@ void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
 }
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predicting,
-								  bool correcting) {
+								  bool /*correcting*/) {
 
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
 

@@ -62,7 +62,7 @@ protected:
 					 bool correcting);
 
   void computeStressFourierCoeffQuasiDynamic(bool predicting,
-					     bool correcting);
+					     bool /*correcting*/);
 
   void computeF2D(std::vector<std::complex<double>> & F,
 		  double q,
