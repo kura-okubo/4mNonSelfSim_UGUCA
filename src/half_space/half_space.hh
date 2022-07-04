@@ -66,6 +66,8 @@ public:
   virtual void computeDisplacement(bool predicting = false);
   virtual void computeInternal(bool predicting = false,
 			       bool correcting = false);
+  virtual void computeInternalQuasiDynamic(bool predicting = false,
+					   bool correcting = false);
   virtual void computeResidual(NodalField & external);
   virtual void computeVelocity(bool predicting = false);
 
@@ -86,7 +88,7 @@ public:
   virtual void registerToRestart(Restart & restart);
 
   // quasi dyn
-  virtual void setSteadyState() = 0;
+  virtual void setSteadyState(bool predicting = false) = 0;
   
 protected:
   // apply fft forward on displacement
@@ -96,7 +98,8 @@ protected:
 
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false) = 0;
-
+  virtual void computeStressFourierCoeffQuasiDynamic(bool predicting = false,
+						     bool correcting = false) = 0;
 private:
   void computeDisplacement(NodalField & disp,
 			   NodalField & velo,

@@ -64,6 +64,8 @@ public:
   // compute convolution of kernel with a history
   std::complex<double> convolve(const LimitedHistory * U_r,
 				const LimitedHistory * U_i);
+  
+  std::complex<double> convolve_quasi_dynamic(const std::complex<double> U);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -81,6 +83,8 @@ protected:
   const Kernel * kernel;
 
   std::vector<double> values;
+  double quasi_dynamic_value;
+  
 };
 
 __END_UGUCA__

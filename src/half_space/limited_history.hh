@@ -54,7 +54,7 @@ public:
   inline void addCurrentValue(double value);
   inline void changeCurrentValue(double value);
 
-  inline void setSteadyState();
+  inline void setSteadyState(double value);
   
   // get history value at index with index=0 : now
   inline double at(unsigned int index) const;
@@ -114,8 +114,8 @@ inline void LimitedHistory::changeCurrentValue(double value) {
 }
 
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::setSteadyState() {
-  double value = this->values[this->index_now];
+inline void LimitedHistory::setSteadyState(double value) {
+  this->nb_history_points = this->size;
   double * v_p = this->values;
   for (unsigned int i=0; i<this->size; ++i){
     *v_p = value;

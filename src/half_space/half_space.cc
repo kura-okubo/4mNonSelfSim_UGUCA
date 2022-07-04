@@ -112,6 +112,12 @@ void HalfSpace::computeInternal(bool predicting, bool correcting) {
   this->computeStressFourierCoeff(predicting, correcting);
   this->backwardFFT();
 }
+/* -------------------------------------------------------------------------- */
+void HalfSpace::computeInternalQuasiDynamic(bool predicting, bool correcting) {
+  this->forwardFFT(predicting);
+  this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
+  this->backwardFFT();
+}
 
 /* -------------------------------------------------------------------------- */
 void HalfSpace::forwardFFT(bool predicting) {

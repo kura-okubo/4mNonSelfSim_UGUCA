@@ -133,6 +133,12 @@ void Interface::computeInternal(bool predicting, bool correcting) {
 }
 
 /* -------------------------------------------------------------------------- */
+void Interface::computeInternalQuasiDynamic(bool predicting, bool correcting) {
+  for (unsigned int i=0;i<this->half_spaces.size();++i)
+    this->half_spaces[i]->computeInternalQuasiDynamic(predicting, correcting);
+}
+
+/* -------------------------------------------------------------------------- */
 void Interface::computeResidual() {
   this->combineLoadAndCohesion(this->scratch_field);
   for (unsigned int i=0;i<this->half_spaces.size();++i)
@@ -157,7 +163,7 @@ void Interface::correctVelocity(bool last_step) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::advanceTimeStep() {
+void Interface::advanceTimeStep(bool dynamic ) {
 
   // predictor-corrector
   for (int i = 0; i < this->nb_pc; ++i) {
@@ -183,7 +189,11 @@ void Interface::advanceTimeStep() {
 
   // compute displacement
   this->computeDisplacement();
-  this->computeInternal(false,false);
+  if (dynamic)
+    this->computeInternal(false,false);
+  else // quasi dnamic
+    this->computeInternalQuasiDynamic(false,false);
+  
   this->computeCohesion();
   this->computeResidual();
   this->computeVelocity();

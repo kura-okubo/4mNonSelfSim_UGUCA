@@ -75,6 +75,7 @@ uguca_add_test(test_preint_kernel)
 uguca_add_test(test_material)
 uguca_add_test(test_dumper)
 uguca_add_test(test_half_space_dynamic)
+uguca_add_test(test_half_space_quasi_dynamic)
 uguca_add_test(test_infinite_boundary)
 
 # test interfaces

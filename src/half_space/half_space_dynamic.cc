@@ -43,13 +43,6 @@ HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
 				   const std::string & name) :
   HalfSpaceQuasiDynamic(mesh, side_factor, name) {
   
-  // allocated pre-integrated kernels
-  this->H00_pi.resize(this->mesh.getNbLocalFFT());
-  this->H01_pi.resize(this->mesh.getNbLocalFFT());
-  this->H11_pi.resize(this->mesh.getNbLocalFFT());
-  if (this->mesh.getDim()==3)
-    this->H22_pi.resize(this->mesh.getNbLocalFFT());
-
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   std::cout << "HSD construct (prank="
@@ -83,18 +76,6 @@ HalfSpaceDynamic::~HalfSpaceDynamic() {
       delete this->U_i[d][j];
     }
   }
-
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    delete this->H00_pi[j];
-    delete this->H01_pi[j];
-    delete this->H11_pi[j];
-    if (this->mesh.getDim()==3)
-      delete this->H22_pi[j];
-  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -112,44 +93,25 @@ void HalfSpaceDynamic::setTimeStep(double time_step) {
   if (((time_step/this->getStableTimeStep()>0.35) && (this->mesh.getDim()==3)) ||
       ((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2)))
     throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
-
+  
   HalfSpace::setTimeStep(time_step);
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpaceDynamic::initConvolutions() {
+void HalfSpaceDynamic::initConvolutions(){
+  HalfSpaceQuasiDynamic::initConvolutions();
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
-  
+
   int total_work=0;
-
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
-
+  
   // history for q1 is longest q = j*q1
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-
     // ignore mode 0
+
     if ((prank == m0_rank) && (j == m0_index)) continue;
-    
-    this->H00_pi[j] = new PreintKernel(this->material->getH00());
-    this->H01_pi[j] = new PreintKernel(this->material->getH01());
-    this->H11_pi[j] = new PreintKernel(this->material->getH11());
-    if (this->mesh.getDim()==3)
-      this->H22_pi[j] = new PreintKernel(this->material->getH22());
-
-    double qq = 0.0;
-    for (int d=0; d<this->mesh.getDim();d+=2)
-      qq +=(wave_numbers[d])[j]*(wave_numbers[d])[j];
-
-    double qj_cs = std::sqrt(qq) * this->material->getCs();
-    
-    this->H00_pi[j]->preintegrate(qj_cs, this->time_step);
-    this->H01_pi[j]->preintegrate(qj_cs, this->time_step);
-    this->H11_pi[j]->preintegrate(qj_cs, this->time_step);
-    if (this->mesh.getDim()==3)
-      this->H22_pi[j]->preintegrate(qj_cs, this->time_step);
 
     std::vector<int> nb_hist={0,0,0};
 
@@ -163,22 +125,15 @@ void HalfSpaceDynamic::initConvolutions() {
 			    this->H22_pi[j]->getSize());
       nb_hist[2] = nb_hist[0];
     }
-
     for (int d=0; d<this->mesh.getDim(); ++d) {
       this->U_r[d][j] = new LimitedHistory(nb_hist[d]);
       this->U_i[d][j] = new LimitedHistory(nb_hist[d]);
     }
-
+    
     for (int d=0; d<this->mesh.getDim(); ++d)
       total_work += nb_hist[d];
   }
-
-#ifdef UCA_VERBOSE
-  int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  printf("Rank %d has total work %d \n",world_rank,total_work);
-#endif /* UCA_VERBOSE */
 }
-
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 						 bool correcting) {
@@ -195,13 +150,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
 
-  double mu = this->material->getShearModulus();
-  double eta = this->material->getCp() / this->material->getCs();
-
   double ** wave_numbers = this->mesh.getLocalWaveNumbers();
-
-  // imaginary number i
-  std::complex<double> imag = {0., 1.};
 
   // access to fourier coefficients of stresses
   fftw_complex * internal_fd[3];
@@ -298,24 +247,13 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     F.resize(this->mesh.getDim());
     if (this->mesh.getDim() == 2) {
       double q = wave_numbers[0][j];
-
-      // - mu * q * int(H00,U0)
-      F[0] = -this->side_factor * mu * q * conv_H00_U0_j;
-
-      // + i * (2 - eta) * mu * q * U1
-      F[0] += mu * q * (2 - eta) * (imag * U[1]);
-
-      // + i * mu * q * int(H01, U1)
-      F[0] += mu * q * imag * conv_H01_U1_j;
-
-      // - mu * q * int(H11, U1)
-      F[1] = -this->side_factor * mu * q * conv_H11_U1_j;
-
-      // - i * (2 - etq) * mu * q * U0
-      F[1] -= mu * q * (2 - eta) * (imag * U[0]);
-
-      // - i * mu * q * int(H01, U0)
-      F[1] -= mu * q * imag * conv_H01_U0_j;
+      this->computeF2D(F,
+		       q,
+		       U,
+		       conv_H00_U0_j,
+		       conv_H01_U0_j,
+		       conv_H01_U1_j,
+		       conv_H11_U1_j);
     } else {
       // convolutions for 3d only
       std::complex<double> conv_H00_U2_j = conv[4];
@@ -326,30 +264,16 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 
       double k = wave_numbers[0][j];
       double m = wave_numbers[2][j];
-
-      double q = std::sqrt(k * k + m * m);
-
-      F[0] = imag * mu * (2 - eta) * k * U[1];
-
-      F[0] += imag * mu * k * conv_H01_U1_j;
-
-      F[0] -= this->side_factor * mu *
-	((conv_H00_U0_j * ((k * k) / q) + conv_H00_U2_j * ((k * m) / q)) +
-	 (conv_H22_U0_j * ((m * m) / q) - conv_H22_U2_j * ((k * m) / q)));
-
-      F[1] = -imag * mu * (2 - eta) * (k * U[0] + m * U[2]);
-
-      F[1] -= mu * imag * (conv_H01_U0_j * k + conv_H01_U2_j * m);
-
-      F[1] -= this->side_factor * mu * q * conv_H11_U1_j;
-
-      F[2] = imag * mu * (2 - eta) * m * U[1];
-
-      F[2] += imag * mu * m * conv_H01_U1_j;
-
-      F[2] -= this->side_factor * mu *
-	((conv_H00_U0_j * ((k * m) / q) + conv_H00_U2_j * ((m * m) / q)) +
-	 (-conv_H22_U0_j * ((k * m) / q) + conv_H22_U2_j * ((k * k) / q)));
+      this->computeF3D(F,k,m,
+		       U,
+		       conv_H00_U0_j,
+		       conv_H00_U2_j,
+		       conv_H01_U0_j,
+		       conv_H01_U2_j,
+		       conv_H01_U1_j,
+		       conv_H11_U1_j,
+		       conv_H22_U0_j,
+		       conv_H22_U2_j);  
     }
     // set values to internal force
     for (int d = 0; d < this->mesh.getDim(); ++d) {
@@ -366,6 +290,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     }
   }
 }
+
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
@@ -390,22 +315,24 @@ void HalfSpaceDynamic::registerToRestart(Restart & restart) {
   HalfSpace::registerToRestart(restart);
 }
 /* -------------------------------------------------------------------------- */
-void HalfSpaceDynamic::setSteadyState() {
+void HalfSpaceDynamic::setSteadyState(bool predicting) {
+
+  FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
-  
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
 
+  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
     
     // ignore mode 0
     if ((prank == m0_rank) && (j == m0_index)) continue;
 
     for (int d = 0; d < this->mesh.getDim(); ++d) {
 
-      this->U_r[d][j]->setSteadyState();
-      this->U_i[d][j]->setSteadyState();
+      this->U_r[d][j]->setSteadyState(_disp.fd(d,j)[0]);
+      this->U_i[d][j]->setSteadyState(_disp.fd(d,j)[1]);
+      
     }
   }
 }

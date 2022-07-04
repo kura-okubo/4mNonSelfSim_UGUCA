@@ -119,6 +119,7 @@ set(UGUCA_SRC
   half_space/preint_kernel.cc
   half_space/half_space.cc
   half_space/half_space_dynamic.cc
+  half_space/half_space_quasi_dynamic.cc
 
   # interfaces
   interface/interface.cc

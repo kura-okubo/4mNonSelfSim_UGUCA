@@ -32,7 +32,6 @@
 #define __HALF_SPACE_DYNAMIC_H__
 /* -------------------------------------------------------------------------- */
 #include "half_space_quasi_dynamic.hh"
-#include "preint_kernel.hh"
 #include "limited_history.hh"
 
 __BEGIN_UGUCA__
@@ -58,8 +57,9 @@ public:
 
   // restart
   virtual void registerToRestart(Restart & restart);
-  // quasi dyn
-  virtual void setSteadyState();
+  
+  // for transition from quasi dynamic integration to full dynamic
+  virtual void setSteadyState(bool predicting = false);
   
 protected:
   virtual void computeStressFourierCoeff(bool predicting = false,
@@ -92,11 +92,6 @@ protected:
   std::vector<std::vector<LimitedHistory *> > U_r;
   std::vector<std::vector<LimitedHistory *> > U_i;
 
-  // convolutions
-  std::vector<PreintKernel *> H00_pi;
-  std::vector<PreintKernel *> H01_pi;
-  std::vector<PreintKernel *> H11_pi;
-  std::vector<PreintKernel *> H22_pi;
 };
 
 __END_UGUCA__
