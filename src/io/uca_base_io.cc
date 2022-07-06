@@ -328,7 +328,7 @@ void BaseIO::read(std::fstream * load_file,
       if (count != size) 
 	throw std::runtime_error("BaseIO read: wrong number of entries "+std::to_string(count)+"!="+std::to_string(size));
       // get values
-      ss = std::stringstream(line); // rewind line
+      ss.str(line);//= std::stringstream(line); // rewind line
       for (int n = 0; n < size; ++n) {
 	ss >> data[n];
       }
