@@ -106,6 +106,11 @@ stages:
     IMAGE_NAME: ubuntu_20.04
   image: registry.gitlab.com/uguca/uguca/ubuntu:20.04
 
+.image_ubuntu_22.04:
+  variables:
+    IMAGE_NAME: ubuntu_22.04
+  image: registry.gitlab.com/uguca/uguca/ubuntu:22.04
+
 # ------------------------------------------------------------------------------
 .compiler_gcc:
   variables:
@@ -134,6 +139,13 @@ stages:
     - .compiler_gcc
     - .image_ubuntu_20.04
 
+.ubuntu_22.04_gcc:
+  variables:
+    output: ubuntu_22.04_gcc
+  extends:
+    - .compiler_gcc
+    - .image_ubuntu_22.04
+
 # ------------------------------------------------------------------------------
 configure:ubuntu_16.04_gcc:
   extends:
@@ -161,22 +173,10 @@ build:ubuntu_18.04_gcc:
     - configure:ubuntu_18.04_gcc
 
 # ------------------------------------------------------------------------------
-configure_base:ubuntu_20.04_gcc:
-  extends:
-    - .ubuntu_20.04_gcc
-    - .configure_base
-
 configure:ubuntu_20.04_gcc:
   extends:
     - .ubuntu_20.04_gcc
     - .configure
-
-build_base:ubuntu_20.04_gcc:
-  extends:
-    - .ubuntu_20.04_gcc
-    - .builds
-  dependencies:
-    - configure_base:ubuntu_20.04_gcc
 
 build:ubuntu_20.04_gcc:
   extends:
@@ -185,45 +185,70 @@ build:ubuntu_20.04_gcc:
   dependencies:
     - configure:ubuntu_20.04_gcc
 
-analyse_build_base:ubuntu_20.04_gcc:
+# ------------------------------------------------------------------------------
+configure_base:ubuntu_22.04_gcc:
   extends:
-    - .ubuntu_20.04_gcc
+    - .ubuntu_22.04_gcc
+    - .configure_base
+
+configure:ubuntu_22.04_gcc:
+  extends:
+    - .ubuntu_22.04_gcc
+    - .configure
+
+build_base:ubuntu_22.04_gcc:
+  extends:
+    - .ubuntu_22.04_gcc
+    - .builds
+  dependencies:
+    - configure_base:ubuntu_22.04_gcc
+
+build:ubuntu_22.04_gcc:
+  extends:
+    - .ubuntu_22.04_gcc
+    - .builds
+  dependencies:
+    - configure:ubuntu_22.04_gcc
+
+analyse_build_base:ubuntu_22.04_gcc:
+  extends:
+    - .ubuntu_22.04_gcc
     - .analyse_build
   dependencies:
-    - build_base:ubuntu_20.04_gcc
+    - build_base:ubuntu_22.04_gcc
 
-analyse_build:ubuntu_20.04_gcc:
+analyse_build:ubuntu_22.04_gcc:
   extends:
-    - .ubuntu_20.04_gcc
+    - .ubuntu_22.04_gcc
     - .analyse_build
   dependencies:
-    - build:ubuntu_20.04_gcc
+    - build:ubuntu_22.04_gcc
 
-test_base:ubuntu_20.04_gcc:
+test_base:ubuntu_22.04_gcc:
   extends:
-    - .ubuntu_20.04_gcc
+    - .ubuntu_22.04_gcc
     - .test
   dependencies:
-    - build_base:ubuntu_20.04_gcc
+    - build_base:ubuntu_22.04_gcc
 
-test:ubuntu_20.04_gcc:
+test:ubuntu_22.04_gcc:
   extends:
-    - .ubuntu_20.04_gcc
+    - .ubuntu_22.04_gcc
     - .test
   dependencies:
-    - build:ubuntu_20.04_gcc
+    - build:ubuntu_22.04_gcc
 
 # ------------------------------------------------------------------------------
 build:documentation:
   stage: doc-build
   extends:
-    - .ubuntu_20.04_gcc
+    - .ubuntu_22.04_gcc
   script:
     - cd build-ci
     - cmake -DUCA_DEVELOPER_DOC:BOOL=TRUE ..
     - cmake --build . --target sphinx-doc
   dependencies:
-    - build:ubuntu_20.04_gcc
+    - build:ubuntu_22.04_gcc
   artifacts:
     paths:
     - build-ci/doc/dev-doc/html
@@ -231,7 +256,7 @@ build:documentation:
 pages:
   stage: deploy
   extends:
-    - .ubuntu_20.04_gcc
+    - .ubuntu_22.04_gcc
   script:
     - mv build-ci/doc/dev-doc/html public
   dependencies:
