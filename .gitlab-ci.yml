@@ -91,11 +91,6 @@ stages:
       - "$output-err.log"
 
 # ------------------------------------------------------------------------------
-.image_ubuntu_16.04:
-  variables:
-    IMAGE_NAME: ubuntu_16.04
-  image: registry.gitlab.com/uguca/uguca/ubuntu:16.04
-
 .image_ubuntu_18.04:
   variables:
     IMAGE_NAME: ubuntu_18.04
@@ -118,13 +113,6 @@ stages:
     CXX: g++
 
 # ------------------------------------------------------------------------------
-.ubuntu_16.04_gcc:
-  variables:
-    output: ubuntu_16.04_gcc
-  extends:
-    - .compiler_gcc
-    - .image_ubuntu_16.04
-
 .ubuntu_18.04_gcc:
   variables:
     output: ubuntu_18.04_gcc
@@ -145,19 +133,6 @@ stages:
   extends:
     - .compiler_gcc
     - .image_ubuntu_22.04
-
-# ------------------------------------------------------------------------------
-configure:ubuntu_16.04_gcc:
-  extends:
-    - .ubuntu_16.04_gcc
-    - .configure
-
-build:ubuntu_16.04_gcc:
-  extends:
-    - .ubuntu_16.04_gcc
-    - .builds
-  dependencies:
-    - configure:ubuntu_16.04_gcc
 
 # ------------------------------------------------------------------------------
 configure:ubuntu_18.04_gcc:
