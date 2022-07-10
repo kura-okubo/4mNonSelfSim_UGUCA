@@ -33,7 +33,7 @@
 /* -------------------------------------------------------------------------- */
 #include "half_space_quasi_dynamic.hh"
 #include "preint_kernel.hh"
-#include "limited_history.hh"
+#include "modal_limited_history.hh"
 
 __BEGIN_UGUCA__
 
@@ -77,8 +77,8 @@ public:
   virtual double getStableTimeStep();
 
   // get limited history
-  LimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
-  LimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
+  ModalLimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
+  ModalLimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -87,8 +87,8 @@ protected:
 
   // past values of displacement in frequency domain
   // each LimitedHistory is for a given wave number q
-  std::vector<std::vector<LimitedHistory *> > U_r;
-  std::vector<std::vector<LimitedHistory *> > U_i;
+  std::vector<std::vector<ModalLimitedHistory *> > U_r;
+  std::vector<std::vector<ModalLimitedHistory *> > U_i;
 
   // convolutions
   std::vector<PreintKernel *> H00_pi;

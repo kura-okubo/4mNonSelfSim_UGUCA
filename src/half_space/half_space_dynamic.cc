@@ -165,8 +165,8 @@ void HalfSpaceDynamic::initConvolutions() {
     }
 
     for (int d=0; d<this->mesh.getDim(); ++d) {
-      this->U_r[d][j] = new LimitedHistory(nb_hist[d]);
-      this->U_i[d][j] = new LimitedHistory(nb_hist[d]);
+      this->U_r[d][j] = new ModalLimitedHistory(nb_hist[d]);
+      this->U_i[d][j] = new ModalLimitedHistory(nb_hist[d]);
     }
 
     for (int d=0; d<this->mesh.getDim(); ++d)
@@ -250,14 +250,14 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
       krnl.insert(krnl.end(), krnl3d.begin(), krnl3d.end());
     }
 
-    std::vector<LimitedHistory *> U_real = {
+    std::vector<ModalLimitedHistory *> U_real = {
       this->U_r[0][j],
       this->U_r[0][j],
       this->U_r[1][j],
       this->U_r[1][j]};
 
     if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<LimitedHistory *> U_real3d = {
+      std::vector<ModalLimitedHistory *> U_real3d = {
 	this->U_r[2][j],
 	this->U_r[2][j],
 	this->U_r[0][j],
@@ -266,14 +266,14 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
       U_real.insert(U_real.end(), U_real3d.begin(), U_real3d.end());
     }
 
-    std::vector<LimitedHistory *> U_imag = {
+    std::vector<ModalLimitedHistory *> U_imag = {
       this->U_i[0][j],
       this->U_i[0][j],
       this->U_i[1][j],
       this->U_i[1][j]};
 
     if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<LimitedHistory *> U_imag3d = {
+      std::vector<ModalLimitedHistory *> U_imag3d = {
 	this->U_i[2][j],
 	this->U_i[2][j],
 	this->U_i[0][j],

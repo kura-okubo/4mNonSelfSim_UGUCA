@@ -1,5 +1,5 @@
 /**
- * @file   limited_history.hh
+ * @file   modal_limited_history.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -29,8 +29,8 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* -------------------------------------------------------------------------- */
-#ifndef __LIMITED_HISTORY_H__
-#define __LIMITED_HISTORY_H__
+#ifndef __MODAL_LIMITED_HISTORY_H__
+#define __MODAL_LIMITED_HISTORY_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include <iostream>
@@ -38,13 +38,13 @@
 
 __BEGIN_UGUCA__
 
-class LimitedHistory {
+class ModalLimitedHistory {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  LimitedHistory(unsigned int size);
-  virtual ~LimitedHistory();
+  ModalLimitedHistory(unsigned int size);
+  virtual ~ModalLimitedHistory();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -92,7 +92,7 @@ protected:
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::addCurrentValue(double value) {
+inline void ModalLimitedHistory::addCurrentValue(double value) {
 
   if (this->index_now == 0)
     this->index_now = this->size;
@@ -107,12 +107,12 @@ inline void LimitedHistory::addCurrentValue(double value) {
 }
 
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::changeCurrentValue(double value) {
+inline void ModalLimitedHistory::changeCurrentValue(double value) {
   this->values[this->index_now] = value;
 }
 
 /* -------------------------------------------------------------------------- */
-inline double LimitedHistory::at(unsigned int index) const {
+inline double ModalLimitedHistory::at(unsigned int index) const {
   if (index >= this->size) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
@@ -124,4 +124,4 @@ inline double LimitedHistory::at(unsigned int index) const {
 
 __END_UGUCA__
 
-#endif /* __LIMITED_HISTORY_H__ */
+#endif /* __MODAL_LIMITED_HISTORY_H__ */

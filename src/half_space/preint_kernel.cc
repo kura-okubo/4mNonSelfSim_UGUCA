@@ -90,8 +90,8 @@ void PreintKernel::multiplyBy(double factor) {
 }
 
 /* -------------------------------------------------------------------------- */
-std::complex<double> PreintKernel::convolve(const LimitedHistory * __restrict__ U_r,
-					    const LimitedHistory * __restrict__ U_i) {
+std::complex<double> PreintKernel::convolve(const ModalLimitedHistory * __restrict__ U_r,
+					    const ModalLimitedHistory * __restrict__ U_i) {
 
   unsigned int nb_U = U_r->getNbHistoryPoints();
 

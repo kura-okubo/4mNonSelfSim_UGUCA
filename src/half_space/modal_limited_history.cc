@@ -1,5 +1,5 @@
 /**
- * @file   limited_history.cc
+ * @file   modal_limited_history.cc
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,12 +28,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include "limited_history.hh"
+#include "modal_limited_history.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-LimitedHistory::LimitedHistory(unsigned int size) :
+ModalLimitedHistory::ModalLimitedHistory(unsigned int size) :
   nb_history_points(0),
   size(size) {
 
@@ -45,7 +45,7 @@ LimitedHistory::LimitedHistory(unsigned int size) :
 }
 
 /* -------------------------------------------------------------------------- */
-LimitedHistory::~LimitedHistory() {
+ModalLimitedHistory::~ModalLimitedHistory() {
   delete[] this->values;
 }
 

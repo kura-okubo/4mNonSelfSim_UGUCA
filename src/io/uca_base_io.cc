@@ -121,7 +121,7 @@ void BaseIO::registerIO(const std::string & name,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(const std::string & name,
-			LimitedHistory & lim_history) {
+			ModalLimitedHistory & lim_history) {
   if (this->registered_histories.find(name) == this->registered_histories.end())
     this->registered_histories[name] = (&lim_history);
   else
@@ -197,7 +197,7 @@ void BaseIO::dumpField(std::fstream * dump_file,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::dumpHistory(std::fstream * dump_file,
-			 const LimitedHistory & limited_history) {
+			 const ModalLimitedHistory & limited_history) {
   if (!this->initiated) return;
 
   // write nb_history points and index_now
@@ -268,7 +268,7 @@ void BaseIO::loadField(std::fstream * load_file,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::loadHistory(std::fstream * load_file,
-			 LimitedHistory & limited_history) {
+			 ModalLimitedHistory & limited_history) {
   if (!this->initiated) return;
 
   // read nb_history points and index_now

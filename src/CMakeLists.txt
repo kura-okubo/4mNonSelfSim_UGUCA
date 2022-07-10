@@ -60,7 +60,7 @@ set(UGUCA_HEADER
   half_space/material.hh
 
   # half spaces
-  half_space/limited_history.hh
+  half_space/modal_limited_history.hh
   half_space/preint_kernel.hh
   half_space/half_space.hh
   half_space/half_space_quasi_dynamic.hh
@@ -114,7 +114,7 @@ set(UGUCA_SRC
   half_space/material.cc
 
   # half spaces
-  half_space/limited_history.cc
+  half_space/modal_limited_history.cc
   half_space/preint_kernel.cc
   half_space/half_space.cc
   half_space/half_space_dynamic.cc

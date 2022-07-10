@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "limited_history.hh"
+#include "modal_limited_history.hh"
 
 #include <iostream>
 #include <stdexcept>
@@ -41,7 +41,7 @@ int main(){
   std::cout << "start test: limited_history" << std::endl;
 
   unsigned int size = 4;
-  LimitedHistory lh1(size);
+  ModalLimitedHistory lh1(size);
 
   std::cout << "check size" << std::endl;
   if (lh1.getSize() != size) {

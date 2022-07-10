@@ -31,7 +31,7 @@
 
 #include "preint_kernel.hh"
 #include "precomputed_kernel.hh"
-#include "limited_history.hh"
+#include "modal_limited_history.hh"
 
 #include <cmath>
 #include <iomanip> // for std::setprecision
@@ -104,7 +104,7 @@ int main(){
   // test convolve
   std::cout << "check convolve" << std::endl;
   // test case where (lt.getSize()- lt.getIndexNow()>=lt.getNbHistoryPoints())
-  LimitedHistory lt(pik.getSize());
+  ModalLimitedHistory lt(pik.getSize());
   for (double val=0.25; val<2.0;val+=0.25){
     lt.addCurrentValue(val);
   }
