@@ -35,18 +35,15 @@ __BEGIN_UGUCA__
 /* -------------------------------------------------------------------------- */
 ModalLimitedHistory::ModalLimitedHistory(unsigned int size) :
   nb_history_points(0),
-  size(size) {
+  index_now(0),
+  values(size) {
 
-  this->index_now = 0;
-  this->values = new double[size];
-
-  for (unsigned int i=0; i<this->size; ++i)
-    this->values[i] = 0.;
+  std::fill(this->values.begin(), this->values.end(), 0);
 }
 
 /* -------------------------------------------------------------------------- */
-ModalLimitedHistory::~ModalLimitedHistory() {
-  delete[] this->values;
+void ModalLimitedHistory::resize(unsigned int size) {
+  this->values.resize(size);
 }
 
 __END_UGUCA__

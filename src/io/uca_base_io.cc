@@ -304,7 +304,7 @@ void BaseIO::loadHistory(std::fstream * load_file,
   }
   
   int size = limited_history.getSize();
-  double * lh_data = limited_history.getValues();
+  double * lh_data = const_cast<double*>(limited_history.getValues());
   this->read(load_file, lh_data, size);
 }
 

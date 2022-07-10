@@ -157,10 +157,10 @@ int main(int argc, char *argv[]) {
   double nf4v2 = 1.2;
   interface.getCohesion().setAllValuesTo(nf4v);
   HalfSpaceDynamic & top = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
-  double * Ur00 = top.getLimitedHistoryReal(0,1).getValues();
+  double * Ur00 = const_cast<double*>(top.getLimitedHistoryReal(0,1).getValues());
   int Ur00_size = top.getLimitedHistoryReal(0,1).getSize();
   std::fill_n(Ur00,Ur00_size,nf4v);
-  double * Ui00 = top.getLimitedHistoryImag(0,1).getValues();
+  double * Ui00 = const_cast<double*>(top.getLimitedHistoryImag(0,1).getValues());
   int Ui00_size = top.getLimitedHistoryImag(0,1).getSize();
   std::fill_n(Ui00,Ui00_size,nf4v2);
   unsigned int nb_history_correct = top.getLimitedHistoryReal(0,1).getNbHistoryPoints();
@@ -207,9 +207,9 @@ int main(int argc, char *argv[]) {
   }
 
   HalfSpaceDynamic & top_to_check = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
-  Ur00 = top_to_check.getLimitedHistoryReal(0,1).getValues();
+  Ur00 = const_cast<double*>(top_to_check.getLimitedHistoryReal(0,1).getValues());
   Ur00_size = top_to_check.getLimitedHistoryReal(0,1).getSize();
-  Ui00 = top_to_check.getLimitedHistoryImag(0,1).getValues();
+  Ui00 = const_cast<double*>(top_to_check.getLimitedHistoryImag(0,1).getValues());
   Ui00_size = top_to_check.getLimitedHistoryImag(0,1).getSize();
   
   for (int i=0; i<Ur00_size; ++i) {
@@ -259,9 +259,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  Ur00 = top_to_check.getLimitedHistoryReal(0,1).getValues();
+  Ur00 = const_cast<double*>(top_to_check.getLimitedHistoryReal(0,1).getValues());
   Ur00_size = top_to_check.getLimitedHistoryReal(0,1).getSize();
-  Ui00 = top_to_check.getLimitedHistoryImag(0,1).getValues();
+  Ui00 = const_cast<double*>(top_to_check.getLimitedHistoryImag(0,1).getValues());
   Ui00_size = top_to_check.getLimitedHistoryImag(0,1).getSize();
   
   for (int i=0; i<Ur00_size; ++i) {

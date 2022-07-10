@@ -35,6 +35,7 @@
 #include "uca_common.hh"
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 __BEGIN_UGUCA__
 
@@ -43,8 +44,8 @@ class ModalLimitedHistory {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  ModalLimitedHistory(unsigned int size);
-  virtual ~ModalLimitedHistory();
+  ModalLimitedHistory(unsigned int size = 0);
+  virtual ~ModalLimitedHistory() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -57,15 +58,18 @@ public:
   // get history value at index with index=0 : now
   inline double at(unsigned int index) const;
 
+  // resize values
+  void resize(unsigned int size);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->size; };
+  unsigned int getSize() const { return this->values.size(); };
   unsigned int getNbHistoryPoints() const { return std::min(this->nb_history_points,
-							    this->size); };
+							    this->values.size()); };
   unsigned int getIndexNow() const {return this->index_now; }
-  double * getValues() const {return this->values; }
+  const double * getValues() const {return this->values.data(); }
 
   // for restart
   void setNbHistoryPoints(int hp) { this->nb_history_points = hp; }
@@ -76,16 +80,13 @@ public:
   /* ------------------------------------------------------------------------ */
 protected:
   // number of accumulated history points
-  unsigned int nb_history_points;
-
-  // number of history entries
-  unsigned int size;
+  std::vector<double>::size_type nb_history_points;
 
   // index pointing to the newest entry
   unsigned int index_now;
 
   // values
-  double * values;
+  std::vector<double> values;
 };
 
 
@@ -95,7 +96,7 @@ protected:
 inline void ModalLimitedHistory::addCurrentValue(double value) {
 
   if (this->index_now == 0)
-    this->index_now = this->size;
+    this->index_now = this->values.size();
 
   this->index_now -= 1;
 
@@ -103,7 +104,7 @@ inline void ModalLimitedHistory::addCurrentValue(double value) {
 
   // increase the counter of history points
   this->nb_history_points = std::min(this->nb_history_points + 1,
-				     this->size);
+				     this->values.size());
 }
 
 /* -------------------------------------------------------------------------- */
@@ -113,12 +114,12 @@ inline void ModalLimitedHistory::changeCurrentValue(double value) {
 
 /* -------------------------------------------------------------------------- */
 inline double ModalLimitedHistory::at(unsigned int index) const {
-  if (index >= this->size) {
+  if (index >= this->values.size()) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
   }
 
-  unsigned int i = (this->index_now + index) % this->size;
+  unsigned int i = (this->index_now + index) % this->values.size();
   return this->values[i];
 }
 
