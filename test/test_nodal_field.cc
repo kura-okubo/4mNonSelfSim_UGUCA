@@ -148,9 +148,7 @@ int main(){
   tol = 1e-16;
   ref_ans = 0;
   ans.setAllValuesTo(0);
-  field.multiplyByScalar(0,ans);
-  field.multiplyByScalar(1,ans);
-  field.multiplyByScalar(2,ans);
+  field.multiplyByScalar(ans);
   for (int j = 0; j < field.getDim(); ++j) {
     for (int i = 0; i < mesh3d.getNbLocalNodes(); ++i) {
       if (std::abs(field.component(j).at(i) - ref_ans) > tol) {

@@ -76,7 +76,9 @@ public:
   // multiply component of field element-wise with scalar
   void multiplyByScalar(int component,
 			const NodalFieldComponent & scalar);
-
+  // multiply all component of field element-wise with scalar
+  void multiplyByScalar(const NodalFieldComponent & scalar);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
