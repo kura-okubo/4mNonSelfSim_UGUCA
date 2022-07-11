@@ -81,6 +81,7 @@ uguca_add_test(test_infinite_boundary)
 # test interfaces
 uguca_add_test(test_interface)
 uguca_add_test(test_unimat_shear_interface)
+uguca_add_test(test_unimat_normal_interface)
 uguca_add_test(test_bimat_interface)
 uguca_add_test(test_defrig_interface)
 

@@ -91,6 +91,11 @@ int checkMaintainShearGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
   load_0.reserve((size_t)mesh.getNbLocalNodes());
   std::vector<double> load_2;
   load_2.reserve((size_t)mesh.getNbLocalNodes());
+  std::vector<double> internal_0;
+  internal_0.reserve((size_t)mesh.getNbLocalNodes());
+  std::vector<double> internal_2;
+  internal_2.reserve((size_t)mesh.getNbLocalNodes());
+  HalfSpace &top = interface.getTop();
   std::uniform_real_distribution<double> unif(0, 1);
   std::default_random_engine re;
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
@@ -100,8 +105,14 @@ int checkMaintainShearGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
     random_value = unif(re);
     load_2.push_back(random_value);
     interface.getLoad().component(2).set(i) = random_value;
+    random_value = unif(re);
+    internal_0.push_back(random_value);
+    top.getInternal().component(0).set(i) = random_value;
+    random_value = unif(re);
+    internal_2.push_back(random_value);
+    top.getInternal().component(2).set(i) = random_value;
   }
-  // compute reference solutions, note that internal is zero.
+  // compute reference solutions, note that internal is not zero.
   std::vector<double> ref_maintain_force_0;
   ref_maintain_force_0.reserve((size_t)mesh.getNbLocalNodes());
   std::vector<double> ref_maintain_force_2;
@@ -111,8 +122,8 @@ int checkMaintainShearGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
   double fact_both = fact_top * 2;
   fact_top /= fact_both;
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-    ref_maintain_force_0.push_back(load_0[i] + 2.0 * fact_top * 0.0);
-    ref_maintain_force_2.push_back(load_2[i] + 2.0 * fact_top * 0.0);
+    ref_maintain_force_0.push_back(load_0[i] + 2.0 * fact_top * internal_0[i]);
+    ref_maintain_force_2.push_back(load_2[i] + 2.0 * fact_top * internal_2[i]);
   }
   // check results
   interface.maintainShearGapForce(fields);  // not predicting
@@ -153,21 +164,24 @@ int checkComputeGaps(SimpleMesh &mesh, UnimatShearInterface &interface,
   // check results
   interface.computeGap(fields, false);  // not predicting
   double tol = 1e-10;
-  for (size_t j = 0; j < 3; ++j) {
-    for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-      if (std::abs(fields.component(j).at(i)-disp[j][i] * 2) > tol) {
-        std::cout << "discrepancy found in computeGap" << std::endl;
-        return 1;  // failure
-      }
+  
+  for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
+    if ((std::abs(fields.component(0).at(i)-disp[0][i] * 2) > tol) ||
+	(std::abs(fields.component(1).at(i)-disp[1][i] * 0) > tol) ||
+	(std::abs(fields.component(2).at(i)-disp[2][i] * 2) > tol)) {
+      std::cout << "discrepancy found in computeGap" << std::endl;
+      return 1;  // failure
     }
   }
+  
   interface.computeGapVelocity(fields, false);  // not predicting
-  for (size_t j = 0; j < 3; ++j) {
-    for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-      if (std::abs(fields.component(j).at(i)-velo[j][i] * 2) > tol) {
-        std::cout << "discrepancy found in computeGapVelocity" << std::endl;
-        return 1;  // failure
-      }
+  
+  for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
+    if ((std::abs(fields.component(0).at(i)-velo[0][i] * 2) > tol) ||
+	(std::abs(fields.component(1).at(i)-velo[1][i] * 0) > tol) ||
+	(std::abs(fields.component(2).at(i)-velo[2][i] * 2) > tol)) {
+      std::cout << "discrepancy found in computeGapVelocity" << std::endl;
+      return 1;  // failure
     }
   }
   return 0;  // success
