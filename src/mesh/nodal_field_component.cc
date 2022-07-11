@@ -78,6 +78,17 @@ void NodalFieldComponent::zeros() {
 }
 
 /* -------------------------------------------------------------------------- */
+void NodalFieldComponent::multiply(const NodalFieldComponent & other) {
+
+  double * this_p = this->storage();
+  const double * other_p = other.storage();
+  
+  for (int n=0; n<this->getNbNodes(); ++n) {
+    this_p[n] *= other_p[n];
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 void NodalFieldComponent::setAllValuesTo(double value) {
   // do not initialize twice
   if (!this->initialized)

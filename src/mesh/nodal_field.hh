@@ -73,10 +73,12 @@ public:
   void computeNorm(NodalFieldComponent & norm,
 		   int ignore_dir = -1) const;
 
-  // multiply fields element-wise with scalar
-  void multiplyByScalar(const NodalFieldComponent & scalar,
-			int ignore_dir = -1);
-
+  // multiply component of field element-wise with scalar
+  void multiplyByScalar(int component,
+			const NodalFieldComponent & scalar);
+  // multiply all component of field element-wise with scalar
+  void multiplyByScalar(const NodalFieldComponent & scalar);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

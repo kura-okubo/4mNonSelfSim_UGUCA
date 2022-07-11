@@ -101,7 +101,7 @@ void LinearNormalCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in normal direction
-  cohesion.multiplyByScalar(alpha_field, 0);
+  cohesion.multiplyByScalar(1, alpha_field);
 }
 
 /* -------------------------------------------------------------------------- */

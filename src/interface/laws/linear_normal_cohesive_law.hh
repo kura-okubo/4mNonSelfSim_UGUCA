@@ -34,6 +34,8 @@
    Linear cohesive law in normal direction only.
    No interpenetration allowed
 
+   Shear gap is maintained as is.
+
    Parameter:
    Gc - fracture energy
    sigma_c peak strength
