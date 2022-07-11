@@ -40,13 +40,13 @@
 /*
   assume antisymmetry - works if interface remains in contact
 
-  u_0_top == -u_0_bot
+  u_0_top ==  u_0_bot -> no opening allowed
   f_0_top == -f_0_bot
 
-  u_1_top == u_1_bot -> no opening allowed
-  f_1_top == f_1_bot -> convolution response is symmetric
+  u_1_top == - u_1_bot -> opening symmetric
+  f_1_top == f_1_bot   -> convolution response is symmetric
 
-  u_2_top == -u_2_bot
+  u_2_top ==  u_2_bot
   f_2_top == -f_2_bot
 
   does not work for mode I crack
