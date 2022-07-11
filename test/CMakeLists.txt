@@ -84,6 +84,7 @@ uguca_add_test(test_bimat_interface)
 uguca_add_test(test_defrig_interface)
 
 # test interface laws
+uguca_add_test(test_linear_normal_cohesive_law)
 uguca_add_test(test_linear_shear_cohesive_law)
 uguca_add_test(test_linear_coulomb_friction_law)
 uguca_add_test(test_barras_law)
