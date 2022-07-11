@@ -97,29 +97,34 @@ void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
 void UnimatShearInterface::computeGap(NodalField & gap,
 				      bool predicting) {
   // gap is only allowed in 0,2 directions (shear)
-  for (int d = 0; d < this->mesh.getDim(); d+=2) {
+  for (int d = 0; d < this->mesh.getDim(); ++d) {
 
     double * top_disp = this->top->getDisp(predicting).storage(d);
     double * gap_p = gap.storage(d);
-
-    for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
-      gap_p[n] = 2 * top_disp[n];
-    }
+    if (d==1)
+      for (int n=0; n<this->mesh.getNbLocalNodes(); ++n)
+	gap_p[n] = 0.0;
+    else
+      for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) 
+	gap_p[n] = 2 * top_disp[n];
   }
 }
 
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::computeGapVelocity(NodalField & gap_velo,
 					      bool predicting) {
-
-  for (int d = 0; d < this->mesh.getDim(); d+=2) {
+  // gap is only allowed in 0,2 directions (shear)
+  for (int d = 0; d < this->mesh.getDim(); ++d) {
 
     double * top_velo_p = this->top->getVelo(predicting).storage(d);
     double * gap_velo_p = gap_velo.storage(d);
 
-    for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
-      gap_velo_p[n] = 2 * top_velo_p[n];
-    }
+    if (d==1)
+      for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n)
+	gap_velo_p[n] = 0.0;
+    else
+      for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) 
+	gap_velo_p[n] = 2 * top_velo_p[n];
   }
 }
 
