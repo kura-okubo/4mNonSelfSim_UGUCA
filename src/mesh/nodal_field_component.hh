@@ -87,6 +87,9 @@ public:
   void zeros();
   void setAllValuesTo(double value);
 
+  /// multiply in-place with other
+  void multiply(const NodalFieldComponent & other);
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
