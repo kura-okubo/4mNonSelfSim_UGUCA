@@ -55,7 +55,7 @@ UnimatNormalInterface::~UnimatNormalInterface() {
 
 /* -------------------------------------------------------------------------- */
 void UnimatNormalInterface::closingNormalGapForce(NodalFieldComponent & close_force,
-						 bool predicting) {
+						  bool predicting) {
   // top material information
   const Material & mat_t = this->top->getMaterial();
   double cp_t = mat_t.getCp();
@@ -71,8 +71,8 @@ void UnimatNormalInterface::closingNormalGapForce(NodalFieldComponent & close_fo
   double * cf = close_force.storage();
 
   for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
-    double u_1_gap = 2.0 * u_1_t[n];           // for readability
-    double du_1_t =  t0_1[n] + f_1_t[n];       // for readability
+    double u_1_gap =  2.0 * u_1_t[n];                 // for readability
+    double du_1_t  =  t0_1[n] + f_1_t[n];       // for readability
     cf[n] = 0.5 * u_1_gap / fact_t + du_1_t;
   }
 }
@@ -95,31 +95,29 @@ void UnimatNormalInterface::maintainShearGapForce(NodalField & maintain_force) {
 
 /* -------------------------------------------------------------------------- */
 void UnimatNormalInterface::computeGap(NodalField & gap,
-				      bool predicting) {
+				       bool predicting) {
+  // gap is only allowed in 1 direction
+  int d = 1;
+  
+  double * top_disp = this->top->getDisp(predicting).storage(d);
+  double * gap_p = gap.storage(d);
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
-
-    double * top_disp = this->top->getDisp(predicting).storage(d);
-    double * gap_p = gap.storage(d);
-
-    for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
-      gap_p[n] = 2 * top_disp[n];
-    }
+  for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
+    gap_p[n] = 2 * top_disp[n];
   }
 }
 
 /* -------------------------------------------------------------------------- */
 void UnimatNormalInterface::computeGapVelocity(NodalField & gap_velo,
-					      bool predicting) {
+					       bool predicting) {
+  // gap is only allowed in 1 direction
+  int d = 1;
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  double * top_velo_p = this->top->getVelo(predicting).storage(d);
+  double * gap_velo_p = gap_velo.storage(d);
 
-    double * top_velo_p = this->top->getVelo(predicting).storage(d);
-    double * gap_velo_p = gap_velo.storage(d);
-
-    for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
-      gap_velo_p[n] = 2 * top_velo_p[n];
-    }
+  for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
+    gap_velo_p[n] = 2 * top_velo_p[n];
   }
 }
 

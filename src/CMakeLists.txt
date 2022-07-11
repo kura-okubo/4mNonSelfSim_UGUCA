@@ -71,6 +71,7 @@ set(UGUCA_HEADER
   interface/bimat_interface.hh
   interface/defrig_interface.hh
   interface/unimat_shear_interface.hh
+  interface/unimat_normal_interface.hh
 
   # interface laws
   interface/laws/interface_law.hh
@@ -126,6 +127,7 @@ set(UGUCA_SRC
   interface/bimat_interface.cc
   interface/defrig_interface.cc
   interface/unimat_shear_interface.cc
+  interface/unimat_normal_interface.cc
 
   # interface laws
   interface/laws/interface_law.cc
