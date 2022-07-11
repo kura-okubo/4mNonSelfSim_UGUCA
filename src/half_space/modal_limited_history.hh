@@ -39,12 +39,14 @@
 
 __BEGIN_UGUCA__
 
+class PreintKernel;
+
 class ModalLimitedHistory {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  ModalLimitedHistory(unsigned int size = 0);
+  ModalLimitedHistory();
   virtual ~ModalLimitedHistory() {};
 
   /* ------------------------------------------------------------------------ */
@@ -58,8 +60,11 @@ public:
   // get history value at index with index=0 : now
   inline double at(unsigned int index) const;
 
-  // resize values
-  void resize(unsigned int size);
+  // update to take account for newly added preint kernels
+  void resize();
+  
+  // register preintegrated kernel
+  void registerKernel(const PreintKernel * pi_kernel);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -87,6 +92,9 @@ protected:
 
   // values
   std::vector<double> values;
+
+  // preintegrated kernels that use this limited history
+  std::vector<const PreintKernel*> pi_kernels;
 };
 
 

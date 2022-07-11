@@ -123,8 +123,6 @@ void HalfSpaceDynamic::initConvolutions() {
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
   
-  int total_work=0;
-
   double ** wave_numbers = this->mesh.getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
@@ -151,29 +149,49 @@ void HalfSpaceDynamic::initConvolutions() {
     if (this->mesh.getDim()==3)
       this->H22_pi[j]->preintegrate(qj_cs, this->time_step);
 
-    std::vector<int> nb_hist={0,0,0};
+    // register ModalLimitedHistory
+    for (int d=0; d<this->mesh.getDim(); ++d) {
+      this->U_r[d][j] = new ModalLimitedHistory();
+      this->U_i[d][j] = new ModalLimitedHistory();
+    }
 
-    nb_hist[0] = std::max(this->H00_pi[j]->getSize(),
-			  this->H01_pi[j]->getSize());
-    nb_hist[1] = std::max(this->H11_pi[j]->getSize(),
-			  this->H01_pi[j]->getSize());
+    // to be corrected when put into a collection
+    this->U_r[0][j]->registerKernel(this->H00_pi[j]);
+    this->U_r[0][j]->registerKernel(this->H01_pi[j]);
+    this->U_i[0][j]->registerKernel(this->H00_pi[j]);
+    this->U_i[0][j]->registerKernel(this->H01_pi[j]);
+
+    this->U_r[1][j]->registerKernel(this->H11_pi[j]);
+    this->U_r[1][j]->registerKernel(this->H01_pi[j]);
+    this->U_i[1][j]->registerKernel(this->H11_pi[j]);
+    this->U_i[1][j]->registerKernel(this->H01_pi[j]);
+
     if (this->mesh.getDim()==3) {
-      nb_hist[0] = std::max(std::max(this->H00_pi[j]->getSize(),
-				     this->H01_pi[j]->getSize()),
-			    this->H22_pi[j]->getSize());
-      nb_hist[2] = nb_hist[0];
+      this->U_r[0][j]->registerKernel(this->H22_pi[j]);
+      this->U_i[0][j]->registerKernel(this->H22_pi[j]);
+
+      this->U_r[2][j]->registerKernel(this->H00_pi[j]);
+      this->U_r[2][j]->registerKernel(this->H01_pi[j]);
+      this->U_r[2][j]->registerKernel(this->H22_pi[j]);
+      this->U_i[2][j]->registerKernel(this->H00_pi[j]);
+      this->U_i[2][j]->registerKernel(this->H01_pi[j]);
+      this->U_i[2][j]->registerKernel(this->H22_pi[j]);
     }
 
     for (int d=0; d<this->mesh.getDim(); ++d) {
-      this->U_r[d][j] = new ModalLimitedHistory(nb_hist[d]);
-      this->U_i[d][j] = new ModalLimitedHistory(nb_hist[d]);
+      this->U_r[d][j]->resize();
+      this->U_i[d][j]->resize();
     }
-
-    for (int d=0; d<this->mesh.getDim(); ++d)
-      total_work += nb_hist[d];
   }
 
 #ifdef UCA_VERBOSE
+  int total_work=0;
+  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
+    // ignore mode 0
+    if ((prank == m0_rank) && (j == m0_index)) continue;
+    for (int d=0; d<this->mesh.getDim(); ++d)
+      total_work += this->U_r[d][j]->getSize();
+  }
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   printf("Rank %d has total work %d \n",world_rank,total_work);
 #endif /* UCA_VERBOSE */

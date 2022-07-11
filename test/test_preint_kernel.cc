@@ -104,7 +104,9 @@ int main(){
   // test convolve
   std::cout << "check convolve" << std::endl;
   // test case where (lt.getSize()- lt.getIndexNow()>=lt.getNbHistoryPoints())
-  ModalLimitedHistory lt(pik.getSize());
+  ModalLimitedHistory lt;
+  lt.registerKernel(&pik);
+  lt.resize();
   for (double val=0.25; val<2.0;val+=0.25){
     lt.addCurrentValue(val);
   }

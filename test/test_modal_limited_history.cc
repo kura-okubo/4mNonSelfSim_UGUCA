@@ -30,18 +30,29 @@
  */
 
 #include "modal_limited_history.hh"
+#include "preint_kernel.hh"
 
 #include <iostream>
 #include <stdexcept>
 
 using namespace uguca;
 
+class PIK : public PreintKernel {
+public:
+  PIK(int size) : PreintKernel(NULL) {
+    this->values.resize(size);
+  }
+};
+
 int main(){
 
   std::cout << "start test: limited_history" << std::endl;
 
   unsigned int size = 4;
-  ModalLimitedHistory lh1(size);
+  PIK pik1(size);
+  ModalLimitedHistory lh1;
+  lh1.registerKernel(&pik1);
+  lh1.resize();
 
   std::cout << "check size" << std::endl;
   if (lh1.getSize() != size) {
@@ -90,6 +101,22 @@ int main(){
   }
   std::cout << "history correct -> success" << std::endl;
 
+  std::cout << "check change size of ModalLimitedHistory" << std::endl;
+  PIK pik2(size*2);
+  lh1.registerKernel(&pik2);
+  lh1.resize();
+  
+  // check if history still correct
+  for (unsigned int i=0; i<lh1.getNbHistoryPoints(); ++i) {
+    double val = add1+add2-i;
+    if (lh1.at(i) != val) {
+      std::cerr << "wrong history value (" << val << "): "
+		<< lh1.at(i) << std::endl;
+      return 1; // failure
+    }
+  }
+  std::cout << "change size -> success" << std::endl;
+  
   std::cout << "check change current value" << std::endl;
   double val = 102;
   lh1.changeCurrentValue(val);

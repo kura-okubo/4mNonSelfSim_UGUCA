@@ -29,21 +29,52 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "modal_limited_history.hh"
+#include "preint_kernel.hh"
+#include <iterator>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-ModalLimitedHistory::ModalLimitedHistory(unsigned int size) :
+ModalLimitedHistory::ModalLimitedHistory() :
   nb_history_points(0),
   index_now(0),
-  values(size) {
-
-  std::fill(this->values.begin(), this->values.end(), 0);
+  values(0) {
+  //std::fill(this->values.begin(), this->values.end(), 0);
 }
 
 /* -------------------------------------------------------------------------- */
-void ModalLimitedHistory::resize(unsigned int size) {
-  this->values.resize(size);
+void ModalLimitedHistory::registerKernel(const PreintKernel * pi_kernel) {
+  this->pi_kernels.push_back(pi_kernel);
 }
+
+/* -------------------------------------------------------------------------- */
+void ModalLimitedHistory::resize() {
+  unsigned int new_size = 0;
+  for(auto const& pik: this->pi_kernels) {
+    new_size = std::max(new_size, pik->getSize());
+  }
+
+  // haven't stored any history yet
+  if (this->nb_history_points == 0) {
+    this->values.resize(new_size);
+  }
+  else {
+    // place history to beginning of temporary vector
+    std::vector<double> tmp(this->values.size());
+    std::copy(this->values.begin()+this->index_now, this->values.end(),
+	      tmp.begin());
+    std::copy(this->values.begin(), this->values.begin()+this->index_now,
+	      tmp.begin()+(this->values.size()-this->index_now));
+
+    // resize
+    int copy_size = std::min((unsigned int)(this->values.size()), new_size);
+    this->values.resize(new_size);
+
+    // copy back
+    std::copy(tmp.begin(), tmp.begin()+copy_size, this->values.begin());
+    this->index_now = 0;
+  }
+}
+
 
 __END_UGUCA__
