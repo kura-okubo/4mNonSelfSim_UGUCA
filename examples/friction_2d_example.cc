@@ -72,14 +72,14 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   LinearCoulombFrictionLaw law(mesh,
-			       data.get<double>("mus"),
-			       data.get<double>("muk"),
-			       data.get<double>("dc"));
+			       data.get<double>("mus","friction"),
+			       data.get<double>("muk","friction"),
+			       data.get<double>("dc","friction"));
 
   // materials
-  Material top_mat = Material(data.get<double>("E_top"),
-			      data.get<double>("nu_top"),
-			      data.get<double>("rho_top"));
+  Material top_mat = Material(data.get<double>("E","top"),
+			      data.get<double>("nu","top"),
+			      data.get<double>("rho","top"));
   top_mat.readPrecomputedKernels();
 
   // interface
@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
   double mus_min = std::numeric_limits<double>::max();
   for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
     double x = X[i];
-    mus(i) = data.get<double>("mus")
-      + data.get<double>("mus_ampl") * (1.0*std::sin(2*x*M_PI)
+    mus(i) = data.get<double>("mus","friction")
+      + data.get<double>("mus_ampl","friction") * (1.0*std::sin(2*x*M_PI)
 					+ 0.5*std::cos(12*x*M_PI)
 					+ 0.7*std::sin(18*x*M_PI));
     mus_min = std::min(mus_min,mus(i));
