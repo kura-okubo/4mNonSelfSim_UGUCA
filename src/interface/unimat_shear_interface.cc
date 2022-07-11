@@ -79,7 +79,7 @@ void UnimatShearInterface::closingNormalGapForce(NodalFieldComponent & close_for
 
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
-
+  // gap is only allowed in 0,2 directions (shear)
   for (int d=0; d<this->mesh.getDim(); d+=2) {
 
     // accessors
@@ -96,8 +96,8 @@ void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::computeGap(NodalField & gap,
 				      bool predicting) {
-
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  // gap is only allowed in 0,2 directions (shear)
+  for (int d = 0; d < this->mesh.getDim(); d+=2) {
 
     double * top_disp = this->top->getDisp(predicting).storage(d);
     double * gap_p = gap.storage(d);
@@ -112,7 +112,7 @@ void UnimatShearInterface::computeGap(NodalField & gap,
 void UnimatShearInterface::computeGapVelocity(NodalField & gap_velo,
 					      bool predicting) {
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  for (int d = 0; d < this->mesh.getDim(); d+=2) {
 
     double * top_velo_p = this->top->getVelo(predicting).storage(d);
     double * gap_velo_p = gap_velo.storage(d);
