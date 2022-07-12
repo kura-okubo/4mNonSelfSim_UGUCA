@@ -71,11 +71,14 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->values.size(); };
+  unsigned int getSize() const { return this->values.size(); }
 
   // get direct access to values (only used to testing)
-  std::vector<double> & getValues() { return this->values; };
+  std::vector<double> & getValues() { return this->values; }
 
+  // get entire integral of kernel
+  double getIntegral() const { return this->quasi_dynamic_value; }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

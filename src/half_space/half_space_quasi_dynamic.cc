@@ -223,6 +223,7 @@ void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
     ((conv_H00_U0_j * ((k * m) / q) + conv_H00_U2_j * ((m * m) / q)) +
      (-conv_H22_U0_j * ((k * m) / q) + conv_H22_U2_j * ((k * k) / q)));
 }
+
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predicting,
 								  bool /*correcting*/) {
@@ -252,90 +253,39 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
       U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
     }
 
-    int nb_conv = (int)std::pow(2.0, this->mesh.getDim());
-
-    std::vector<std::complex<double>> conv;
-    conv.resize(nb_conv);
-
-    std::vector<PreintKernel *> krnl = {
-      this->H00_pi[j],
-      this->H01_pi[j],
-      this->H01_pi[j],
-      this->H11_pi[j]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<PreintKernel *> krnl3d = {
-	this->H00_pi[j],
-	this->H01_pi[j],
-	this->H22_pi[j],
-	this->H22_pi[j]};
-
-      krnl.insert(krnl.end(), krnl3d.begin(), krnl3d.end());
-    }
-
-    std::vector<std::complex<double>> U_ = {
-      U[0],
-      U[0],
-      U[1],
-      U[1]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<std::complex<double>> U_3d = {
-	U[2],
-	U[2],
-	U[0],
-	U[2]};
-
-      U_.insert(U_.end(), U_3d.begin(), U_3d.end());
-    }
-
-  
-
-#ifdef UCA_USE_OPENMP
-#pragma omp parallel for
-#endif
-    for (int n = 0; n < nb_conv; ++n) {
-      conv[n] = krnl[n]->convolve_quasi_dynamic(U_[n]);
-    }
-    // convolutions for both 2d and 3d
-    std::complex<double> conv_H00_U0_j = conv[0];
-    std::complex<double> conv_H01_U0_j = conv[1];
-    std::complex<double> conv_H01_U1_j = conv[2];
-    std::complex<double> conv_H11_U1_j = conv[3];
-
+    double H00_integrated = this->H00_pi[j]->getIntegral();
+    double H01_integrated = this->H01_pi[j]->getIntegral();
+    double H11_integrated = this->H11_pi[j]->getIntegral();
+    
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
     if (this->mesh.getDim() == 2) {
       double q = wave_numbers[0][j];
-      this->computeF2D(F,
-		       q,
+      this->computeF2D(F,q,
 		       U,
-		       conv_H00_U0_j,
-		       conv_H01_U0_j,
-		       conv_H01_U1_j,
-		       conv_H11_U1_j);
+		       H00_integrated*U[0],
+		       H01_integrated*U[0],
+		       H01_integrated*U[1],
+		       H11_integrated*U[1]);
     } else {
-      // convolutions for 3d only
-      std::complex<double> conv_H00_U2_j = conv[4];
-      std::complex<double> conv_H01_U2_j = conv[5];
-      std::complex<double> conv_H22_U0_j = conv[6];
-      std::complex<double> conv_H22_U2_j = conv[7];
-      // q = {k,m} wave number in x,y direction
+      
+      double H22_integrated = this->H22_pi[j]->getIntegral();
 
+      // q = {k,m} wave number in x,y direction
       double k = wave_numbers[0][j];
       double m = wave_numbers[2][j];
       this->computeF3D(F,k,m,
 		       U,
-		       conv_H00_U0_j,
-		       conv_H00_U2_j,
-		       conv_H01_U0_j,
-		       conv_H01_U2_j,
-		       conv_H01_U1_j,
-		       conv_H11_U1_j,
-		       conv_H22_U0_j,
-		       conv_H22_U2_j);
-
+		       H00_integrated*U[0],
+		       H00_integrated*U[2],
+		       H01_integrated*U[0],
+		       H01_integrated*U[2],
+		       H01_integrated*U[1],
+		       H11_integrated*U[1],
+		       H22_integrated*U[0],
+		       H22_integrated*U[2]);
     }
+    
     // set values to internal force
     for (int d = 0; d < this->mesh.getDim(); ++d) {
       internal_fd[d][j][0] = std::real(F[d]);  // real part
