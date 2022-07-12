@@ -65,8 +65,6 @@ public:
   std::complex<double> convolve(const LimitedHistory * U_r,
 				const LimitedHistory * U_i);
   
-  std::complex<double> convolve_quasi_dynamic(const std::complex<double> U);
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -77,7 +75,7 @@ public:
   std::vector<double> & getValues() { return this->values; }
 
   // get entire integral of kernel
-  double getIntegral() const { return this->quasi_dynamic_value; }
+  double getIntegral() const { return this->integral; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -85,9 +83,11 @@ public:
 protected:
   const Kernel * kernel;
 
+  // integral of trapezoids with a constant time step
   std::vector<double> values;
-  double quasi_dynamic_value;
-  
+
+  // full integral of kernel
+  double integral;
 };
 
 __END_UGUCA__

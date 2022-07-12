@@ -76,10 +76,11 @@ void PreintKernel::preintegrate(double time_factor, double time_step) {
     this->values[i] = 0.5 * (k_i + k_ii) * time_step * time_factor;
     k_i = k_ii;
   }
-  // copute static response
-  this->quasi_dynamic_value = 0.0;
+
+  // compute integral of kernel
+  this->integral = 0.0;
   for (unsigned int i=0; i<nb_integration_int; ++i) {
-    this->quasi_dynamic_value += this->values[i];
+    this->integral += this->values[i];
   }
 }
 
@@ -90,14 +91,6 @@ void PreintKernel::multiplyBy(double factor) {
   for (unsigned int i=0; i<nb_integration_int; ++i) {
     this->values[i] *= factor;
   }
-
-}
-
-/* -------------------------------------------------------------------------- */
-std::complex<double> PreintKernel::convolve_quasi_dynamic(const std::complex<double> U) {
-
-  return U * this->quasi_dynamic_value;
-
 }
 
 /* -------------------------------------------------------------------------- */
