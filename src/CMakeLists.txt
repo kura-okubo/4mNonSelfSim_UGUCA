@@ -78,7 +78,6 @@ set(UGUCA_HEADER
   interface/laws/linear_shear_cohesive_law.hh
   interface/laws/linear_normal_cohesive_law.hh
   interface/laws/barras_law.hh
-  interface/laws/fracture_law.hh
   interface/laws/rate_and_state_law.hh
 
   # use method as infinite boundary condition for FEM
@@ -134,7 +133,6 @@ set(UGUCA_SRC
   interface/laws/linear_shear_cohesive_law.cc
   interface/laws/linear_normal_cohesive_law.cc
   interface/laws/barras_law.cc
-  interface/laws/fracture_law.cc
   interface/laws/rate_and_state_law.cc
 
   # use method as infinite boundary condition for FEM
