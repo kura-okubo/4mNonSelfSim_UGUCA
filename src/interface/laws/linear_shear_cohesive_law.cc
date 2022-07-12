@@ -107,7 +107,11 @@ void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in shear direction
-  cohesion.multiplyByScalar(alpha_field, 1);
+  for (int d=0; d<cohesion.getDim(); ++d) {
+    if (d==1) // ignore normal direction
+      continue;
+    cohesion.multiplyByScalar(d,alpha_field);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
