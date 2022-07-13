@@ -35,6 +35,7 @@ set(UGUCA_HEADER
   static_communicator_mpi.hh
 
   # io
+  io/uca_input_section.hh
   io/uca_parameter_reader.hh
   io/uca_base_io.hh
   io/uca_dumper.hh
@@ -90,6 +91,7 @@ set(UGUCA_SRC
   static_communicator_mpi.cc
 
   # io
+  io/uca_input_section.cc
   io/uca_parameter_reader.cc
   io/uca_base_io.cc
   io/uca_dumper.cc  
