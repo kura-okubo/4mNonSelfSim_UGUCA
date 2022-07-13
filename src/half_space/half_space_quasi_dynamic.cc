@@ -80,25 +80,6 @@ HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {
 }
 
 /* -------------------------------------------------------------------------- */
-double HalfSpaceQuasiDynamic::getStableTimeStep() {
-  double delta_x = this->mesh.getDeltaX();
-  double delta_z = this->mesh.getDeltaZ();
-
-  if (this->mesh.getDim()==2)
-    delta_z = 1e100;
-  return std::min(delta_x,delta_z) / this->material->getCs();
-}
-
-/* -------------------------------------------------------------------------- */
-void HalfSpaceQuasiDynamic::setTimeStep(double time_step) {
-  if (((time_step/this->getStableTimeStep()>0.35) && (this->mesh.getDim()==3)) ||
-      ((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2)))
-    throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
-    
-  HalfSpace::setTimeStep(time_step);
-}
-
-/* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::initConvolutions() {
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -141,14 +122,20 @@ void HalfSpaceQuasiDynamic::initConvolutions() {
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeStressFourierCoeff(bool predicting,
-						 bool correcting) {
-  this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
+						      bool correcting,
+						      bool dynamic) {
+  if (!dynamic) {
+    this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
+  }
+  else {
+    throw std::runtime_error("HalfSpaceQuasiDynamic cannot compute stress for dynamic problem!");
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeF2D(std::vector<std::complex<double>> & F,
 				       double q,
-				       std::vector<std::complex<double>> U,
+				       std::vector<std::complex<double>> & U,
 				       std::complex<double> conv_H00_U0_j,
 				       std::complex<double> conv_H01_U0_j,
 				       std::complex<double> conv_H01_U1_j,
@@ -177,14 +164,13 @@ void HalfSpaceQuasiDynamic::computeF2D(std::vector<std::complex<double>> & F,
 
   // - i * mu * q * int(H01, U0)
   F[1] -= mu * q * imag * conv_H01_U0_j;
-
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
 				       double k,
 				       double m,
-				       std::vector<std::complex<double>> U,
+				       std::vector<std::complex<double>> & U,
 				       std::complex<double> conv_H00_U0_j,
 				       std::complex<double> conv_H00_U2_j,
 				       std::complex<double> conv_H01_U0_j,

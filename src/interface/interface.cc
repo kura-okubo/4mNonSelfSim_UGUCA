@@ -115,27 +115,15 @@ double Interface::getStableTimeStep() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*void Interface::setDynamic(bool fully_dynamic) {
-  for (unsigned int i = 0; i < this->half_space.size(); ++i)
-    this->half_space[i]->setDynamic(fully_dynamic);
-    }*/
-
-/* -------------------------------------------------------------------------- */
 void Interface::computeDisplacement(bool predicting) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
     this->half_spaces[i]->computeDisplacement(predicting);
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::computeInternal(bool predicting, bool correcting) {
+void Interface::computeInternal(bool predicting, bool correcting, bool dynamic) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->computeInternal(predicting, correcting);
-}
-
-/* -------------------------------------------------------------------------- */
-void Interface::computeInternalQuasiDynamic(bool predicting, bool correcting) {
-  for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->computeInternalQuasiDynamic(predicting, correcting);
+    this->half_spaces[i]->computeInternal(predicting, correcting, dynamic);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -163,7 +151,7 @@ void Interface::correctVelocity(bool last_step) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::advanceTimeStep(bool dynamic ) {
+void Interface::advanceTimeStep(bool dynamic) {
 
   // predictor-corrector
   for (int i = 0; i < this->nb_pc; ++i) {
@@ -189,11 +177,7 @@ void Interface::advanceTimeStep(bool dynamic ) {
 
   // compute displacement
   this->computeDisplacement();
-  if (dynamic)
-    this->computeInternal(false,false);
-  else // quasi dnamic
-    this->computeInternalQuasiDynamic(false,false);
-  
+  this->computeInternal(false,false,dynamic);
   this->computeCohesion();
   this->computeResidual();
   this->computeVelocity();

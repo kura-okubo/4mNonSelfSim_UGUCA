@@ -54,19 +54,17 @@ public:
   // init convolutions
   virtual void initConvolutions();
 
-  // for transition from quasi dynamic integration to full dynamic
-  virtual void setSteadyState(bool /*predicting = false*/ ) {};
-  
 protected:
-  virtual void computeStressFourierCoeff(bool predicting,
-					 bool correcting);
+  virtual void computeStressFourierCoeff(bool predicting = false,
+					 bool correcting = false,
+					 bool dynamic = false);
 
   void computeStressFourierCoeffQuasiDynamic(bool predicting,
-					     bool /*correcting*/);
+					     bool correcting);
 
   void computeF2D(std::vector<std::complex<double>> & F,
 		  double q,
-		  std::vector<std::complex<double>> U,
+		  std::vector<std::complex<double>> & U,
 		  std::complex<double> conv_H00_U0_j,
 		  std::complex<double> conv_H01_U0_j,
 		  std::complex<double> conv_H01_U1_j,
@@ -75,7 +73,7 @@ protected:
   void computeF3D(std::vector<std::complex<double>> & F,
 		  double k,
 		  double m,
-		  std::vector<std::complex<double>> U,
+		  std::vector<std::complex<double>> & U,
 		  std::complex<double> conv_H00_U0_j,
 		  std::complex<double> conv_H00_U2_j,
 		  std::complex<double> conv_H01_U0_j,
@@ -88,11 +86,7 @@ protected:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // set time step
-  virtual void setTimeStep(double time_step);
 
-  // get stable time step
-  virtual double getStableTimeStep();
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

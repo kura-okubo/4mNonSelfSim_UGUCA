@@ -79,9 +79,8 @@ public:
   // functions used during time stepping for each half-space
   virtual void computeDisplacement(bool predicting = false);
   virtual void computeInternal(bool predicting = false,
-			       bool correcting = false);
-  virtual void computeInternalQuasiDynamic(bool predicting = false,
-					   bool correcting = false);
+			       bool correcting = false,
+			       bool dynamic = true);
   virtual void computeCohesion(bool predicting = false);
   virtual void computeResidual();
   virtual void computeVelocity(bool predicting = false);
