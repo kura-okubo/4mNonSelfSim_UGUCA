@@ -141,11 +141,13 @@ void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 						 bool dynamic) {
   if (!dynamic) {
     this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
+    this->previously_dynamic = false;
   }
   else {
     if (!this->previously_dynamic)
       this->setSteadyState(predicting);
     this->computeStressFourierCoeffDynamic(predicting, correcting);
+    this->previously_dynamic = true;
   }
 }
 
