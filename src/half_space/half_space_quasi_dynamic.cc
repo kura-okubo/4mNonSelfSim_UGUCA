@@ -94,11 +94,11 @@ void HalfSpaceQuasiDynamic::initConvolutions() {
     // ignore mode 0
     if ((prank == m0_rank) && (j == m0_index)) continue;
     
-    this->H00_pi[j] = new PreintKernel(this->material->getH00());
-    this->H01_pi[j] = new PreintKernel(this->material->getH01());
-    this->H11_pi[j] = new PreintKernel(this->material->getH11());
+    this->H00_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H00));
+    this->H01_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H01));
+    this->H11_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H11));
     if (this->mesh.getDim()==3)
-      this->H22_pi[j] = new PreintKernel(this->material->getH22());
+      this->H22_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H22));
 
     double qq = 0.0;
     for (int d=0; d<this->mesh.getDim();d+=2)
