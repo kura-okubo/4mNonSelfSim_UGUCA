@@ -24,6 +24,9 @@ double a0 = 0.05
 double duration = 2.3e-4
 double tsf = 0.4 # time step factor
 
+# quasi-dynamic: no real computational gain here - just for demonstration
+double dyn_velo_threshold = 1
+
 # dumping
-string dump_fields = cohesion_0,top_disp_0,mu_s
+string dump_fields = cohesion_0,top_disp_0,top_velo_0,mu_s
 int nb_dumps = 200
