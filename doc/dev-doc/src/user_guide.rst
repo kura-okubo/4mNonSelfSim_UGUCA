@@ -60,7 +60,7 @@ External interface load can be applied by accessing the load array of the interf
 
 **Time Step**
 
-The interface requires a time step used for time integration. It can be set via the ``setTimeStep(time_step)`` method of the interface. The imposed time step needs to be considerably smaller than the stable time step, which can be accessed via the ``getStableTimeStep()`` method. For 2D simulations (*i.e.*, 1D interface), it is common to use a time step that is 40% of the stable time step.
+The interface requires a time step used for time integration. It can be set via the ``setTimeStep(time_step)`` method of the interface. For dynamic problems, the imposed time step needs to be considerably smaller than the stable time step, which can be accessed via the ``getStableTimeStep()`` method. For 2D simulations (*i.e.*, 1D interface), it is common to use a time step that is 40% of the stable time step. For quasi-dynamic simulations, the time step may exceed this critical stable time step, but needs to remain small enough to allow for proper temporal integration.
 
 **Dumping**
 
@@ -76,7 +76,7 @@ Please note that you can only restart an example on the same number of procs (i.
 
 **Time Integration**
 
-Finally, time integration is done with the ``advanceTimeStep()`` method of the ``Interface`` object. 
+Finally, time integration is done with the ``advanceTimeStep(dynamic_step)`` method of the ``Interface`` object. The boolean parameter ``dynamic_step`` determines if a fully-dynamic (default) or a quasi-dynamic increment is computed.
 
 
 Precompute kernels for material properties

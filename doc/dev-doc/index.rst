@@ -14,7 +14,7 @@
 
 Welcome to uguca! 
 
-uguca is a spectral-boundary-integral (SBI) method to model the dynamic failure of an interface between two elastic half-spaces. The SBI method provides computational efficency and accuracy.
+uguca is a spectral-boundary-integral (SBI) method to model the dynamic and quasi-dynamic failure of an interface between two elastic half-spaces. The SBI method provides computational efficency and accuracy.
 
 In this online documentation, you find information on how to get and compile uguca, how to develop and run your own simulation, and how to develop additional features for uguca.
 

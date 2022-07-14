@@ -1,6 +1,6 @@
 # uguca
 
-**Spectral Boundary Integral Method** to simulate rupture propagation along a weak interface between two semi-infinite half-planes.
+**Spectral Boundary Integral Method** to simulate dynamic and quasi-dynamic rupture propagation along a weak interface between two semi-infinite half-planes.
 
 ## License
 
