@@ -51,6 +51,7 @@ function(uguca_add_test TEST_NAME)
 endfunction()
 
 # basics
+uguca_add_test(test_input_section)
 uguca_add_test(test_parameter_reader)
 uguca_add_test(test_nodal_field_component)
 uguca_add_test(test_nodal_field)
@@ -75,6 +76,7 @@ uguca_add_test(test_preint_kernel)
 uguca_add_test(test_material)
 uguca_add_test(test_dumper)
 uguca_add_test(test_half_space_dynamic)
+uguca_add_test(test_half_space_quasi_dynamic)
 uguca_add_test(test_infinite_boundary)
 
 # test interfaces
@@ -84,6 +86,7 @@ uguca_add_test(test_bimat_interface)
 uguca_add_test(test_defrig_interface)
 
 # test interface laws
+uguca_add_test(test_linear_normal_cohesive_law)
 uguca_add_test(test_linear_shear_cohesive_law)
 uguca_add_test(test_linear_coulomb_friction_law)
 uguca_add_test(test_barras_law)

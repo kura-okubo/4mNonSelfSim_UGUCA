@@ -161,6 +161,25 @@ The mode III kernel is defined as follows
 
 where :math:`J_1(t)`  is the Bessel function.
 
+Quasi-dynamic formulation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The quasi-dynamic formulation neglects the wave-mediated stress transfer and only considers the radiation damping contribution, i.e., only a static stress transfer is considered. This is equivalent to saying that the displacement history was constant and corresponds to the current displacement. Hence, the convolutional terms become a simple multiplication of a constant displacement with the constant full integral of the convolution kernel.
+
+For instance, 
+
+.. math::
+   \mu^\pm |q| \int_{0}^{t} H_{00}(|q|c_s^\pm t') U_0^\pm(t-t';q)|q|c_s^\pm \mathrm{d}t' = \mu^\pm |q| \int_{0}^{\infty} H_{00}(|q|c_s^\pm t')|q|c_s^\pm \mathrm{d}t' U_0^\pm(t;q)
+
+where
+
+.. math::
+   \int_{0}^{t} H_{00}(|q|c_s^\pm t') |q|c_s^\pm \mathrm{d}t'
+
+can be precomputed during initialitation, and remains constant throught the entire simulation.
+
+Since the computation of the convolution term is one of the most computationally intensive operations in fully-dynamic simulations, this approximation reduces considerably the overal computational cost of the quasi-dynamic formulation compared to the fully-dynamic one. It also allows for adaptive time stepping, where time steps are larger than the dynamic stable time step, which constitutes another computational gain. 
+
 
 Computation of interface tractions
 ----------------------------------

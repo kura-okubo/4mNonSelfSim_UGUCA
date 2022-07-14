@@ -6,9 +6,9 @@
  * @author Chun-Yu Ke <ck659@cornell.edu>
  *
  * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date last modification: Sun Jun 26 2022
  *
- * @brief  TODO
+ * @brief  reads input file and stores input parameters
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -33,15 +33,26 @@
 #define __PARAMETER_READER_HH__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "uca_input_section.hh"
 
 // std
-#include <set>
 #include <map>
+#include <memory>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 class ParameterReader {
+  
+private:
+  inline static const std::string general = "general";
+
+  /* ------------------------------------------------------------------------ */
+  /* Typedefs                                                                 */
+  /* ------------------------------------------------------------------------ */
+protected:
+  typedef std::map<const std::string,std::shared_ptr<InputSection>> SectionMap;
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -64,26 +75,22 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  /// get a section
+  InputSection & getSection(std::string name = ParameterReader::general);
+  InputSection & getSection(std::string name = ParameterReader::general) const;
+
   ///
   template<typename T>
-  T get(std::string key) const;
+  T get(std::string key, std::string section = ParameterReader::general) const;
 
-  template<typename T>
-  bool has(std::string key) const;
-
+  bool has(std::string key, std::string section = ParameterReader::general) const;
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  /// type of data available
-  std::set<std::string> data_types;
-
   /// data
-  std::map<std::string,std::string> string_data;
-  std::map<std::string,int> int_data;
-  std::map<std::string,unsigned int> uint_data;
-  std::map<std::string,double> double_data;
-  std::map<std::string,bool> bool_data;
+  SectionMap sections;
 };
 
 

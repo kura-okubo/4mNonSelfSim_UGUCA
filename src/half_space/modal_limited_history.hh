@@ -57,6 +57,8 @@ public:
   inline void addCurrentValue(double value);
   inline void changeCurrentValue(double value);
 
+  inline void setSteadyState(double value);
+  
   // get history value at index with index=0 : now
   inline double at(unsigned int index) const;
 
@@ -118,6 +120,12 @@ inline void ModalLimitedHistory::addCurrentValue(double value) {
 /* -------------------------------------------------------------------------- */
 inline void ModalLimitedHistory::changeCurrentValue(double value) {
   this->values[this->index_now] = value;
+}
+
+/* -------------------------------------------------------------------------- */
+inline void ModalLimitedHistory::setSteadyState(double value) {
+  this->nb_history_points = this->values.size();
+  std::fill(this->values.begin(), this->values.end(), value);
 }
 
 /* -------------------------------------------------------------------------- */

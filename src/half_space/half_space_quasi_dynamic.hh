@@ -32,6 +32,7 @@
 #define __HALF_SPACE_QUASIDYNAMIC_H__
 /* -------------------------------------------------------------------------- */
 #include "half_space.hh"
+#include "preint_kernel.hh"
 
 __BEGIN_UGUCA__
 
@@ -42,39 +43,60 @@ class HalfSpaceQuasiDynamic : public HalfSpace {
   /* ------------------------------------------------------------------------ */
 public:
   HalfSpaceQuasiDynamic(FFTableMesh & mesh, int side_factor,
-			const std::string & name = "half_space") :
-    HalfSpace(mesh, side_factor, name) {}
+			const std::string & name = "half_space");
 
-  virtual ~HalfSpaceQuasiDynamic() {}
+  virtual ~HalfSpaceQuasiDynamic();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  
-  
+  // init convolutions
+  virtual void initConvolutions();
+
 protected:
-  virtual void computeStressFourierCoeff(bool /*predicting = false*/,
-					 bool /*correcting = false*/) {
-    throw std::runtime_error(
-	  "HalfSpaceQuasiDynamic::computeStressFourierCoeff not implemented.");
-  }
+  virtual void computeStressFourierCoeff(bool predicting = false,
+					 bool correcting = false,
+					 bool dynamic = false);
 
-  void computeStressFourierCoeffQuasiDynamic(bool /*predicting*/,
-					     bool /*correcting*/) {
-    throw std::runtime_error(
-	  "HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic not implemented.");
-  }
+  void computeStressFourierCoeffQuasiDynamic(bool predicting,
+					     bool correcting);
 
+  void computeF2D(std::vector<std::complex<double>> & F,
+		  double q,
+		  std::vector<std::complex<double>> & U,
+		  std::complex<double> conv_H00_U0_j,
+		  std::complex<double> conv_H01_U0_j,
+		  std::complex<double> conv_H01_U1_j,
+		  std::complex<double> conv_H11_U1_j);
+  
+  void computeF3D(std::vector<std::complex<double>> & F,
+		  double k,
+		  double m,
+		  std::vector<std::complex<double>> & U,
+		  std::complex<double> conv_H00_U0_j,
+		  std::complex<double> conv_H00_U2_j,
+		  std::complex<double> conv_H01_U0_j,
+		  std::complex<double> conv_H01_U2_j,
+		  std::complex<double> conv_H01_U1_j,
+		  std::complex<double> conv_H11_U1_j,
+		  std::complex<double> conv_H22_U0_j,
+		  std::complex<double> conv_H22_U2_j);				   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
 
+
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
+  // convolutions
+  std::vector<PreintKernel *> H00_pi;
+  std::vector<PreintKernel *> H01_pi;
+  std::vector<PreintKernel *> H11_pi;
+  std::vector<PreintKernel *> H22_pi;
 
 };
 

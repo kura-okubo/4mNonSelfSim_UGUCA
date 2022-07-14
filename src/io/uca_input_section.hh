@@ -1,14 +1,12 @@
 /**
- * @file   half_space_dynamic.hh
+ * @file   uca_input_section.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Sun Jun 26 2022
+ * @date last modification: Sun Jun 26 2022
  *
- * @brief  TODO
+ * @brief  Contains information from a section in the input file
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -28,77 +26,74 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __HALF_SPACE_DYNAMIC_H__
-#define __HALF_SPACE_DYNAMIC_H__
 /* -------------------------------------------------------------------------- */
-#include "half_space_quasi_dynamic.hh"
-#include "modal_limited_history.hh"
+#ifndef __INPUT_SECTION_HH__
+#define __INPUT_SECTION_HH__
+/* -------------------------------------------------------------------------- */
+#include "uca_common.hh"
+
+// std
+#include <map>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class HalfSpaceDynamic : public HalfSpaceQuasiDynamic {
-  
+class InputSection {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceDynamic(FFTableMesh & mesh, int side_factor,
-		   const std::string & name = "half_space");
 
-  virtual ~HalfSpaceDynamic();
+  InputSection(std::string type = "section") : type(type) {};
+  virtual ~InputSection() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // init convolutions
-  virtual void initConvolutions();
 
-  // restart
-  virtual void registerToRestart(Restart & restart);
+private:
+  /// get value returns string and checks
+  std::string get(std::string) const;
   
-  // for transition from quasi dynamic integration to full dynamic
-  virtual void setSteadyState(bool predicting = false);
-  
-protected:
-  virtual void computeStressFourierCoeff(bool predicting = false,
-					 bool correcting = false,
-					 bool dynamic = true);
-
-  void computeStressFourierCoeffDynamic(bool predicting,
-					bool correcting);
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // set time step
-  virtual void setTimeStep(double time_step);
 
-  // get stable time step
-  virtual double getStableTimeStep();
+  /// insert a new pair
+  void insert(std::string key, std::string value);
 
-  // get limited history
-  ModalLimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
-  ModalLimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
+  /// returns value for key at type T
+  template<typename T>
+  T get(std::string key) const;
+
+  /// check if key is in data
+  bool has(std::string key) const;
+
+  const std::string getType() const { return this->type; }
+  
+  /// access to data
+  const std::map<std::string,std::string> & getData() const { return this->data; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-protected:
-
-  // past values of displacement in frequency domain
-  // each LimitedHistory is for a given wave number q
-  std::vector<std::vector<ModalLimitedHistory *> > U_r;
-  std::vector<std::vector<ModalLimitedHistory *> > U_i;
-
-  // keeps information if previous step was dynamic
-  bool previously_dynamic;
+private:
+  /// information on type of input section
+  std::string type;
+  
+  /// data stored as strings
+  std::map<std::string,std::string> data;
 };
+
+
+/* -------------------------------------------------------------------------- */
+/* inline functions                                                           */
+/* -------------------------------------------------------------------------- */
 
 __END_UGUCA__
 
-//#include "half_space_dynamic_impl.cc"
+//#include "input_section_inline_impl.cc"
 
-#endif /* __HALF_SPACE_DYNAMIC_H__ */
+#endif /* __INPUT_SECTION_HH__ */

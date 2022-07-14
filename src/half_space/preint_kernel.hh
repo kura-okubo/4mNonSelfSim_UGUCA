@@ -69,18 +69,25 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->values.size(); };
+  unsigned int getSize() const { return this->values.size(); }
 
   // get direct access to values (only used to testing)
-  std::vector<double> & getValues() { return this->values; };
+  std::vector<double> & getValues() { return this->values; }
 
+  // get entire integral of kernel
+  double getIntegral() const { return this->integral; }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
   const Kernel * kernel;
 
+  // integral of trapezoids with a constant time step
   std::vector<double> values;
+
+  // full integral of kernel
+  double integral;
 };
 
 __END_UGUCA__

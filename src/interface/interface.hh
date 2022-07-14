@@ -74,12 +74,13 @@ public:
   virtual void initPredictorCorrector(int iterations = 1);
 
   // iteration of advancing one time step
-  virtual void advanceTimeStep();
+  virtual void advanceTimeStep(bool dynamic=true);
 
   // functions used during time stepping for each half-space
   virtual void computeDisplacement(bool predicting = false);
   virtual void computeInternal(bool predicting = false,
-			       bool correcting = false);
+			       bool correcting = false,
+			       bool dynamic = true);
   virtual void computeCohesion(bool predicting = false);
   virtual void computeResidual();
   virtual void computeVelocity(bool predicting = false);
