@@ -1,14 +1,12 @@
 /**
- * @file   uca_parameter_reader.hh
+ * @file   uca_input_section.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
+ * @date creation: Sun Jun 26 2022
  * @date last modification: Sun Jun 26 2022
  *
- * @brief  reads input file and stores input parameters
+ * @brief  Contains information from a section in the input file
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -29,68 +27,64 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* -------------------------------------------------------------------------- */
-#ifndef __PARAMETER_READER_HH__
-#define __PARAMETER_READER_HH__
+#ifndef __INPUT_SECTION_HH__
+#define __INPUT_SECTION_HH__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "uca_input_section.hh"
 
 // std
 #include <map>
-#include <memory>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class ParameterReader {
-  
-private:
-  inline static const std::string general = "general";
-
-  /* ------------------------------------------------------------------------ */
-  /* Typedefs                                                                 */
-  /* ------------------------------------------------------------------------ */
-protected:
-  typedef std::map<const std::string,std::shared_ptr<InputSection>> SectionMap;
-
+class InputSection {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
 
-  ParameterReader();
-  virtual ~ParameterReader() {};
+  InputSection(std::string type = "section") : type(type) {};
+  virtual ~InputSection() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  /// read input file
-  void readInputFile(std::string file_name);
 
-  /// write input file
-  void writeInputFile(std::string file_name) const;
-
+private:
+  /// get value returns string and checks
+  std::string get(std::string) const;
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  /// get a section
-  InputSection & getSection(std::string name = ParameterReader::general);
-  InputSection & getSection(std::string name = ParameterReader::general) const;
 
-  ///
+  /// insert a new pair
+  void insert(std::string key, std::string value);
+
+  /// returns value for key at type T
   template<typename T>
-  T get(std::string key, std::string section = ParameterReader::general) const;
+  T get(std::string key) const;
 
-  bool has(std::string key, std::string section = ParameterReader::general) const;
+  /// check if key is in data
+  bool has(std::string key) const;
+
+  const std::string getType() const { return this->type; }
+  
+  /// access to data
+  const std::map<std::string,std::string> & getData() const { return this->data; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  /// data
-  SectionMap sections;
+  /// information on type of input section
+  std::string type;
+  
+  /// data stored as strings
+  std::map<std::string,std::string> data;
 };
 
 
@@ -100,6 +94,6 @@ private:
 
 __END_UGUCA__
 
-//#include "parameter_reader_inline_impl.cc"
+//#include "input_section_inline_impl.cc"
 
-#endif /* __PARAMETER_READER_HH__ */
+#endif /* __INPUT_SECTION_HH__ */

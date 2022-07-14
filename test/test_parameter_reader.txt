@@ -1,5 +1,14 @@
-string string_1 = burger
-bool bool_1 = True
-double double_1 = 2.2
-int int_1 = 3
-uint uint_1 = 4
+string_1 = burger
+bool_1 = True
+
+mimi[
+double_1 = 2.2
+]
+
+material tata [
+int_1 = 3
+]
+
+section toto[
+  uint_1 = 4
+]

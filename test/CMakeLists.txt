@@ -51,6 +51,7 @@ function(uguca_add_test TEST_NAME)
 endfunction()
 
 # basics
+uguca_add_test(test_input_section)
 uguca_add_test(test_parameter_reader)
 uguca_add_test(test_nodal_field_component)
 uguca_add_test(test_nodal_field)
