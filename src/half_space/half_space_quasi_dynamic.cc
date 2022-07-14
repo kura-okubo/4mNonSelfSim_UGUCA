@@ -39,16 +39,10 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(FFTableMesh & mesh,
-				   int side_factor,
-				   const std::string & name) :
-  HalfSpace(mesh, side_factor, name) {
-  
-  // allocated pre-integrated kernels
-  this->H00_pi.resize(this->mesh.getNbLocalFFT());
-  this->H01_pi.resize(this->mesh.getNbLocalFFT());
-  this->H11_pi.resize(this->mesh.getNbLocalFFT());
-  if (this->mesh.getDim()==3)
-    this->H22_pi.resize(this->mesh.getNbLocalFFT());
+					     int side_factor,
+					     const std::string & name) :
+  HalfSpace(mesh, side_factor, name),
+  pi_kernels(mesh) {
 
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -56,64 +50,25 @@ HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(FFTableMesh & mesh,
 	    << prank << "): " << this->name
 	    << " : " << this->mesh.getNbLocalFFT() << std::endl;
 #endif // UCA_VERBOSE
- 
 }
 
 /* -------------------------------------------------------------------------- */
-HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-    
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    delete this->H00_pi[j];
-    delete this->H01_pi[j];
-    delete this->H11_pi[j];
-    if (this->mesh.getDim()==3)
-      delete this->H22_pi[j];
-  }
-}
+HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {}
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::initConvolutions() {
 
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
+  this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H00,
+				this->material->getCs(), this->time_step);
+  this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H01,
+				this->material->getCs(), this->time_step);
+  this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H11,
+				this->material->getCs(), this->time_step);
+
+  if (this->mesh.getDim()==3)
+    this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H22,
+				  this->material->getCs(), this->time_step);
   
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
-
-  // history for q1 is longest q = j*q1
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-    
-    this->H00_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H00));
-    this->H01_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H01));
-    this->H11_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H11));
-    if (this->mesh.getDim()==3)
-      this->H22_pi[j] = new PreintKernel(this->material->getKernel(Kernel::Krnl::H22));
-
-    double qq = 0.0;
-    for (int d=0; d<this->mesh.getDim();d+=2)
-      qq +=(wave_numbers[d])[j]*(wave_numbers[d])[j];
-
-    double qj_cs = std::sqrt(qq) * this->material->getCs();
-    
-    this->H00_pi[j]->preintegrate(qj_cs, this->time_step);
-    this->H01_pi[j]->preintegrate(qj_cs, this->time_step);
-    this->H11_pi[j]->preintegrate(qj_cs, this->time_step);
-    if (this->mesh.getDim()==3)
-      this->H22_pi[j]->preintegrate(qj_cs, this->time_step);
-
-  }
-
 #ifdef UCA_VERBOSE
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   printf("Rank %d has total work %d \n",world_rank,total_work);
@@ -239,9 +194,9 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
       U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
     }
 
-    double H00_integrated = this->H00_pi[j]->getIntegral();
-    double H01_integrated = this->H01_pi[j]->getIntegral();
-    double H11_integrated = this->H11_pi[j]->getIntegral();
+    double H00_integrated = this->pi_kernels.get(Kernel::Krnl::H00,j)->getIntegral();
+    double H01_integrated = this->pi_kernels.get(Kernel::Krnl::H01,j)->getIntegral();
+    double H11_integrated = this->pi_kernels.get(Kernel::Krnl::H11,j)->getIntegral();
     
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
@@ -255,7 +210,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
 		       H11_integrated*U[1]);
     } else {
       
-      double H22_integrated = this->H22_pi[j]->getIntegral();
+      double H22_integrated = this->pi_kernels.get(Kernel::Krnl::H22,j)->getIntegral();
 
       // q = {k,m} wave number in x,y direction
       double k = wave_numbers[0][j];

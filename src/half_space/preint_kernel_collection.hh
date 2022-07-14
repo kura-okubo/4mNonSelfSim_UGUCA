@@ -1,14 +1,12 @@
 /**
- * @file   half_space_quasidynamic.hh
+ * @file   preint_kernel_collection.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Thu Jul 14 2022
+ * @date last modification: Thu Jul 14 2022
  *
- * @brief  TODO
+ * @brief  Contains PreintKernels for each type of kernel and each mode
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -28,79 +26,76 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __HALF_SPACE_QUASIDYNAMIC_H__
-#define __HALF_SPACE_QUASIDYNAMIC_H__
+#ifndef __PREINT_KERNEL_COLLECTION_H__
+#define __PREINT_KERNEL_COLLECTION_H__
 /* -------------------------------------------------------------------------- */
-#include "half_space.hh"
-#include "preint_kernel_collection.hh"
+
+#include "uca_common.hh"
+#include "uca_fftable_mesh.hh"
+#include "preint_kernel.hh"
+#include "material.hh"
+
+#include <map>
+#include <memory>
 
 __BEGIN_UGUCA__
 
-/* -------------------------------------------------------------------------- */
-class HalfSpaceQuasiDynamic : public HalfSpace {
+class PreintKernelCollection {
+
+  /* ------------------------------------------------------------------------ */
+  /* Typedefs                                                                 */
+  /* ------------------------------------------------------------------------ */
+protected:
+  typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
+  typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
+
+  
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceQuasiDynamic(FFTableMesh & mesh, int side_factor,
-			const std::string & name = "half_space");
 
-  virtual ~HalfSpaceQuasiDynamic();
+  PreintKernelCollection(FFTableMesh & mesh);
+
+  virtual ~PreintKernelCollection();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // init convolutions
-  virtual void initConvolutions();
 
-protected:
-  virtual void computeStressFourierCoeff(bool predicting = false,
-					 bool correcting = false,
-					 bool dynamic = false);
-
-  void computeStressFourierCoeffQuasiDynamic(bool predicting,
-					     bool correcting);
-
-  void computeF2D(std::vector<std::complex<double>> & F,
-		  double q,
-		  std::vector<std::complex<double>> & U,
-		  std::complex<double> conv_H00_U0_j,
-		  std::complex<double> conv_H01_U0_j,
-		  std::complex<double> conv_H01_U1_j,
-		  std::complex<double> conv_H11_U1_j);
-  
-  void computeF3D(std::vector<std::complex<double>> & F,
-		  double k,
-		  double m,
-		  std::vector<std::complex<double>> & U,
-		  std::complex<double> conv_H00_U0_j,
-		  std::complex<double> conv_H00_U2_j,
-		  std::complex<double> conv_H01_U0_j,
-		  std::complex<double> conv_H01_U2_j,
-		  std::complex<double> conv_H01_U1_j,
-		  std::complex<double> conv_H11_U1_j,
-		  std::complex<double> conv_H22_U0_j,
-		  std::complex<double> conv_H22_U2_j);				   
+  // preintegrate kernels
+  void preintegrate(Material & material, Kernel::Krnl kernel,
+		    double scale_factor, double time_step);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
 
+  // hopefully don't need this
+  std::shared_ptr<PreintKernel> get(Kernel::Krnl kernel, int mode) { return this->pi_kernels[kernel][mode]; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-protected:
-  
-  // convolution kernels
-  PreintKernelCollection pi_kernels;
+private:
 
+  // reference to mesh
+  FFTableMesh & mesh;
+  
+  // preintegrated kernels [kernel][mode]
+  // e.g., pi_kernels[Kernel::Krnl::H00][1]
+  PIKernelMap pi_kernels;
+  
 };
+
+/* -------------------------------------------------------------------------- */
+/* inline functions                                                           */
+/* -------------------------------------------------------------------------- */
 
 __END_UGUCA__
 
-//#include "half_space_quasidynamic_impl.cc"
+//#include "preint_kernel_collection_impl.cc"
 
-#endif /* __HALF_SPACE_QUASIDYNAMIC_H__ */
+#endif /* __PREINT_KERNEL_COLLECTION_H__ */

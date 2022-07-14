@@ -119,26 +119,26 @@ void HalfSpaceDynamic::initConvolutions() {
     }
 
     // to be corrected when put into a collection
-    this->U_r[0][j]->registerKernel(this->H00_pi[j]);
-    this->U_r[0][j]->registerKernel(this->H01_pi[j]);
-    this->U_i[0][j]->registerKernel(this->H00_pi[j]);
-    this->U_i[0][j]->registerKernel(this->H01_pi[j]);
+    this->U_r[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
+    this->U_r[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
+    this->U_i[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
+    this->U_i[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
 
-    this->U_r[1][j]->registerKernel(this->H11_pi[j]);
-    this->U_r[1][j]->registerKernel(this->H01_pi[j]);
-    this->U_i[1][j]->registerKernel(this->H11_pi[j]);
-    this->U_i[1][j]->registerKernel(this->H01_pi[j]);
+    this->U_r[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H11,j).get());
+    this->U_r[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
+    this->U_i[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H11,j).get());
+    this->U_i[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
 
     if (this->mesh.getDim()==3) {
-      this->U_r[0][j]->registerKernel(this->H22_pi[j]);
-      this->U_i[0][j]->registerKernel(this->H22_pi[j]);
+      this->U_r[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
+      this->U_i[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
 
-      this->U_r[2][j]->registerKernel(this->H00_pi[j]);
-      this->U_r[2][j]->registerKernel(this->H01_pi[j]);
-      this->U_r[2][j]->registerKernel(this->H22_pi[j]);
-      this->U_i[2][j]->registerKernel(this->H00_pi[j]);
-      this->U_i[2][j]->registerKernel(this->H01_pi[j]);
-      this->U_i[2][j]->registerKernel(this->H22_pi[j]);
+      this->U_r[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
+      this->U_r[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
+      this->U_r[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
+      this->U_i[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
+      this->U_i[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
+      this->U_i[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
     }
     for (int d=0; d<this->mesh.getDim(); ++d) {
       this->U_r[d][j]->resize();
@@ -219,17 +219,17 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     conv.resize(nb_conv);
 
     std::vector<PreintKernel *> krnl = {
-      this->H00_pi[j],
-      this->H01_pi[j],
-      this->H01_pi[j],
-      this->H11_pi[j]};
+      this->pi_kernels.get(Kernel::Krnl::H00,j).get(),
+      this->pi_kernels.get(Kernel::Krnl::H01,j).get(),
+      this->pi_kernels.get(Kernel::Krnl::H01,j).get(),
+      this->pi_kernels.get(Kernel::Krnl::H11,j).get()};
 
     if (this->mesh.getDim() == 3) {  // add 3d part
       std::vector<PreintKernel *> krnl3d = {
-	this->H00_pi[j],
-	this->H01_pi[j],
-	this->H22_pi[j],
-	this->H22_pi[j]};
+	this->pi_kernels.get(Kernel::Krnl::H00,j).get(),
+	this->pi_kernels.get(Kernel::Krnl::H01,j).get(),
+	this->pi_kernels.get(Kernel::Krnl::H22,j).get(),
+	this->pi_kernels.get(Kernel::Krnl::H22,j).get()};
 
       krnl.insert(krnl.end(), krnl3d.begin(), krnl3d.end());
     }
