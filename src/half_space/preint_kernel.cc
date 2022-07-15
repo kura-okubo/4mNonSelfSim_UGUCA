@@ -67,6 +67,8 @@ void PreintKernel::preintegrate(double time_factor, double time_step) {
 
   // Reduce nb_integration_int by 1 because of i+1 when calling at() and another +1 inside at()
   unsigned int nb_integration_int = (unsigned int)(trunc / time_step) - 1;
+  if (time_factor == 0.) // mode 0 -> q=0
+    nb_integration_int = 0;
   this->values.resize(nb_integration_int);
 
   // compute trapezoidal integral over time step
@@ -94,23 +96,22 @@ void PreintKernel::multiplyBy(double factor) {
 }
 
 /* -------------------------------------------------------------------------- */
-std::complex<double> PreintKernel::convolve(const ModalLimitedHistory * __restrict__ U_r,
-					    const ModalLimitedHistory * __restrict__ U_i) {
+std::complex<double> PreintKernel::convolve(const ModalLimitedHistory * __restrict__ U) {
 
-  unsigned int nb_U = U_r->getNbHistoryPoints();
+  unsigned int nb_U = U->getNbHistoryPoints();
 
   double real = 0.;
   double imag = 0.;
 
-  unsigned int index_now = U_r->getIndexNow();
-  unsigned int size = U_r->getSize();
+  unsigned int index_now = U->getIndexNow();
+  unsigned int size = U->getSize();
   if (nb_U > size) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw nb_U;
   }
 
-  const double * __restrict__ Ur_p = U_r->getValues();
-  const double * __restrict__ Ui_p = U_i->getValues();
+  const double * __restrict__ Ur_p = U->real();
+  const double * __restrict__ Ui_p = U->imag();
 
 
 #ifdef UCA_USE_BLAS

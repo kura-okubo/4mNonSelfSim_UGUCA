@@ -32,7 +32,7 @@
 #define __HALF_SPACE_QUASIDYNAMIC_H__
 /* -------------------------------------------------------------------------- */
 #include "half_space.hh"
-#include "preint_kernel_collection.hh"
+#include "convolutions.hh"
 
 __BEGIN_UGUCA__
 
@@ -95,7 +95,7 @@ public:
 protected:
   
   // convolution kernels
-  PreintKernelCollection pi_kernels;
+  Convolutions convolutions; 
 
 };
 

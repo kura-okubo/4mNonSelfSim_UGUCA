@@ -157,6 +157,7 @@ int main(int argc, char *argv[]) {
   double nf4v2 = 1.2;
   interface.getCohesion().setAllValuesTo(nf4v);
   HalfSpaceDynamic & top = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
+  /*
   double * Ur00 = const_cast<double*>(top.getLimitedHistoryReal(0,1).getValues());
   int Ur00_size = top.getLimitedHistoryReal(0,1).getSize();
   std::fill_n(Ur00,Ur00_size,nf4v);
@@ -165,7 +166,7 @@ int main(int argc, char *argv[]) {
   std::fill_n(Ui00,Ui00_size,nf4v2);
   unsigned int nb_history_correct = top.getLimitedHistoryReal(0,1).getNbHistoryPoints();
   unsigned int index_now_correct = top.getLimitedHistoryReal(0,1).getIndexNow();
-
+  */
   // dump the solution
   interface.registerToRestart(restart_dump);
   interface.registerToRestart(restart_dump_binary);
@@ -173,16 +174,18 @@ int main(int argc, char *argv[]) {
   restart_dump_binary.dump(rs_number);
 
   // fill with other information
+  /*
   top.getLimitedHistoryReal(0,1).addCurrentValue(44.);
   interface.getCohesion().setAllValuesTo(nf4v*2);
   std::fill_n(Ur00,Ur00_size,2*nf4v);
   std::fill_n(Ui00,Ui00_size,2*nf4v2);
-  
+  */
   // reload from dump
   interface.registerToRestart(restart_load);
   restart_load.load(rs_number);
 
   // check ACII
+  /*
   if (nb_history_correct != top.getLimitedHistoryReal(0,1).getNbHistoryPoints()) {
     std::cerr << "should be " << nb_history_correct
 	      << ": " << top.getLimitedHistoryReal(0,1).getNbHistoryPoints()
@@ -205,7 +208,9 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
+  */
+  return 1; // while debugging
+  /*
   HalfSpaceDynamic & top_to_check = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
   Ur00 = const_cast<double*>(top_to_check.getLimitedHistoryReal(0,1).getValues());
   Ur00_size = top_to_check.getLimitedHistoryReal(0,1).getSize();
@@ -354,4 +359,5 @@ int main(int argc, char *argv[]) {
   
   std::cout << "all checks passed -> overall success" << std::endl;
   return 0; // success
+  */
 }

@@ -42,7 +42,7 @@ HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(FFTableMesh & mesh,
 					     int side_factor,
 					     const std::string & name) :
   HalfSpace(mesh, side_factor, name),
-  pi_kernels(mesh) {
+  convolutions(mesh) {
 
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -58,15 +58,15 @@ HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {}
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::initConvolutions() {
 
-  this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H00,
+  this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H00,
 				this->material->getCs(), this->time_step);
-  this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H01,
+  this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H01,
 				this->material->getCs(), this->time_step);
-  this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H11,
+  this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H11,
 				this->material->getCs(), this->time_step);
 
   if (this->mesh.getDim()==3)
-    this->pi_kernels.preintegrate(*(this->material), Kernel::Krnl::H22,
+    this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H22,
 				  this->material->getCs(), this->time_step);
   
 #ifdef UCA_VERBOSE
@@ -194,9 +194,9 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
       U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
     }
 
-    double H00_integrated = this->pi_kernels.get(Kernel::Krnl::H00,j)->getIntegral();
-    double H01_integrated = this->pi_kernels.get(Kernel::Krnl::H01,j)->getIntegral();
-    double H11_integrated = this->pi_kernels.get(Kernel::Krnl::H11,j)->getIntegral();
+    double H00_integrated = this->convolutions.get(Kernel::Krnl::H00,j)->getIntegral();
+    double H01_integrated = this->convolutions.get(Kernel::Krnl::H01,j)->getIntegral();
+    double H11_integrated = this->convolutions.get(Kernel::Krnl::H11,j)->getIntegral();
     
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
@@ -210,7 +210,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
 		       H11_integrated*U[1]);
     } else {
       
-      double H22_integrated = this->pi_kernels.get(Kernel::Krnl::H22,j)->getIntegral();
+      double H22_integrated = this->convolutions.get(Kernel::Krnl::H22,j)->getIntegral();
 
       // q = {k,m} wave number in x,y direction
       double k = wave_numbers[0][j];

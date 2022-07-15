@@ -1,12 +1,12 @@
 /**
- * @file   preint_kernel_collection.hh
+ * @file   limited_history.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  *
- * @date creation: Thu Jul 14 2022
- * @date last modification: Thu Jul 14 2022
+ * @date creation: Sun Jul 10 2022
+ * @date last modification: Sun Jul 10 2022
  *
- * @brief  Contains PreintKernels for each type of kernel and each mode
+ * @brief  Limited history for all dimensions and modes
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -26,76 +26,73 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __PREINT_KERNEL_COLLECTION_H__
-#define __PREINT_KERNEL_COLLECTION_H__
 /* -------------------------------------------------------------------------- */
-
+#ifndef __LIMITED_HISTORY_H__
+#define __LIMITED_HISTORY_H__
+/* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include "uca_fftable_mesh.hh"
-#include "preint_kernel.hh"
-#include "material.hh"
+#include "modal_limited_history.hh"
+#include "convolutions.hh"
 
-#include <map>
 #include <memory>
 
 __BEGIN_UGUCA__
 
-class PreintKernelCollection {
+class LimitedHistory {
 
   /* ------------------------------------------------------------------------ */
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
 protected:
-  typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
-  typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
-
+  typedef std::vector<std::shared_ptr<ModalLimitedHistory>> LHVector;
   
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-
-  PreintKernelCollection(FFTableMesh & mesh);
-
-  virtual ~PreintKernelCollection();
+  LimitedHistory(FFTableMesh & mesh);
+  virtual ~LimitedHistory() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
 
-  // preintegrate kernels
-  void preintegrate(Material & material, Kernel::Krnl kernel,
-		    double scale_factor, double time_step);
-
+  // registers Kernel to all modes of a history
+  void registerKernel(Convolutions::PIKernelVector & pi_kernels,
+		      unsigned int dim);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-
-  // hopefully don't need this
-  std::shared_ptr<PreintKernel> get(Kernel::Krnl kernel, int mode) { return this->pi_kernels[kernel][mode]; }
-
+  std::shared_ptr<ModalLimitedHistory> get(unsigned int dim,
+					   unsigned int wave_number) {
+    return this->history[dim*this->nbfft+wave_number];
+  }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-private:
+protected:
+  // copy of spatial dimension for fast use in get accessor
+  unsigned int dimension;
 
-  // reference to mesh
-  FFTableMesh & mesh;
+  // copy of nbfft for fast useful
+  unsigned int nbfft;
   
-  // preintegrated kernels [kernel][mode]
-  // e.g., pi_kernels[Kernel::Krnl::H00][1]
-  PIKernelMap pi_kernels;
-  
+  // past values of field in frequency domain
+  // each LimitedHistory is for a given dimension d and wave number q
+  LHVector history;
 };
+
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
 
+
 __END_UGUCA__
 
-//#include "preint_kernel_collection_impl.cc"
-
-#endif /* __PREINT_KERNEL_COLLECTION_H__ */
+#endif /* __LIMITED_HISTORY_H__ */

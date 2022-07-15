@@ -33,9 +33,12 @@
 #define __MODAL_LIMITED_HISTORY_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <memory>
+#include <complex>
 
 __BEGIN_UGUCA__
 
@@ -54,30 +57,35 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   // at the current value of the history
-  inline void addCurrentValue(double value);
-  inline void changeCurrentValue(double value);
+  inline void addCurrentValue(std::complex<double> value);
+  inline void changeCurrentValue(std::complex<double> value);
 
-  inline void setSteadyState(double value);
+  inline void setSteadyState(std::complex<double> value);
   
   // get history value at index with index=0 : now
-  inline double at(unsigned int index) const;
+  inline std::complex<double> at(unsigned int index) const;
 
   // update to take account for newly added preint kernels
   void resize();
   
   // register preintegrated kernel
-  void registerKernel(const PreintKernel * pi_kernel);
+  void registerKernel(std::shared_ptr<PreintKernel> pi_kernel);
+
+private:
+  void resize(std::vector<double> & vec, bool update_index);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->values.size(); };
+  unsigned int getSize() const { return this->values_real.size(); };
   unsigned int getNbHistoryPoints() const { return std::min(this->nb_history_points,
-							    this->values.size()); };
+							    this->values_real.size()); };
   unsigned int getIndexNow() const {return this->index_now; }
-  const double * getValues() const {return this->values.data(); }
-
+  //const std::complex<double> * getValues() const {return this->values.data(); }
+  const double * real() const { return this->values_real.data(); }
+  const double * imag() const { return this->values_imag.data(); }
+  
   // for restart
   void setNbHistoryPoints(int hp) { this->nb_history_points = hp; }
   void setIndexNow(int idx) { this->index_now = idx; }
@@ -92,51 +100,55 @@ protected:
   // index pointing to the newest entry
   unsigned int index_now;
 
-  // values
-  std::vector<double> values;
+  // values (keep in separate vectors for BLAS in preint_kernel convolution)
+  std::vector<double> values_real;
+  std::vector<double> values_imag;
 
   // preintegrated kernels that use this limited history
-  std::vector<const PreintKernel*> pi_kernels;
+  std::vector<std::shared_ptr<PreintKernel>> pi_kernels;
 };
 
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::addCurrentValue(double value) {
+inline void ModalLimitedHistory::addCurrentValue(std::complex<double> value) {
 
   if (this->index_now == 0)
-    this->index_now = this->values.size();
+    this->index_now = this->values_real.size();
 
   this->index_now -= 1;
 
-  this->values[this->index_now] = value;
-
+  this->values_real[this->index_now] = std::real(value);
+  this->values_imag[this->index_now] = std::imag(value);
+  
   // increase the counter of history points
   this->nb_history_points = std::min(this->nb_history_points + 1,
-				     this->values.size());
+				     this->values_real.size());
 }
 
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::changeCurrentValue(double value) {
-  this->values[this->index_now] = value;
+inline void ModalLimitedHistory::changeCurrentValue(std::complex<double> value) {
+  this->values_real[this->index_now] = std::real(value);
+  this->values_imag[this->index_now] = std::imag(value);
 }
 
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::setSteadyState(double value) {
-  this->nb_history_points = this->values.size();
-  std::fill(this->values.begin(), this->values.end(), value);
+inline void ModalLimitedHistory::setSteadyState(std::complex<double> value) {
+  this->nb_history_points = this->values_real.size();
+  std::fill(this->values_real.begin(), this->values_real.end(), std::real(value));
+  std::fill(this->values_imag.begin(), this->values_imag.end(), std::imag(value));
 }
 
 /* -------------------------------------------------------------------------- */
-inline double ModalLimitedHistory::at(unsigned int index) const {
-  if (index >= this->values.size()) {
+inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
+  if (index >= this->values_real.size()) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
   }
 
-  unsigned int i = (this->index_now + index) % this->values.size();
-  return this->values[i];
+  unsigned int i = (this->index_now + index) % this->values_real.size();
+  return {this->values_real[i], this->values_imag[i]};
 }
 
 __END_UGUCA__

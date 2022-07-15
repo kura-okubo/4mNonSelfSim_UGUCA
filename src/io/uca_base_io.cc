@@ -121,7 +121,7 @@ void BaseIO::registerIO(const std::string & name,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(const std::string & name,
-			ModalLimitedHistory & lim_history) {
+			LimitedHistory & lim_history) {
   if (this->registered_histories.find(name) == this->registered_histories.end())
     this->registered_histories[name] = (&lim_history);
   else
@@ -197,34 +197,36 @@ void BaseIO::dumpField(std::fstream * dump_file,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::dumpHistory(std::fstream * dump_file,
-			 const ModalLimitedHistory & limited_history) {
+			 const LimitedHistory & limited_history) {
   if (!this->initiated) return;
 
   // write nb_history points and index_now
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
-      (*dump_file) << limited_history.getSize() << this->separator;
-      (*dump_file) << limited_history.getNbHistoryPoints() << this->separator;
-      (*dump_file) << limited_history.getIndexNow() << std::endl;
+      //(*dump_file) << limited_history.getSize() << this->separator;
+      //(*dump_file) << limited_history.getNbHistoryPoints() << this->separator;
+      //(*dump_file) << limited_history.getIndexNow() << std::endl;
       break;
     }
     case Format::Binary: {
+      /*
       float temp = (float)(limited_history.getSize());
       (*dump_file).write((char *)&temp, sizeof(float));
       temp = (float)(limited_history.getNbHistoryPoints());
       (*dump_file).write((char *)&temp, sizeof(float));
       temp = (float)(limited_history.getIndexNow());
       (*dump_file).write((char *)&temp, sizeof(float));
+      */
       break;
     }
     default:
       throw std::runtime_error("Unsupported output format.");
   }
 
-  int size = limited_history.getSize();
-  const double * lh_data = limited_history.getValues();
-  this->write(dump_file, lh_data, size);
+  //int size = limited_history.getSize();
+  //const std::complex<double> * lh_data = limited_history.getValues();
+  //this->write(dump_file, lh_data, size);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -268,7 +270,7 @@ void BaseIO::loadField(std::fstream * load_file,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::loadHistory(std::fstream * load_file,
-			 ModalLimitedHistory & limited_history) {
+			 LimitedHistory & limited_history) {
   if (!this->initiated) return;
 
   // read nb_history points and index_now
@@ -280,32 +282,36 @@ void BaseIO::loadHistory(std::fstream * load_file,
       std::stringstream ss(line);
       double temp;
       ss >> temp;
+      /*
       if (temp != limited_history.getSize()) 
 	throw std::runtime_error("reloaded Limited History is of incorrect size");
       ss >> temp;
       limited_history.setNbHistoryPoints((int)temp);
       ss >> temp;
       limited_history.setIndexNow((int)temp);
+      */
       break;
     }
     case Format::Binary: {
       float temp;
       (*load_file).read((char *)&temp, sizeof(float));
+      /*
       if (temp != limited_history.getSize()) 
 	throw std::runtime_error("reloaded Limited History is of incorrect size");
       (*load_file).read((char *)&temp, sizeof(float));
       limited_history.setNbHistoryPoints((int)temp);
       (*load_file).read((char *)&temp, sizeof(float));
       limited_history.setIndexNow((int)temp);
+      */
       break;
     }
     default:
       throw std::runtime_error("Unsupported output format.");
   }
   
-  int size = limited_history.getSize();
-  double * lh_data = const_cast<double*>(limited_history.getValues());
-  this->read(load_file, lh_data, size);
+  //int size = limited_history.getSize();
+  //double * lh_data = const_cast<double*>(limited_history.getValues());
+  //this->read(load_file, lh_data, size);
 }
 
 /* -------------------------------------------------------------------------- */

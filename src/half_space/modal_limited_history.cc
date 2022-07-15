@@ -38,17 +38,23 @@ __BEGIN_UGUCA__
 ModalLimitedHistory::ModalLimitedHistory() :
   nb_history_points(0),
   index_now(0),
-  values(0) {
-  //std::fill(this->values.begin(), this->values.end(), 0);
-}
+  values_real(0), values_imag(0) {}
 
 /* -------------------------------------------------------------------------- */
-void ModalLimitedHistory::registerKernel(const PreintKernel * pi_kernel) {
+void ModalLimitedHistory::registerKernel(std::shared_ptr<PreintKernel> pi_kernel) {
   this->pi_kernels.push_back(pi_kernel);
+  this->resize();
 }
 
 /* -------------------------------------------------------------------------- */
 void ModalLimitedHistory::resize() {
+  this->resize(this->values_real, false);
+  this->resize(this->values_imag, true);
+}
+
+/* -------------------------------------------------------------------------- */
+void ModalLimitedHistory::resize(std::vector<double> & vec,
+				 bool update_index) {
   unsigned int new_size = 0;
   for(auto const& pik: this->pi_kernels) {
     new_size = std::max(new_size, pik->getSize());
@@ -56,23 +62,24 @@ void ModalLimitedHistory::resize() {
 
   // haven't stored any history yet
   if (this->nb_history_points == 0) {
-    this->values.resize(new_size);
+    vec.resize(new_size);
   }
   else {
     // place history to beginning of temporary vector
-    std::vector<double> tmp(this->values.size());
-    std::copy(this->values.begin()+this->index_now, this->values.end(),
+    std::vector<double> tmp(vec.size());
+    std::copy(vec.begin()+this->index_now, vec.end(),
 	      tmp.begin());
-    std::copy(this->values.begin(), this->values.begin()+this->index_now,
-	      tmp.begin()+(this->values.size()-this->index_now));
+    std::copy(vec.begin(), vec.begin()+this->index_now,
+	      tmp.begin()+(vec.size()-this->index_now));
 
     // resize
-    int copy_size = std::min((unsigned int)(this->values.size()), new_size);
-    this->values.resize(new_size);
+    int copy_size = std::min((unsigned int)(vec.size()), new_size);
+    vec.resize(new_size);
 
     // copy back
-    std::copy(tmp.begin(), tmp.begin()+copy_size, this->values.begin());
-    this->index_now = 0;
+    std::copy(tmp.begin(), tmp.begin()+copy_size, vec.begin());
+    if (update_index)
+      this->index_now = 0;
   }
 }
 

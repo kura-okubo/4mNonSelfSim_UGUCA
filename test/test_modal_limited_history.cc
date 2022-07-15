@@ -49,9 +49,9 @@ int main(){
   std::cout << "start test: limited_history" << std::endl;
 
   unsigned int size = 4;
-  PIK pik1(size);
+  std::shared_ptr<PIK> pik1(new PIK(size));
   ModalLimitedHistory lh1;
-  lh1.registerKernel(&pik1);
+  lh1.registerKernel(pik1);
   lh1.resize();
 
   std::cout << "check size" << std::endl;
@@ -102,8 +102,8 @@ int main(){
   std::cout << "history correct -> success" << std::endl;
 
   std::cout << "check change size of ModalLimitedHistory" << std::endl;
-  PIK pik2(size*2);
-  lh1.registerKernel(&pik2);
+  std::shared_ptr<PIK> pik2(new PIK(size*2));
+  lh1.registerKernel(pik2);
   lh1.resize();
   
   // check if history still correct

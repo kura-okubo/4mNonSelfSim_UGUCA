@@ -26,33 +26,39 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include "preint_kernel_collection.hh"
+#include "convolutions.hh"
 #include "static_communicator_mpi.hh"
+#include "limited_history.hh"
+
+#ifdef UCA_USE_OPENMP
+#include <omp.h>
+#endif /* UCA_USE_OPENMP */
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-PreintKernelCollection::PreintKernelCollection(FFTableMesh & mesh) :
+Convolutions::Convolutions(FFTableMesh & mesh) :
   mesh(mesh) {
   
 }
 
 /* -------------------------------------------------------------------------- */
-PreintKernelCollection::~PreintKernelCollection() {
+Convolutions::~Convolutions() {
 
 }
 
 /* -------------------------------------------------------------------------- */
-void PreintKernelCollection::preintegrate(Material & material,
-					  Kernel::Krnl kernel,
-					  double scale_factor,
-					  double time_step) {
+void Convolutions::preintegrate(Material & material,
+				Kernel::Krnl kernel,
+				double scale_factor,
+				double time_step) {
 
   // create vector and resize it
   this->pi_kernels.insert(std::pair<Kernel::Krnl,PIKernelVector>(kernel, PIKernelVector()));
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
   pik_vector.resize(this->mesh.getNbLocalFFT());
-  
+
+  // could remove this here < ------------------------------------ !!!
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
@@ -63,7 +69,7 @@ void PreintKernelCollection::preintegrate(Material & material,
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
 
     // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
+    //if ((prank == m0_rank) && (j == m0_index)) continue;
 
     pik_vector[j] = std::make_shared<PreintKernel>(material.getKernel(kernel));
 
@@ -75,6 +81,45 @@ void PreintKernelCollection::preintegrate(Material & material,
     
     pik_vector[j]->preintegrate(qj_cs, time_step);
   }
+}
+
+/* -------------------------------------------------------------------------- */
+void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int> ConvPair;
+  
+  // make sure that the fields have the correct length
+  this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
+  
+  // prepare results
+  this->results.insert(std::pair<ConvPair,std::vector<std::complex<double>>>(conv,std::vector<std::complex<double>>(this->mesh.getNbLocalFFT())));
+}
+
+/* -------------------------------------------------------------------------- */
+void Convolutions::convolve() {
+
+ConvMap::iterator it;
+
+#ifdef UCA_USE_OPENMP
+#pragma omp parallel for
+#pragma omp single nowait
+#endif
+ for(it=this->results.begin(); it!=this->results.end(); ++it) {
+#ifdef UCA_USE_OPENMP
+#pragma omp task firstprivate(datIt)
+#endif
+   // history for q1 is longest q = j*q1
+   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
+
+     // kernel 
+     Kernel::Krnl kernel = it->first.first;
+
+     // modal U
+     unsigned int U_dim = it->first.second;
+     std::shared_ptr<ModalLimitedHistory> U_j = this->field->get(U_dim,j);
+     
+     // std::vector<std::complex<double>> & res = it->second;
+     it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j.get());
+   }
+ }
 }
 
 __END_UGUCA__

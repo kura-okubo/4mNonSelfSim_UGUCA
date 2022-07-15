@@ -62,8 +62,9 @@ set(UGUCA_HEADER
 
   # half spaces
   half_space/modal_limited_history.hh
+  half_space/limited_history.hh
   half_space/preint_kernel.hh
-  half_space/preint_kernel_collection.hh
+  half_space/convolutions.hh
   half_space/half_space.hh
   half_space/half_space_quasi_dynamic.hh
   half_space/half_space_dynamic.hh
@@ -119,8 +120,9 @@ set(UGUCA_SRC
 
   # half spaces
   half_space/modal_limited_history.cc
+  half_space/limited_history.cc
   half_space/preint_kernel.cc
-  half_space/preint_kernel_collection.cc
+  half_space/convolutions.cc
   half_space/half_space.cc
   half_space/half_space_dynamic.cc
   half_space/half_space_quasi_dynamic.cc

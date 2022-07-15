@@ -33,7 +33,7 @@
 #include "uca_common.hh"
 #include "nodal_field_component.hh"
 #include "nodal_field.hh"
-#include "modal_limited_history.hh"
+#include "limited_history.hh"
 
 #include <fstream>
 #include <map>
@@ -49,7 +49,7 @@ public:
   /* ------------------------------------------------------------------------ */
 protected:
   typedef std::map<const std::string, NodalFieldComponent *> FieldMap;
-  typedef std::map<const std::string, ModalLimitedHistory *> HistoryMap;
+  typedef std::map<const std::string, LimitedHistory *> HistoryMap;
   typedef std::map<const std::string, std::fstream *> FileMap;
 
   /* ------------------------------------------------------------------------ */
@@ -73,7 +73,7 @@ public:
   virtual void registerIO(const std::string & name,
 			  NodalField & nodal_field);
   virtual void registerIO(const std::string & name,
-			  ModalLimitedHistory & lim_history);
+			  LimitedHistory & lim_history);
 
   virtual void registerIO(NodalFieldComponent & nodal_field);
   virtual void registerIO(NodalField & nodal_field);
@@ -94,9 +94,9 @@ protected:
 		 NodalFieldComponent & nodal_field);
 
   void dumpHistory(std::fstream * dump_file,
-		   const ModalLimitedHistory & limited_history);
+		   const LimitedHistory & limited_history);
   void loadHistory(std::fstream * dump_file,
-		   ModalLimitedHistory & limited_history);
+		   LimitedHistory & limited_history);
 
   // writing data
   void write(std::fstream * dump_file, const double * data, int size);

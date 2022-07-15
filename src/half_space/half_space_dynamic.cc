@@ -31,6 +31,7 @@
 #include "half_space_dynamic.hh"
 #include "static_communicator_mpi.hh"
 
+/*
 #ifdef UCA_USE_OPENMP
 #include <omp.h>
 #endif /* UCA_USE_OPENMP */
@@ -41,7 +42,9 @@ __BEGIN_UGUCA__
 HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
 				   int side_factor,
 				   const std::string & name) :
-  HalfSpaceQuasiDynamic(mesh, side_factor, name), previously_dynamic(true) {
+  HalfSpaceQuasiDynamic(mesh, side_factor, name),
+  U_history(mesh),
+  previously_dynamic(true) {
   
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -49,34 +52,10 @@ HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
 	    << prank << "): " << this->name
 	    << " : " << this->mesh.getNbLocalFFT() << std::endl;
 #endif // UCA_VERBOSE
-  
-  // allocate displacement history
-  this->U_r.resize(this->mesh.getDim());
-  this->U_i.resize(this->mesh.getDim());
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    this->U_r[d].resize(this->mesh.getNbLocalFFT());
-    this->U_i[d].resize(this->mesh.getNbLocalFFT());
-  }
 }
 
 /* -------------------------------------------------------------------------- */
-HalfSpaceDynamic::~HalfSpaceDynamic() {
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-  
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-
-      // ignore mode 0
-      if ((prank == m0_rank) && (j == m0_index)) continue;
-
-      delete this->U_r[d][j];
-      delete this->U_i[d][j];
-    }
-  }
-}
+HalfSpaceDynamic::~HalfSpaceDynamic() {}
 
 /* -------------------------------------------------------------------------- */
 double HalfSpaceDynamic::getStableTimeStep() {
@@ -102,57 +81,28 @@ void HalfSpaceDynamic::initConvolutions() {
 
   HalfSpaceQuasiDynamic::initConvolutions();
 
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
+  this->convolutions.registerHistory(this->U_history);
+
   
-  // history for q1 is longest q = j*q1
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-    // ignore mode 0
+  this->convolutions.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
+  this->convolutions.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
+  this->convolutions.init(std::make_pair(Kernel::Krnl::H11,1)); // H11-U1
+  this->convolutions.init(std::make_pair(Kernel::Krnl::H01,1)); // H01-U1
 
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    // register ModalLimitedHistory
-    for (int d=0; d<this->mesh.getDim(); ++d) {
-      this->U_r[d][j] = new ModalLimitedHistory();
-      this->U_i[d][j] = new ModalLimitedHistory();
-    }
-
-    // to be corrected when put into a collection
-    this->U_r[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
-    this->U_r[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
-    this->U_i[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
-    this->U_i[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
-
-    this->U_r[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H11,j).get());
-    this->U_r[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
-    this->U_i[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H11,j).get());
-    this->U_i[1][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
-
-    if (this->mesh.getDim()==3) {
-      this->U_r[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
-      this->U_i[0][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
-
-      this->U_r[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
-      this->U_r[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
-      this->U_r[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
-      this->U_i[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H00,j).get());
-      this->U_i[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H01,j).get());
-      this->U_i[2][j]->registerKernel(this->pi_kernels.get(Kernel::Krnl::H22,j).get());
-    }
-    for (int d=0; d<this->mesh.getDim(); ++d) {
-      this->U_r[d][j]->resize();
-      this->U_i[d][j]->resize();
-    }
-  }
-
+  if (this->mesh.getDim()==3) {
+    this->convolutions.init(std::make_pair(Kernel::Krnl::H22,0)); // H22-U0
+    this->convolutions.init(std::make_pair(Kernel::Krnl::H00,2)); // H00-U2
+    this->convolutions.init(std::make_pair(Kernel::Krnl::H01,2)); // H01-U2
+    this->convolutions.init(std::make_pair(Kernel::Krnl::H22,2)); // H22-U2
+  }    
+  
 #ifdef UCA_VERBOSE
   int total_work=0;
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
     // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
+    //if ((prank == m0_rank) && (j == m0_index)) continue;
     for (int d=0; d<this->mesh.getDim(); ++d)
-      total_work += this->U_r[d][j]->getSize();
+      total_work += this->U_history.real(d,j)->getSize();
   }
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   printf("Rank %d has total work %d \n",world_rank,total_work);
@@ -187,136 +137,90 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 
   double ** wave_numbers = this->mesh.getLocalWaveNumbers();
 
-  // access to fourier coefficients of stresses
-  fftw_complex * internal_fd[3];
-  for (int d = 0; d < this->mesh.getDim(); ++d)
-    internal_fd[d] = this->internal.fd_storage(d);
-
+  // --------------
+  // UPDATE HISTORY
+  // --------------
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
 
     // ignore mode 0
     if ((prank == m0_rank) && (j == m0_index)) continue;
     
-    std::vector<std::complex<double>> U;
-    U.resize(this->mesh.getDim());
-
     for (int d = 0; d < this->mesh.getDim(); ++d) {
-      U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
-
-      // store current displacement in history
+      
+      std::complex<double> Udj = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
+      
       if (correcting) {
-        this->U_r[d][j]->changeCurrentValue(std::real(U[d]));
-        this->U_i[d][j]->changeCurrentValue(std::imag(U[d]));
+        this->U_history.get(d,j)->changeCurrentValue(Udj);
       } else {
-        this->U_r[d][j]->addCurrentValue(std::real(U[d]));
-        this->U_i[d][j]->addCurrentValue(std::imag(U[d]));
+        this->U_history.get(d,j)->addCurrentValue(Udj);
       }
     }
+  }
+  
+  // --------------
+  // CONVOLUTION
+  // --------------
+  this->convolutions.convolve();
+  auto conv = this->convolutions.getResults();
+    
+  // --------------
+  // COMPUTE F
+  // --------------
 
-    int nb_conv = (int)std::pow(2.0, this->mesh.getDim());
-
-    std::vector<std::complex<double>> conv;
-    conv.resize(nb_conv);
-
-    std::vector<PreintKernel *> krnl = {
-      this->pi_kernels.get(Kernel::Krnl::H00,j).get(),
-      this->pi_kernels.get(Kernel::Krnl::H01,j).get(),
-      this->pi_kernels.get(Kernel::Krnl::H01,j).get(),
-      this->pi_kernels.get(Kernel::Krnl::H11,j).get()};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<PreintKernel *> krnl3d = {
-	this->pi_kernels.get(Kernel::Krnl::H00,j).get(),
-	this->pi_kernels.get(Kernel::Krnl::H01,j).get(),
-	this->pi_kernels.get(Kernel::Krnl::H22,j).get(),
-	this->pi_kernels.get(Kernel::Krnl::H22,j).get()};
-
-      krnl.insert(krnl.end(), krnl3d.begin(), krnl3d.end());
-    }
-
-    std::vector<ModalLimitedHistory *> U_real = {
-      this->U_r[0][j],
-      this->U_r[0][j],
-      this->U_r[1][j],
-      this->U_r[1][j]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<ModalLimitedHistory *> U_real3d = {
-	this->U_r[2][j],
-	this->U_r[2][j],
-	this->U_r[0][j],
-	this->U_r[2][j]};
-
-      U_real.insert(U_real.end(), U_real3d.begin(), U_real3d.end());
-    }
-
-    std::vector<ModalLimitedHistory *> U_imag = {
-      this->U_i[0][j],
-      this->U_i[0][j],
-      this->U_i[1][j],
-      this->U_i[1][j]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<ModalLimitedHistory *> U_imag3d = {
-	this->U_i[2][j],
-	this->U_i[2][j],
-	this->U_i[0][j],
-	this->U_i[2][j]};
-
-      U_imag.insert(U_imag.end(), U_imag3d.begin(), U_imag3d.end());
-    }
-
-#ifdef UCA_USE_OPENMP
-#pragma omp parallel for
-#endif
-    for (int n = 0; n < nb_conv; ++n) {
-      conv[n] = krnl[n]->convolve(U_real[n], U_imag[n]);
-    }
-    // convolutions for both 2d and 3d
-    std::complex<double> conv_H00_U0_j = conv[0];
-    std::complex<double> conv_H01_U0_j = conv[1];
-    std::complex<double> conv_H01_U1_j = conv[2];
-    std::complex<double> conv_H11_U1_j = conv[3];
-
+  // access to fourier coefficients of stresses
+  fftw_complex * internal_fd[3];
+  for (int d = 0; d < this->mesh.getDim(); ++d)
+    internal_fd[d] = this->internal.fd_storage(d);
+ 
+  
+  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
+    
+    // ignore mode 0
+    if ((prank == m0_rank) && (j == m0_index)) continue;
+    
+    // current U
+    std::vector<std::complex<double>> U;
+    U.resize(this->mesh.getDim());
+    for (int d=0; d<this->mesh.getDim(); ++d)
+      U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
+    
+    // to be computed
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
+    
     if (this->mesh.getDim() == 2) {
       double q = wave_numbers[0][j];
       this->computeF2D(F,
 		       q,
 		       U,
-		       conv_H00_U0_j,
-		       conv_H01_U0_j,
-		       conv_H01_U1_j,
-		       conv_H11_U1_j);
+		       conv[std::make_pair(Kernel::Krnl::H00,0)][j],  // H00-U0
+		       conv[std::make_pair(Kernel::Krnl::H01,0)][j],  // H01-U0
+		       conv[std::make_pair(Kernel::Krnl::H01,1)][j],  // H01-U1
+		       conv[std::make_pair(Kernel::Krnl::H11,1)][j]); // H11-U1
     } else {
-      // convolutions for 3d only
-      std::complex<double> conv_H00_U2_j = conv[4];
-      std::complex<double> conv_H01_U2_j = conv[5];
-      std::complex<double> conv_H22_U0_j = conv[6];
-      std::complex<double> conv_H22_U2_j = conv[7];
       // q = {k,m} wave number in x,y direction
-
       double k = wave_numbers[0][j];
       double m = wave_numbers[2][j];
+
       this->computeF3D(F,k,m,
 		       U,
-		       conv_H00_U0_j,
-		       conv_H00_U2_j,
-		       conv_H01_U0_j,
-		       conv_H01_U2_j,
-		       conv_H01_U1_j,
-		       conv_H11_U1_j,
-		       conv_H22_U0_j,
-		       conv_H22_U2_j);  
+		       conv[std::make_pair(Kernel::Krnl::H00,0)][j],  // H00-U0
+		       conv[std::make_pair(Kernel::Krnl::H00,2)][j],  // H00-U2
+		       conv[std::make_pair(Kernel::Krnl::H01,0)][j],  // H01-U0
+		       conv[std::make_pair(Kernel::Krnl::H01,2)][j],  // H01-U2
+		       conv[std::make_pair(Kernel::Krnl::H01,1)][j],  // H01-U1
+		       conv[std::make_pair(Kernel::Krnl::H11,1)][j],  // H11-U1
+		       conv[std::make_pair(Kernel::Krnl::H22,0)][j],  // H22-U0
+		       conv[std::make_pair(Kernel::Krnl::H22,2)][j]); // H22-U2
     }
+    
     // set values to internal force
     for (int d = 0; d < this->mesh.getDim(); ++d) {
       internal_fd[d][j][0] = std::real(F[d]);  // real part
       internal_fd[d][j][1] = std::imag(F[d]);  // imag part
     }
   }
-
+  
   // correct mode 0
   if (prank == m0_rank) {
     for (int d = 0; d < this->mesh.getDim(); ++d) {
@@ -329,6 +233,9 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 
+  restart.registerIO(this->name+"_U",this->U_history);
+
+  /*
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
@@ -345,7 +252,7 @@ void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 			 *(this->U_i[d][j]));
     }
   }
-
+  */
   HalfSpace::registerToRestart(restart);
 }
 
@@ -365,9 +272,8 @@ void HalfSpaceDynamic::setSteadyState(bool predicting) {
 
     for (int d = 0; d < this->mesh.getDim(); ++d) {
 
-      this->U_r[d][j]->setSteadyState(_disp.fd(d,j)[0]);
-      this->U_i[d][j]->setSteadyState(_disp.fd(d,j)[1]);
-      
+      this->U_history.get(d,j)->setSteadyState({_disp.fd(d,j)[0],
+						_disp.fd(d,j)[1]});
     }
   }
 }
