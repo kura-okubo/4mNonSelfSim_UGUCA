@@ -59,15 +59,15 @@ HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {}
 void HalfSpaceQuasiDynamic::initConvolutions() {
 
   this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H00,
-				this->material->getCs(), this->time_step);
+				  this->material->getCs(), this->time_step);
   this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H01,
-				this->material->getCs(), this->time_step);
+				  this->material->getCs(), this->time_step);
   this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H11,
-				this->material->getCs(), this->time_step);
+				  this->material->getCs(), this->time_step);
 
   if (this->mesh.getDim()==3)
     this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H22,
-				  this->material->getCs(), this->time_step);
+				    this->material->getCs(), this->time_step);
   
 #ifdef UCA_VERBOSE
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -194,9 +194,9 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
       U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
     }
 
-    double H00_integrated = this->convolutions.get(Kernel::Krnl::H00,j)->getIntegral();
-    double H01_integrated = this->convolutions.get(Kernel::Krnl::H01,j)->getIntegral();
-    double H11_integrated = this->convolutions.get(Kernel::Krnl::H11,j)->getIntegral();
+    double H00_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H00,j);
+    double H01_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H01,j);
+    double H11_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H11,j);
     
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
@@ -210,7 +210,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
 		       H11_integrated*U[1]);
     } else {
       
-      double H22_integrated = this->convolutions.get(Kernel::Krnl::H22,j)->getIntegral();
+      double H22_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H22,j);
 
       // q = {k,m} wave number in x,y direction
       double k = wave_numbers[0][j];

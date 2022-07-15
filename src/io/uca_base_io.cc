@@ -292,9 +292,9 @@ void BaseIO::loadHistory(std::fstream * load_file,
 	if (temp != limited_history.history[i]->getSize()) 
 	  throw std::runtime_error("reloaded Limited History is of incorrect size");
 	ss >> temp;
-	limited_history.history[i]->setNbHistoryPoints((int)temp);
+	limited_history.history[i]->nb_history_points = (int)temp;
 	ss >> temp;
-	limited_history.history[i]->setIndexNow((int)temp);
+	limited_history.history[i]->index_now = (int)temp;
       }
       break;
     }
@@ -305,9 +305,9 @@ void BaseIO::loadHistory(std::fstream * load_file,
 	if (temp != limited_history.history[i]->getSize()) 
 	  throw std::runtime_error("reloaded Limited History is of incorrect size");
 	(*load_file).read((char *)&temp, sizeof(float));
-	limited_history.history[i]->setNbHistoryPoints((int)temp);
+	limited_history.history[i]->nb_history_points = (int)temp;
 	(*load_file).read((char *)&temp, sizeof(float));
-	limited_history.history[i]->setIndexNow((int)temp);
+	limited_history.history[i]->index_now = (int)temp;
       }
       break;
     }

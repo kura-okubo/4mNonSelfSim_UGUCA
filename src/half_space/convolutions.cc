@@ -37,14 +37,10 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Convolutions::Convolutions(FFTableMesh & mesh) :
-  mesh(mesh) {
-  
-}
+  mesh(mesh) {}
 
 /* -------------------------------------------------------------------------- */
-Convolutions::~Convolutions() {
-
-}
+Convolutions::~Convolutions() {}
 
 /* -------------------------------------------------------------------------- */
 void Convolutions::preintegrate(Material & material,
@@ -81,7 +77,7 @@ void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int
   this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
   
   // prepare results
-  this->results.insert(std::pair<ConvPair,std::vector<std::complex<double>>>(conv,std::vector<std::complex<double>>(this->mesh.getNbLocalFFT())));
+  this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(this->mesh.getNbLocalFFT())));
 }
 
 /* -------------------------------------------------------------------------- */

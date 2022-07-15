@@ -80,7 +80,6 @@ public:
 
   // access kernels
   Kernel * getKernel(Kernel::Krnl krnl) { return this->kernels.get(krnl); }
-  //  const KernelCollection * getKernels() { return &(this->kernels); }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

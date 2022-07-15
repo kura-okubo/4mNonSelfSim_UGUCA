@@ -45,6 +45,9 @@ __BEGIN_UGUCA__
 class PreintKernel;
 
 class ModalLimitedHistory {
+
+  friend class BaseIO;
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
@@ -82,14 +85,9 @@ public:
   unsigned int getNbHistoryPoints() const { return std::min(this->nb_history_points,
 							    this->values_real.size()); };
   unsigned int getIndexNow() const {return this->index_now; }
-  //const std::complex<double> * getValues() const {return this->values.data(); }
   const double * real() const { return this->values_real.data(); }
   const double * imag() const { return this->values_imag.data(); }
-  
-  // for restart
-  void setNbHistoryPoints(int hp) { this->nb_history_points = hp; }
-  void setIndexNow(int idx) { this->index_now = idx; }
-  
+
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

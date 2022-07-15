@@ -29,12 +29,10 @@
 #ifndef __CONVOLUTIONS_H__
 #define __CONVOLUTIONS_H__
 /* -------------------------------------------------------------------------- */
-
 #include "uca_common.hh"
 #include "material.hh"
 #include "uca_fftable_mesh.hh"
 #include "preint_kernel.hh"
-//#include "limited_history.hh"
 
 #include <map>
 #include <memory>
@@ -53,14 +51,14 @@ public:
 protected:
   typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
   typedef std::pair<Kernel::Krnl,unsigned int> ConvPair;
-  typedef std::map<ConvPair,std::vector<std::complex<double>>> ConvMap;
+  typedef std::vector<std::complex<double>> VecComplex;
+  typedef std::map<ConvPair,VecComplex> ConvMap;
   
   
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-
   Convolutions(FFTableMesh & mesh);
 
   virtual ~Convolutions();
@@ -89,9 +87,10 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
 
-  // hopefully don't need this -> replace this by a
-  // getIntegral(kernel, mode)
-  std::shared_ptr<PreintKernel> get(Kernel::Krnl kernel, int mode) { return this->pi_kernels[kernel][mode]; }
+  // simple full integral of kernel
+  double getKernelIntegral(Kernel::Krnl kernel, int wave_number) {
+    return this->pi_kernels[kernel][wave_number]->getIntegral();
+  }
   
   const ConvMap & getResults() { return this->results; }
   
