@@ -113,8 +113,11 @@ void FractureLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in shear direction
-  int ignore_dir = 1;
-  cohesion.multiplyByScalar(alpha_field, ignore_dir);
+  for (int d=0; d<cohesion.getDim(); ++d) {
+    if (d==1) // ignore normal direction
+      continue;
+    cohesion.multiplyByScalar(d,alpha_field);
+  }
 }
 
 /* --------------------------------------------------------------------------*/
