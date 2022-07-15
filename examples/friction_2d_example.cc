@@ -8,7 +8,8 @@
  * @date creation: Fri Feb 5 2021
  * @date last modification: Fri Feb 5 2021
  *
- * @brief  TODO
+ * @brief  Example demonstrating UnishearInterface, a friction law,
+ * and quasi-dynamic time stepping
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -122,6 +123,10 @@ int main(int argc, char *argv[]) {
   interface.dump(0,0);
   unsigned int dump_int = std::max(1, nb_time_steps/data.get<int>("nb_dumps"));
 
+  // quasi-dynamic
+  bool dynamic_step = false;
+  NodalFieldComponent & velo_0 = interface.getTop().getVelo().component(0);
+  
   // time stepping
   for (int s=1; s<=nb_time_steps; ++s) {
     if (world_rank==0) {
@@ -131,8 +136,24 @@ int main(int argc, char *argv[]) {
 
     ext_shear.setAllValuesTo(mus_min*std::abs(normal_load) + s*time_step*shear_load_rate);
 
+    // switch between quasi-dynamic and dynamic
+    double max_velo = 0.;
+    for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
+      max_velo = std::max(max_velo,velo_0(i));
+    }
+    if (max_velo > data.get<double>("dyn_velo_threshold")) {
+      if (!dynamic_step)
+	std::cout << "quasi-dynamic -> dynamic (s=" << s << ")" << std::endl;
+      dynamic_step = true;
+    }
+    else {
+      if (dynamic_step)
+	std::cout << "dynamic -> quasi-dynamic (s=" << s << ")" << std::endl;
+      dynamic_step = false;
+    }
+    
     // time integration
-    interface.advanceTimeStep();
+    interface.advanceTimeStep(dynamic_step);
 
     // dump
     if (s % dump_int == 0)

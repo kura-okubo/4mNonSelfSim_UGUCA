@@ -77,6 +77,11 @@ void PreintKernel::preintegrate(double time_factor, double time_step) {
     k_i = k_ii;
   }
 
+  // compute integral of kernel
+  this->integral = 0.0;
+  for (unsigned int i=0; i<nb_integration_int; ++i) {
+    this->integral += this->values[i];
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -86,7 +91,6 @@ void PreintKernel::multiplyBy(double factor) {
   for (unsigned int i=0; i<nb_integration_int; ++i) {
     this->values[i] *= factor;
   }
-
 }
 
 /* -------------------------------------------------------------------------- */

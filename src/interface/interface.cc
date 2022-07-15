@@ -115,21 +115,15 @@ double Interface::getStableTimeStep() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*void Interface::setDynamic(bool fully_dynamic) {
-  for (unsigned int i = 0; i < this->half_space.size(); ++i)
-    this->half_space[i]->setDynamic(fully_dynamic);
-    }*/
-
-/* -------------------------------------------------------------------------- */
 void Interface::computeDisplacement(bool predicting) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
     this->half_spaces[i]->computeDisplacement(predicting);
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::computeInternal(bool predicting, bool correcting) {
+void Interface::computeInternal(bool predicting, bool correcting, bool dynamic) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->computeInternal(predicting, correcting);
+    this->half_spaces[i]->computeInternal(predicting, correcting, dynamic);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -157,7 +151,7 @@ void Interface::correctVelocity(bool last_step) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::advanceTimeStep() {
+void Interface::advanceTimeStep(bool dynamic) {
 
   // predictor-corrector
   for (int i = 0; i < this->nb_pc; ++i) {
@@ -183,7 +177,7 @@ void Interface::advanceTimeStep() {
 
   // compute displacement
   this->computeDisplacement();
-  this->computeInternal(false,false);
+  this->computeInternal(false,false,dynamic);
   this->computeCohesion();
   this->computeResidual();
   this->computeVelocity();
