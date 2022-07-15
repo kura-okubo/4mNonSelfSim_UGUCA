@@ -31,11 +31,6 @@
 #include "half_space_dynamic.hh"
 #include "static_communicator_mpi.hh"
 
-/*
-#ifdef UCA_USE_OPENMP
-#include <omp.h>
-#endif /* UCA_USE_OPENMP */
-
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
@@ -82,7 +77,6 @@ void HalfSpaceDynamic::initConvolutions() {
   HalfSpaceQuasiDynamic::initConvolutions();
 
   this->convolutions.registerHistory(this->U_history);
-
   
   this->convolutions.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
   this->convolutions.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
@@ -99,8 +93,6 @@ void HalfSpaceDynamic::initConvolutions() {
 #ifdef UCA_VERBOSE
   int total_work=0;
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-    // ignore mode 0
-    //if ((prank == m0_rank) && (j == m0_index)) continue;
     for (int d=0; d<this->mesh.getDim(); ++d)
       total_work += this->U_history.real(d,j)->getSize();
   }
@@ -232,27 +224,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
-
   restart.registerIO(this->name+"_U",this->U_history);
-
-  /*
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-  
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-
-      // ignore mode 0
-      if ((prank == m0_rank) && (j == m0_index)) continue;
-
-      restart.registerIO(this->name+"_Ur_"+std::to_string(d)+"_"+std::to_string(j),
-			 *(this->U_r[d][j]));
-      restart.registerIO(this->name+"_Ui_"+std::to_string(d)+"_"+std::to_string(j),
-			 *(this->U_i[d][j]));
-    }
-  }
-  */
   HalfSpace::registerToRestart(restart);
 }
 

@@ -27,7 +27,6 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "convolutions.hh"
-#include "static_communicator_mpi.hh"
 #include "limited_history.hh"
 
 #ifdef UCA_USE_OPENMP
@@ -58,18 +57,10 @@ void Convolutions::preintegrate(Material & material,
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
   pik_vector.resize(this->mesh.getNbLocalFFT());
 
-  // could remove this here < ------------------------------------ !!!
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-  
   double ** wave_numbers = this->mesh.getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-
-    // ignore mode 0
-    //if ((prank == m0_rank) && (j == m0_index)) continue;
 
     pik_vector[j] = std::make_shared<PreintKernel>(material.getKernel(kernel));
 
