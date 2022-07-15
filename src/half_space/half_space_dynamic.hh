@@ -80,8 +80,7 @@ public:
   virtual double getStableTimeStep();
 
   // get limited history
-  //  ModalLimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
-  //  ModalLimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
+  LimitedHistory & getLimitedHistory() { return U_history; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -90,12 +89,7 @@ protected:
 
   // past values of displacement in frequency domain
   // each LimitedHistory is for a given wave number q
-
   LimitedHistory U_history;
-  /*
-  std::vector<std::vector<ModalLimitedHistory *> > U_r;
-  std::vector<std::vector<ModalLimitedHistory *> > U_i;
-  */
   
   // keeps information if previous step was dynamic
   bool previously_dynamic;
