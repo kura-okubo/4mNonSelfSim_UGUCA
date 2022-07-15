@@ -11,3 +11,4 @@ simulations
 !tools/.headers_for_c.txt
 !test/ci/dockerfiles/ubuntu_18_04/.openmpi
 !test/ci/dockerfiles/ubuntu_20_04/.openmpi
+!test/ci/dockerfiles/ubuntu_22_04/.openmpi

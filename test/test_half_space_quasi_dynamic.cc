@@ -69,8 +69,10 @@ int main(){
       u1.set(i)=0.5*cos(i*6)+0.4*(sin(i));
       // std::cout << (*u0)(i)<<std::endl;
     }
-    
-    double dt=hs2.getStableTimeStep()*0.1;
+
+    double dx = msh.getDeltaX();
+    double cs = mat.getCs();
+    double dt = dx/cs*0.1;
 
     hs2.setTimeStep(dt);
 
@@ -86,7 +88,7 @@ int main(){
       std::cout << "check computeStressFourierCoeff 2D (prank>0)" << std::endl;
     }
 
-    hs2.computeInternal();
+    hs2.computeInternal(false,false,false); // predicting, correcting, dynamic
 
     FFTableNodalFieldComponent & s0 = hs2.getInternal().component(0);
     FFTableNodalFieldComponent & s1 = hs2.getInternal().component(1);
@@ -136,7 +138,10 @@ int main(){
     HalfSpaceQuasiDynamic hs3(msh3,1);
 
     hs3.setMaterial(&mat);
-    double dt=hs3.getStableTimeStep()*0.1;
+
+    double dx = msh3.getDeltaX();
+    double cs = mat.getCs();
+    double dt = dx/cs*0.1;
 
     hs3.setTimeStep(dt);
 
@@ -158,7 +163,8 @@ int main(){
       }
     }
 
-    hs3.computeInternal(); // destroys the fourier space
+    // destroys the fourier space
+    hs3.computeInternal(false,false,false); // predicting, correcting, dynamic
 
     if (prank==0) // complete data is gathered to process 0
     {

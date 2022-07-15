@@ -35,6 +35,7 @@ set(UGUCA_HEADER
   static_communicator_mpi.hh
 
   # io
+  io/uca_input_section.hh
   io/uca_parameter_reader.hh
   io/uca_base_io.hh
   io/uca_dumper.hh
@@ -77,8 +78,8 @@ set(UGUCA_HEADER
   interface/laws/interface_law.hh
   interface/laws/linear_coulomb_friction_law.hh
   interface/laws/linear_shear_cohesive_law.hh
+  interface/laws/linear_normal_cohesive_law.hh
   interface/laws/barras_law.hh
-  interface/laws/fracture_law.hh
   interface/laws/rate_and_state_law.hh
 
   # use method as infinite boundary condition for FEM
@@ -91,6 +92,7 @@ set(UGUCA_SRC
   static_communicator_mpi.cc
 
   # io
+  io/uca_input_section.cc
   io/uca_parameter_reader.cc
   io/uca_base_io.cc
   io/uca_dumper.cc  
@@ -133,8 +135,8 @@ set(UGUCA_SRC
   interface/laws/interface_law.cc
   interface/laws/linear_coulomb_friction_law.cc
   interface/laws/linear_shear_cohesive_law.cc
+  interface/laws/linear_normal_cohesive_law.cc
   interface/laws/barras_law.cc
-  interface/laws/fracture_law.cc
   interface/laws/rate_and_state_law.cc
 
   # use method as infinite boundary condition for FEM

@@ -64,7 +64,8 @@ public:
     computeDisplacementCalled = true;
   }
   void computeStressFourierCoeff(bool = false,
-                                bool = false) {
+				 bool = false,
+				 bool = true) {
     computeStressFourierCoeffCalled = true;
   }
   void computeResidual(NodalField &) {

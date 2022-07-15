@@ -41,7 +41,7 @@ __BEGIN_UGUCA__
 HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
 				   int side_factor,
 				   const std::string & name) :
-  HalfSpaceQuasiDynamic(mesh, side_factor, name) {
+  HalfSpaceQuasiDynamic(mesh, side_factor, name), previously_dynamic(true) {
   
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -84,7 +84,7 @@ double HalfSpaceDynamic::getStableTimeStep() {
   double delta_z = this->mesh.getDeltaZ();
 
   if (this->mesh.getDim()==2)
-    delta_z = 1e100;
+    delta_z = delta_x;
   return std::min(delta_x,delta_z) / this->material->getCs();
 }
 
@@ -94,11 +94,12 @@ void HalfSpaceDynamic::setTimeStep(double time_step) {
       ((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2)))
     throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
   
-  HalfSpace::setTimeStep(time_step);
+  HalfSpaceQuasiDynamic::setTimeStep(time_step);
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpaceDynamic::initConvolutions(){
+void HalfSpaceDynamic::initConvolutions() {
+
   HalfSpaceQuasiDynamic::initConvolutions();
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -136,8 +137,18 @@ void HalfSpaceDynamic::initConvolutions(){
 }
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
-						 bool correcting) {
-  this->computeStressFourierCoeffDynamic(predicting, correcting);
+						 bool correcting,
+						 bool dynamic) {
+  if (!dynamic) {
+    this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
+    this->previously_dynamic = false;
+  }
+  else {
+    if (!this->previously_dynamic)
+      this->setSteadyState(predicting);
+    this->computeStressFourierCoeffDynamic(predicting, correcting);
+    this->previously_dynamic = true;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -291,7 +302,6 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   }
 }
 
-
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 
@@ -314,6 +324,7 @@ void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 
   HalfSpace::registerToRestart(restart);
 }
+
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::setSteadyState(bool predicting) {
 

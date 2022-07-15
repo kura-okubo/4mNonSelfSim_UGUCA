@@ -74,12 +74,12 @@ void HalfSpace::initPredictorCorrector() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*double HalfSpace::getStableTimeStep() {
+double HalfSpace::getStableTimeStep() {
 #ifdef UCA_VERBOSE
   std::cout << "getStableTimeStep is not implemented for this HalfSpace" << std::endl;
 #endif
   return std::numeric_limits<double>::max();
-}*/
+}
 
 /* -------------------------------------------------------------------------- */
 void HalfSpace::computeDisplacement(bool predicting) {
@@ -107,15 +107,9 @@ void HalfSpace::computeDisplacement(NodalField & _disp,
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpace::computeInternal(bool predicting, bool correcting) {
+void HalfSpace::computeInternal(bool predicting, bool correcting, bool dynamic) {
   this->forwardFFT(predicting);
-  this->computeStressFourierCoeff(predicting, correcting);
-  this->backwardFFT();
-}
-/* -------------------------------------------------------------------------- */
-void HalfSpace::computeInternalQuasiDynamic(bool predicting, bool correcting) {
-  this->forwardFFT(predicting);
-  this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
+  this->computeStressFourierCoeff(predicting, correcting, dynamic);
   this->backwardFFT();
 }
 

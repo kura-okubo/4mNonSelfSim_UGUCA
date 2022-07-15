@@ -65,9 +65,8 @@ public:
 public:
   virtual void computeDisplacement(bool predicting = false);
   virtual void computeInternal(bool predicting = false,
-			       bool correcting = false);
-  virtual void computeInternalQuasiDynamic(bool predicting = false,
-					   bool correcting = false);
+			       bool correcting = false,
+			       bool dynamic = true);
   virtual void computeResidual(NodalField & external);
   virtual void computeVelocity(bool predicting = false);
 
@@ -87,8 +86,9 @@ public:
   // restart
   virtual void registerToRestart(Restart & restart);
 
-  // quasi dyn
-  virtual void setSteadyState(bool predicting = false) = 0;
+  // set half space to steady state (used for transition from
+  // quasi-dynamic to dynamic)
+  virtual void setSteadyState(bool /*predicting*/ = false) {};
   
 protected:
   // apply fft forward on displacement
@@ -97,9 +97,9 @@ protected:
   virtual void backwardFFT();
 
   virtual void computeStressFourierCoeff(bool predicting = false,
-					 bool correcting = false) = 0;
-  virtual void computeStressFourierCoeffQuasiDynamic(bool predicting = false,
-						     bool correcting = false) = 0;
+					 bool correcting = false,
+					 bool dynamic = true) = 0;
+
 private:
   void computeDisplacement(NodalField & disp,
 			   NodalField & velo,
@@ -146,7 +146,7 @@ public:
   }
   const FFTableNodalField & getInternal() const { return this->internal; }
 
-  virtual double getStableTimeStep() = 0;
+  virtual double getStableTimeStep();
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

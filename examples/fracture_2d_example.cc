@@ -72,17 +72,17 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   BarrasLaw law(mesh,
-		data.get<double>("tauc"),
-		data.get<double>("dc"));
+		data.get<double>("tauc", "cohesion"),
+		data.get<double>("dc", "cohesion"));
 
   // materials
-  Material top_mat = Material(data.get<double>("E_top"),
-			      data.get<double>("nu_top"),
-			      data.get<double>("rho_top"));
+  Material top_mat = Material(data.get<double>("E","top"),
+			      data.get<double>("nu","top"),
+			      data.get<double>("rho","top"));
   top_mat.readPrecomputedKernels();
-  Material bot_mat = Material(data.get<double>("E_bot"),
-			      data.get<double>("nu_bot"),
-			      data.get<double>("rho_bot"));
+  Material bot_mat = Material(data.get<double>("E","bot"),
+			      data.get<double>("nu","bot"),
+			      data.get<double>("rho","bot"));
   bot_mat.readPrecomputedKernels();
 
   // interface
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   int s=1;
 
   // check if restart from file is required
-  if (data.has<int>("restart_step")) {
+  if (data.has("restart_step")) {
     s = data.get<int>("restart_step");
     // different from dumper not to overwrite it
     Restart restart_load = restart;

@@ -8,7 +8,8 @@
  * @date creation: Fri Feb 5 2021
  * @date last modification: Fri Feb 5 2021
  *
- * @brief  TODO
+ * @brief  Example demonstrating UnishearInterface, a friction law,
+ * and quasi-dynamic time stepping
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -72,14 +73,14 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   LinearCoulombFrictionLaw law(mesh,
-			       data.get<double>("mus"),
-			       data.get<double>("muk"),
-			       data.get<double>("dc"));
+			       data.get<double>("mus","friction"),
+			       data.get<double>("muk","friction"),
+			       data.get<double>("dc","friction"));
 
   // materials
-  Material top_mat = Material(data.get<double>("E_top"),
-			      data.get<double>("nu_top"),
-			      data.get<double>("rho_top"));
+  Material top_mat = Material(data.get<double>("E","top"),
+			      data.get<double>("nu","top"),
+			      data.get<double>("rho","top"));
   top_mat.readPrecomputedKernels();
 
   // interface
@@ -97,8 +98,8 @@ int main(int argc, char *argv[]) {
   double mus_min = std::numeric_limits<double>::max();
   for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
     double x = X[i];
-    mus(i) = data.get<double>("mus")
-      + data.get<double>("mus_ampl") * (1.0*std::sin(2*x*M_PI)
+    mus(i) = data.get<double>("mus","friction")
+      + data.get<double>("mus_ampl","friction") * (1.0*std::sin(2*x*M_PI)
 					+ 0.5*std::cos(12*x*M_PI)
 					+ 0.7*std::sin(18*x*M_PI));
     mus_min = std::min(mus_min,mus(i));
@@ -122,6 +123,10 @@ int main(int argc, char *argv[]) {
   interface.dump(0,0);
   unsigned int dump_int = std::max(1, nb_time_steps/data.get<int>("nb_dumps"));
 
+  // quasi-dynamic
+  bool dynamic_step = false;
+  NodalFieldComponent & velo_0 = interface.getTop().getVelo().component(0);
+  
   // time stepping
   for (int s=1; s<=nb_time_steps; ++s) {
     if (world_rank==0) {
@@ -131,8 +136,24 @@ int main(int argc, char *argv[]) {
 
     ext_shear.setAllValuesTo(mus_min*std::abs(normal_load) + s*time_step*shear_load_rate);
 
+    // switch between quasi-dynamic and dynamic
+    double max_velo = 0.;
+    for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
+      max_velo = std::max(max_velo,velo_0(i));
+    }
+    if (max_velo > data.get<double>("dyn_velo_threshold")) {
+      if (!dynamic_step)
+	std::cout << "quasi-dynamic -> dynamic (s=" << s << ")" << std::endl;
+      dynamic_step = true;
+    }
+    else {
+      if (dynamic_step)
+	std::cout << "dynamic -> quasi-dynamic (s=" << s << ")" << std::endl;
+      dynamic_step = false;
+    }
+    
     // time integration
-    interface.advanceTimeStep();
+    interface.advanceTimeStep(dynamic_step);
 
     // dump
     if (s % dump_int == 0)

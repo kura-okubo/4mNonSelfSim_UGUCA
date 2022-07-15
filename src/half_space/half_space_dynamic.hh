@@ -63,7 +63,8 @@ public:
   
 protected:
   virtual void computeStressFourierCoeff(bool predicting = false,
-					 bool correcting = false);
+					 bool correcting = false,
+					 bool dynamic = true);
 
   void computeStressFourierCoeffDynamic(bool predicting,
 					bool correcting);
@@ -92,6 +93,8 @@ protected:
   std::vector<std::vector<LimitedHistory *> > U_r;
   std::vector<std::vector<LimitedHistory *> > U_i;
 
+  // keeps information if previous step was dynamic
+  bool previously_dynamic;
 };
 
 __END_UGUCA__

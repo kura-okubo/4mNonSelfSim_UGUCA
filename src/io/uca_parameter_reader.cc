@@ -6,7 +6,7 @@
  * @author Chun-Yu Ke <ck659@cornell.edu>
  *
  * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date last modification: Sun Jun 26 2022
  *
  * @brief  TODO
  *
@@ -42,20 +42,10 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-ParameterReader::ParameterReader() :
-  data_types(),
-  string_data(),
-  int_data(),
-  uint_data(),
-  double_data(),
-  bool_data()
-{
-
-  data_types.insert("string");
-  data_types.insert("uint");
-  data_types.insert("int");
-  data_types.insert("double");
-  data_types.insert("bool");
+ParameterReader::ParameterReader() {
+  // create default section
+  this->sections.insert(std::pair<std::string,std::shared_ptr<InputSection>>(ParameterReader::general,
+									     std::make_shared<InputSection>()));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -63,7 +53,12 @@ void ParameterReader::readInputFile(std::string file_name) {
 
   char comment_char = '#';
   char equal_char = '=';
+  char section_start_char = '[';
+  char section_end_char = ']';
 
+  // start with general section
+  std::string current_section = ParameterReader::general;
+  
   // open a file called file name
   std::ifstream infile;
   infile.open(file_name.c_str());
@@ -87,94 +82,109 @@ void ParameterReader::readInputFile(std::string file_name) {
     if (clean_line.empty())
       continue;
 
-    std::stringstream sstr(clean_line);
-
-    // check if data type exists
-    std::string type;
-    sstr >> type;
-    std::transform(type.begin(),type.end(),type.begin(),::tolower);
-    if (this->data_types.find(type) == this->data_types.end()) {
-      std::cerr << " *** WARNING *** Data type " << type << " does not exist"
-		<< " in this input data structure. Ignore line: ";
-      std::cerr << clean_line << std::endl;
-      continue;
-    }
-
-    std::string keyword;
-    std::string equal;
-    std::string value;
-
-    // get keyword
-    sstr >> keyword;
-    size_t equal_p = keyword.find_first_of(equal_char);
-    if (equal_p != std::string::npos) {
-      equal = keyword.substr(equal_p,std::string::npos);
-      keyword = keyword.substr(0,equal_p);
-    }
-
-    // get equal
-    if (equal.empty())
-      sstr >> equal;
-    if (equal.length() != 1) {
-      value = equal.substr(1,std::string::npos);
-      equal = equal[0];
-    }
-    if (equal[0] != equal_char) {
-      std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
-      std::cerr << clean_line << std::endl;
-      continue;
-    }
-
-    // get value
-    if (value.empty())
-      sstr >> value;
-
-    // no value
-    if (value.empty()) {
-      std::cerr << " *** WARNING *** No value given! Ignore line: ";
-      std::cerr << clean_line << std::endl;
-      continue;
-    }
-
-    // put value in map
-    std::stringstream convert(value);
-    if (type.compare("string") == 0) {
-      this->string_data.insert(std::make_pair(keyword,value));
-    }
-    else if (type.compare("int") == 0) {
-      int i;
-      convert >> i;
-      this->int_data.insert(std::make_pair(keyword,i));
-    }
-    else if (type.compare("uint") == 0) {
-      unsigned int i;
-      convert >> i;
-      this->uint_data.insert(std::make_pair(keyword,i));
-    }
-    else if (type.compare("double") == 0) {
-      double r;
-      convert >> r;
-      this->double_data.insert(std::make_pair(keyword,r));
-    }
-    else if (type.compare("bool") == 0) {
-      std::transform(value.begin(),value.end(),value.begin(),::tolower);
-      bool b;
-      if (value.compare("true") == 0)
-	b = true;
-      else if (value.compare("false") == 0)
-	b = false;
-      else {
-	std::cerr << " *** WARNING *** boolean cannot be " << value << ". Ignore line: ";
+    // this is a line with a parameter
+    if (clean_line.find(equal_char) != std::string::npos) {
+    
+      std::stringstream sstr(clean_line);
+      
+      std::string keyword;
+      std::string equal;
+      std::string value;
+      
+      // get keyword
+      sstr >> keyword;
+      size_t equal_p = keyword.find_first_of(equal_char);
+      if (equal_p != std::string::npos) {
+	equal = keyword.substr(equal_p,std::string::npos);
+	keyword = keyword.substr(0,equal_p);
+      }
+      
+      // get equal
+      if (equal.empty())
+	sstr >> equal;
+      if (equal.length() != 1) {
+	value = equal.substr(1,std::string::npos);
+	equal = equal[0];
+      }
+      if (equal[0] != equal_char) {
+	std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
 	std::cerr << clean_line << std::endl;
 	continue;
       }
-      this->bool_data.insert(std::make_pair(keyword,b));
+      
+      // get value
+      if (value.empty())
+	sstr >> value;
+      
+      // no value
+      if (value.empty()) {
+	std::cerr << " *** WARNING *** No value given! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+	continue;
+      }
+      
+      // put value in map
+      this->getSection(current_section).insert(keyword, value);
     }
+    // this is the start of a section
+    else if (clean_line.find(section_start_char) != std::string::npos) {
+      std::stringstream sstr(clean_line);
+      
+      std::string sec_type;
+      std::string sec_name;
+      std::string sec_open;
+
+      sstr >> sec_type;
+
+      size_t open_p = sec_type.find_first_of(section_start_char);
+      if (open_p != std::string::npos) { // one word without space to [
+	sec_open = sec_type[open_p];
+	sec_name = sec_type.substr(0,open_p);
+	sec_type = "section";
+      }
+      else { // two words
+	sstr >> sec_name;
+	open_p = sec_name.find_first_of(section_start_char);
+	if (open_p != std::string::npos) { // no space to [
+	  sec_open = sec_name[open_p];
+	  sec_name = sec_name.substr(0,open_p);
+	}
+	else {
+	  sstr >> sec_open;
+	}
+      }
+
+      // check syntax correct
+      if ((sec_open.length() != 1) || sec_open[0] != section_start_char) {
+	std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+	continue;
+      }
+
+      // use name to store section
+      current_section = sec_name;
+
+      // create new section
+      if (this->sections.find(current_section) == this->sections.end()) {
+	this->sections.insert(std::pair<std::string,std::shared_ptr<InputSection>>(current_section,
+										   std::make_shared<InputSection>(sec_type)));
+      }
+    }
+    // this is the end of a section
+    else if (clean_line.find(section_end_char) != std::string::npos) {
+
+      if (clean_line.length() != 1) {
+	std::cerr << " *** WARNING *** Unrespected convention! Ignore line: ";
+	std::cerr << clean_line << std::endl;
+      }
+      
+      // everything outside a section goes into the general section
+      current_section = ParameterReader::general;
+    }
+    // don't know what this line is
     else {
-      std::cerr << " *** ERROR *** Could not add data to InputData for line: ";
+      std::cerr << " *** WARNING *** Don't know what to do with this line. Ignore it: ";
       std::cerr << clean_line << std::endl;
-      continue;
-      exit(EXIT_FAILURE);
     }
   }
 }
@@ -186,156 +196,85 @@ void ParameterReader::writeInputFile(std::string file_name) const {
   std::ofstream outfile;
   outfile.open(file_name.c_str());
 
-  // string
-  for (std::map<std::string, std::string>::const_iterator it = string_data.begin();
-       it != string_data.end(); ++it)
-    outfile << "string " << it->first << " = " << it->second << std::endl;
+  for (auto const& sec : this->sections) {
 
-  // Int
-  for (std::map<std::string, int>::const_iterator it = int_data.begin();
-       it != int_data.end(); ++it)
-    outfile << "int " << it->first << " = " << it->second << std::endl;
+    outfile << sec.second->getType() << " " << sec.first << " [" << std::endl;
 
-  // UInt
-  for (std::map<std::string, unsigned int>::const_iterator it = uint_data.begin();
-       it != uint_data.end(); ++it)
-    outfile << "uint " << it->first << " = " << it->second << std::endl;
+    const std::map<std::string,std::string> & data = sec.second->getData();
+    for (auto const& e : data) {
+      outfile << "  " << e.first << " = " << e.second << std::endl;
+    }
 
-  // Double
-  for (std::map<std::string, double>::const_iterator it = double_data.begin();
-       it != double_data.end(); ++it)
-    outfile << "double " << it->first << " = " << it->second << std::endl;
-
-  // Bool
-  for (std::map<std::string, bool>::const_iterator it = bool_data.begin();
-       it != bool_data.end(); ++it) {
-    std::string b = "false";
-    if (it->second)
-      b = "true";
-    outfile << "bool " << it->first << " = " << b << std::endl;
+    outfile << "]" << std::endl << std::endl;
   }
 }
 
 /* -------------------------------------------------------------------------- */
-template<>
-unsigned int ParameterReader::get<unsigned int>(std::string key) const {
-  std::map<std::string,unsigned int>::const_iterator it;
-  it = this->uint_data.find(key);
+InputSection & ParameterReader::getSection(std::string name) {
+
+  SectionMap::iterator it;
+  it = this->sections.find(name);
 
   // if not in map
-  if (it == this->uint_data.end()) {
-    std::cerr << " *** ERROR *** This data was not in input file. "
-	      << "You need the following line in your input file: ";
-    std::cerr << "uint " << key << " = ???" << std::endl;
-    exit(EXIT_FAILURE);
+  if (it == this->sections.end()) {
+    throw std::runtime_error("Don't know input section: "+name);
   }
 
-  else
-    return it->second;
+  return *(it->second);
 }
 
 /* -------------------------------------------------------------------------- */
-template<>
-std::string ParameterReader::get<std::string>(std::string key) const {
-  std::map<std::string,std::string>::const_iterator it;
-  it = this->string_data.find(key);
+InputSection & ParameterReader::getSection(std::string name) const {
+
+  SectionMap::const_iterator it;
+  it = this->sections.find(name);
 
   // if not in map
-  if (it == this->string_data.end()) {
-    std::cerr << " *** ERROR *** This data was not in input file. "
-	      << "You need the following line in your input file: ";
-    std::cerr << "string " << key << " = ???" << std::endl;
-    exit(EXIT_FAILURE);
+  if (it == this->sections.end()) {
+    throw std::runtime_error("Don't know input section: "+name);
   }
 
-  else
-    return it->second;
+  return *(it->second);
 }
 
 /* -------------------------------------------------------------------------- */
 template<>
-int ParameterReader::get<int>(std::string key) const {
-  std::map<std::string,int>::const_iterator it;
-  it = this->int_data.find(key);
-
-  // if not in map
-  if (it == this->int_data.end()) {
-    std::cerr << " *** ERROR *** This data was not in input file. "
-	      << "You need the following line in your input file: ";
-    std::cerr << "int " << key << " = ???" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  else
-    return it->second;
+std::string ParameterReader::get<std::string>(std::string key,
+					      std::string section) const {
+  return this->getSection(section).get<std::string>(key);
 }
 
 /* -------------------------------------------------------------------------- */
 template<>
-double ParameterReader::get<double>(std::string key) const {
-  std::map<std::string,double>::const_iterator it;
-  it = this->double_data.find(key);
-
-  // if not in map
-  if (it == this->double_data.end()) {
-    std::cerr << " *** ERROR *** This data was not in input file. "
-	      << "You need the following line in your input file: ";
-    std::cerr << "double " << key << " = ???" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  else
-    return it->second;
+double ParameterReader::get<double>(std::string key,
+				    std::string section) const {
+  return this->getSection(section).get<double>(key);
 }
 
 /* -------------------------------------------------------------------------- */
 template<>
-bool ParameterReader::get<bool>(std::string key) const {
-  std::map<std::string,bool>::const_iterator it;
-  it = this->bool_data.find(key);
-
-  // if not in map
-  if (it == this->bool_data.end()) {
-    std::cerr << " *** ERROR *** This data was not in input file. "
-	      << "You need the following line in your input file: ";
-    std::cerr << "bool " << key << " = ???" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  else
-    return it->second;
+int ParameterReader::get<int>(std::string key,
+			      std::string section) const {
+  return this->getSection(section).get<int>(key);
 }
 
 /* -------------------------------------------------------------------------- */
 template<>
-bool ParameterReader::has<bool>(std::string key) const {
-  std::map<std::string,bool>::const_iterator it;
-  it = this->bool_data.find(key);
-  return (it != this->bool_data.end());
+unsigned int ParameterReader::get<unsigned int>(std::string key,
+						std::string section) const {
+  return this->getSection(section).get<unsigned int>(key);
 }
+
+/* -------------------------------------------------------------------------- */
 template<>
-bool ParameterReader::has<std::string>(std::string key) const {
-  std::map<std::string,std::string>::const_iterator it;
-  it = this->string_data.find(key);
-  return (it != this->string_data.end());
+bool ParameterReader::get<bool>(std::string key,
+				std::string section) const {
+  return this->getSection(section).get<bool>(key);
 }
-template<>
-bool ParameterReader::has<int>(std::string key) const {
-  std::map<std::string,int>::const_iterator it;
-  it = this->int_data.find(key);
-  return (it != this->int_data.end());
-}
-template<>
-bool ParameterReader::has<unsigned int>(std::string key) const {
-  std::map<std::string,unsigned int>::const_iterator it;
-  it = this->uint_data.find(key);
-  return (it != this->uint_data.end());
-}
-template<>
-bool ParameterReader::has<double>(std::string key) const {
-  std::map<std::string,double>::const_iterator it;
-  it = this->double_data.find(key);
-  return (it != this->double_data.end());
+
+/* -------------------------------------------------------------------------- */
+bool ParameterReader::has(std::string key, std::string section) const {
+  return this->getSection(section).has(key);
 }
 
 __END_UGUCA__

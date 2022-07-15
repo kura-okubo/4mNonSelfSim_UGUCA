@@ -119,7 +119,7 @@ inline void LimitedHistory::setSteadyState(double value) {
   double * v_p = this->values;
   for (unsigned int i=0; i<this->size; ++i){
     *v_p = value;
-    v_p++;
+    ++v_p;
   }
 }
 

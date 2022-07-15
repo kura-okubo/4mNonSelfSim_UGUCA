@@ -1,14 +1,12 @@
 /**
- * @file   fracture_law.hh
+ * @file   linear_normal_cohesive_law.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Fri Jun 3 2022
+ * @date last modification: Fri Jun 3 2022
  *
- * @brief  TODO
+ * @brief  linear cohesive law for fracture
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -28,32 +26,36 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __FRACTURE_LAW_H__
-#define __FRACTURE_LAW_H__
+#ifndef __LINEAR_NORMAL_COHESIVE_LAW_H__
+#define __LINEAR_NORMAL_COHESIVE_LAW_H__
 /* -------------------------------------------------------------------------- */
 #include "interface_law.hh"
-
 /*
-   This is not exactly the same law than used in Barras et al. 2014.
-   Within the cohesive zone, this law can close in normal direction,
-   whereas Fracture' law will only maintain the normal gap.
-   Also, here no friction behind the cohesive zone is applied.
+   Linear cohesive law in normal direction only.
+   No interpenetration allowed
 
-   strength = tau_max ( 1 - |delta| / delta_c )
+   Shear gap is maintained as is.
+
+   Parameter:
+   Gc - fracture energy
+   sigma_c peak strength
  */
 
 __BEGIN_UGUCA__
 
-class FractureLaw : public InterfaceLaw {
+class LinearNormalCohesiveLaw : public InterfaceLaw {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
 
-  FractureLaw(BaseMesh & mesh,
-	    double tau_max_default, double delta_c_default,
-	    const std::string & name = "fraclaw");
-  virtual ~FractureLaw() {};
+
+  LinearNormalCohesiveLaw(BaseMesh & mesh,
+			  double Gc_default,
+			  double sigma_c_default,
+			  const std::string & name = "lnclaw");
+
+  virtual ~LinearNormalCohesiveLaw() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -61,9 +63,10 @@ public:
 public:
   void computeCohesiveForces(NodalField & cohesion,
 			     bool predicting = false);
-  
+
+  // dumper function
   virtual void registerDumpField(const std::string & field_name);
-  
+
   // restart
   virtual void registerToRestart(Restart & restart);
 
@@ -71,22 +74,19 @@ public:
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent & getTauMax() { return this->tau_max; }
-  NodalFieldComponent & getDc()     { return this->delta_c; }
+  NodalFieldComponent & getGc()     { return this->G_c;   }
+  NodalFieldComponent & getSigmac() { return this->sigma_c; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  NodalFieldComponent tau_max;
-  NodalFieldComponent delta_c;
-  NodalFieldComponent gap_norm;
-  NodalFieldComponent strength;
-  
+  NodalFieldComponent G_c;
+  NodalFieldComponent sigma_c;
 };
 
 __END_UGUCA__
 
-//#include "fracture_law_impl.cc"
+//#include "linear_normal_cohesive_law_impl.cc"
 
-#endif /* __FRACTURE_LAW_H__ */
+#endif /* __LINEAR_NORMAL_COHESIVE_LAW_H__ */

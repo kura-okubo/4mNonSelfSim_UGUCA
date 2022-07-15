@@ -103,20 +103,16 @@ void NodalField::computeNorm(NodalFieldComponent & norm,
 }
 
 /* -------------------------------------------------------------------------- */
-void NodalField::multiplyByScalar(const NodalFieldComponent & scalar,
-				       int ignore_dir) {
+void NodalField::multiplyByScalar(int component,
+				  const NodalFieldComponent & scalar) {
 
-  const double * scalar_p = scalar.storage();
+  this->component(component).multiply(scalar);
+}
 
-  for (int d=0; d<this->getDim(); ++d) {
-    if (d == ignore_dir) continue;
-
-    double * field_d_p = this->storage(d);
-
-    for (int n=0; n<this->getNbNodes(); ++n) {
-      field_d_p[n] *= scalar_p[n];
-    }
-  }
+/* -------------------------------------------------------------------------- */
+void NodalField::multiplyByScalar(const NodalFieldComponent & scalar) {
+  for (int d=0; d<this->getDim(); ++d) 
+    this->multiplyByScalar(d,scalar);
 }
 
 

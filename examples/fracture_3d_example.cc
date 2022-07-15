@@ -74,13 +74,13 @@ int main(int argc, char *argv[]) {
 
   // constitutive interface law
   BarrasLaw law(mesh,
-		data.get<double>("tauc"),
-		data.get<double>("dc"));
+		data.get<double>("tauc","cohesion"),
+		data.get<double>("dc","cohesion"));
 
   // materials
-  Material top_mat = Material(data.get<double>("E_top"),
-			      data.get<double>("nu_top"),
-			      data.get<double>("rho_top"));
+  Material top_mat = Material(data.get<double>("E","top"),
+			      data.get<double>("nu","top"),
+			      data.get<double>("rho","top"));
   top_mat.readPrecomputedKernels();
 
   // interface

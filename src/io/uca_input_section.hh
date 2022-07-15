@@ -1,14 +1,12 @@
 /**
- * @file   preint_kernel.hh
+ * @file   uca_input_section.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Sun Jun 26 2022
+ * @date last modification: Sun Jun 26 2022
  *
- * @brief  TODO
+ * @brief  Contains information from a section in the input file
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -29,72 +27,73 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* -------------------------------------------------------------------------- */
-#ifndef __PREINT_KERNEL_H__
-#define __PREINT_KERNEL_H__
+#ifndef __INPUT_SECTION_HH__
+#define __INPUT_SECTION_HH__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "kernel.hh"
-#include "limited_history.hh"
 
-#include <vector>
-#include <complex>
+// std
+#include <map>
 
 __BEGIN_UGUCA__
 
-class PreintKernel {
+/* -------------------------------------------------------------------------- */
+class InputSection {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  PreintKernel(const Kernel * kernel);
-  virtual ~PreintKernel();
+
+  InputSection(std::string type = "section") : type(type) {};
+  virtual ~InputSection() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // compute pre-integration of kernel (only kernel: no other factors)
-  // e.g., integral of H11(q*c_s*t) with time_factor q*c_s
-  void preintegrate(double time_factor,
-		    double time_step);
 
-  // muliply preintegrated kernel by factor
-  void multiplyBy(double factor);
-
-  // compute convolution of kernel with a history
-  std::complex<double> convolve(const LimitedHistory * U_r,
-				const LimitedHistory * U_i);
+private:
+  /// get value returns string and checks
+  std::string get(std::string) const;
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->values.size(); }
 
-  // get direct access to values (only used to testing)
-  std::vector<double> & getValues() { return this->values; }
+  /// insert a new pair
+  void insert(std::string key, std::string value);
 
-  // get entire integral of kernel
-  double getIntegral() const { return this->integral; }
+  /// returns value for key at type T
+  template<typename T>
+  T get(std::string key) const;
+
+  /// check if key is in data
+  bool has(std::string key) const;
+
+  const std::string getType() const { return this->type; }
+  
+  /// access to data
+  const std::map<std::string,std::string> & getData() const { return this->data; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-protected:
-  const Kernel * kernel;
-
-  // integral of trapezoids with a constant time step
-  std::vector<double> values;
-
-  // full integral of kernel
-  double integral;
+private:
+  /// information on type of input section
+  std::string type;
+  
+  /// data stored as strings
+  std::map<std::string,std::string> data;
 };
 
-__END_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
 
+__END_UGUCA__
 
-#endif /* __PREINT_KERNEL_H__ */
+//#include "input_section_inline_impl.cc"
+
+#endif /* __INPUT_SECTION_HH__ */
