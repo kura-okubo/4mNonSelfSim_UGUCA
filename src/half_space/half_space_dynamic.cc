@@ -34,10 +34,11 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
+HalfSpaceDynamic::HalfSpaceDynamic(Material & material,
+				   FFTableMesh & mesh,
 				   int side_factor,
 				   const std::string & name) :
-  HalfSpaceQuasiDynamic(mesh, side_factor, name),
+  HalfSpaceQuasiDynamic(material, mesh, side_factor, name),
   U_history(mesh),
   previously_dynamic(true) {
   
@@ -59,7 +60,7 @@ double HalfSpaceDynamic::getStableTimeStep() {
 
   if (this->mesh.getDim()==2)
     delta_z = delta_x;
-  return std::min(delta_x,delta_z) / this->material->getCs();
+  return std::min(delta_x,delta_z) / this->material.getCs();
 }
 
 /* -------------------------------------------------------------------------- */

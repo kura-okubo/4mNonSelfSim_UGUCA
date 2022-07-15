@@ -42,11 +42,10 @@ InfiniteBoundary::InfiniteBoundary(FFTableMesh & mesh,
   Interface(mesh,name),
   external(mesh,"external") {
 
-  this->hs = HalfSpace::newHalfSpace(mesh, side_factor, this->name+"_hs", method);
+  this->hs = HalfSpace::newHalfSpace(material, mesh, side_factor, this->name+"_hs", method);
   
   this->half_spaces.resize(1);
   this->half_spaces[0] = this->hs;
-  this->hs->setMaterial(&material);
 }
 
 /* -------------------------------------------------------------------------- */

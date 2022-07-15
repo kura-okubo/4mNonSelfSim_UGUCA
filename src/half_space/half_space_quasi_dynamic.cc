@@ -38,10 +38,11 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(FFTableMesh & mesh,
+HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(Material & material,
+					     FFTableMesh & mesh,
 					     int side_factor,
 					     const std::string & name) :
-  HalfSpace(mesh, side_factor, name),
+  HalfSpace(material, mesh, side_factor, name),
   convolutions(mesh) {
 
 #ifdef UCA_VERBOSE
@@ -58,16 +59,16 @@ HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {}
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::initConvolutions() {
 
-  this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H00,
-				  this->material->getCs(), this->time_step);
-  this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H01,
-				  this->material->getCs(), this->time_step);
-  this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H11,
-				  this->material->getCs(), this->time_step);
+  this->convolutions.preintegrate(this->material, Kernel::Krnl::H00,
+				  this->material.getCs(), this->time_step);
+  this->convolutions.preintegrate(this->material, Kernel::Krnl::H01,
+				  this->material.getCs(), this->time_step);
+  this->convolutions.preintegrate(this->material, Kernel::Krnl::H11,
+				  this->material.getCs(), this->time_step);
 
   if (this->mesh.getDim()==3)
-    this->convolutions.preintegrate(*(this->material), Kernel::Krnl::H22,
-				    this->material->getCs(), this->time_step);
+    this->convolutions.preintegrate(this->material, Kernel::Krnl::H22,
+				    this->material.getCs(), this->time_step);
   
 #ifdef UCA_VERBOSE
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -95,8 +96,8 @@ void HalfSpaceQuasiDynamic::computeF2D(std::vector<std::complex<double>> & F,
 				       std::complex<double> conv_H01_U0_j,
 				       std::complex<double> conv_H01_U1_j,
 				       std::complex<double> conv_H11_U1_j) {
-  double mu = this->material->getShearModulus();
-  double eta = this->material->getCp() / this->material->getCs();
+  double mu = this->material.getShearModulus();
+  double eta = this->material.getCp() / this->material.getCs();
   
   // imaginary number i
   std::complex<double> imag = {0., 1.};
@@ -134,8 +135,8 @@ void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
 				       std::complex<double> conv_H11_U1_j,
 				       std::complex<double> conv_H22_U0_j,
 				       std::complex<double> conv_H22_U2_j) {
-  double mu = this->material->getShearModulus();
-  double eta = this->material->getCp() / this->material->getCs();
+  double mu = this->material.getShearModulus();
+  double eta = this->material.getCp() / this->material.getCs();
 
   // imaginary number i
   std::complex<double> imag = {0., 1.};

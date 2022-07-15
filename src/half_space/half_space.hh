@@ -48,13 +48,14 @@ class HalfSpace {
   /* ------------------------------------------------------------------------ */
 public:
   // side factor top=1 bot=-1
-  HalfSpace(FFTableMesh & mesh, int side_factor,
+  HalfSpace(Material & material, FFTableMesh & mesh, int side_factor,
 	    const std::string & name = "half_space");
 
   virtual ~HalfSpace();
 
   // allocate HalfSpace of type
-  static HalfSpace * newHalfSpace(FFTableMesh & mesh,
+  static HalfSpace * newHalfSpace(Material & material,
+				  FFTableMesh & mesh,
 				  int side_factor,
 				  const std::string & name,
 				  const SolverMethod & method);
@@ -113,11 +114,8 @@ private:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // set a material to half space
-  void setMaterial(Material *material) { this->material = material; }
-
   // get material of half space
-  const Material &getMaterial() const { return (*this->material); }
+  const Material& getMaterial() const { return this->material; }
 
   // set time step
   virtual void setTimeStep(double time_step) { this->time_step = time_step; }
@@ -155,6 +153,9 @@ protected:
   // name
   std::string name;
 
+  // material properties
+  Material & material;
+
   // mesh
   FFTableMesh & mesh;
 
@@ -170,9 +171,6 @@ protected:
   // velocity
   NodalField velo;
   
-  // material properties
-  Material * material;
-
   // tractions due to deformation
   FFTableNodalField internal;
 

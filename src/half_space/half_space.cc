@@ -36,10 +36,12 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-HalfSpace::HalfSpace(FFTableMesh & mesh,
+HalfSpace::HalfSpace(Material & material,
+		     FFTableMesh & mesh,
 		     int side_factor,
 		     const std::string & name) :
   name(name),
+  material(material),
   mesh(mesh),
   time_step(0.),
   side_factor(side_factor),
@@ -52,13 +54,14 @@ HalfSpace::HalfSpace(FFTableMesh & mesh,
 HalfSpace::~HalfSpace() {}
 
 /* -------------------------------------------------------------------------- */
-HalfSpace * HalfSpace::newHalfSpace(FFTableMesh & mesh,
+HalfSpace * HalfSpace::newHalfSpace(Material & material,
+				    FFTableMesh & mesh,
 				    int side_factor,
 				    const std::string & name,
 				    const SolverMethod & method) {
   HalfSpace * hs = NULL;
   if (method == _dynamic) {
-    hs = new HalfSpaceDynamic(mesh, side_factor, name);
+    hs = new HalfSpaceDynamic(material, mesh, side_factor, name);
   }
   else {
     throw std::runtime_error("HalfSpace: solver method not implemented");
@@ -180,9 +183,9 @@ void HalfSpace::correctVelocity(NodalField & velo_n,
 // velocity = cs / mu / eta * residual (for normal component)
 // velocity = cs / mu       * residual (for out-of-plane shear components)
 void HalfSpace::computeVelocity(NodalField & _velo) {
-  double mu = this->material->getShearModulus();
-  double Cs = this->material->getCs();
-  double Cp = this->material->getCp();
+  double mu = this->material.getShearModulus();
+  double Cs = this->material.getCs();
+  double Cp = this->material.getCp();
   std::vector<double> eta = {1.0, Cp / Cs, 1.0};
 
   for (int d=0; d < this->mesh.getDim(); ++d) {
