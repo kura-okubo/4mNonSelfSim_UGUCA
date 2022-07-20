@@ -95,15 +95,15 @@ void FractureLaw::computeCohesiveForces(NodalField & cohesion,
     double rel_gap = gap_norm_p[n] / dc[n];
 
     // full healing
-    strength[n] = tauc[n] * std::max(0., 1 - rel_gap);
+    // strength[n] = tauc[n] * std::max(0., 1 - rel_gap);
 
     // healing in cohesive zone only
-    // int strength_sgn = (0.0 < strength[n]) - (strength[n] < 0.0);
-    // strength[n] = strength_sgn * tauc[n] * std::max(0., 1 - rel_gap);
+    //int strength_sgn = (0.0 < strength[n]) - (strength[n] < 0.0);
+    //strength[n] = strength_sgn * tauc[n] * std::max(0., 1 - rel_gap);
 
     // no healing
-    // strength[n] = std::min(strength[n],
-    // tauc[n] * std::max(0., 1 - rel_gap));
+    strength[n] = std::min(strength[n],
+			   tauc[n] * std::max(0., 1 - rel_gap));
     
     p_coh1[n] = std::min(p_coh1[n], strength[n]);
 
