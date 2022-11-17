@@ -38,6 +38,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 __BEGIN_UGUCA__
 
@@ -123,6 +124,67 @@ void RateAndStateLaw::init() {
       throw message;
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+
+double RateAndStateLaw::getTimeStep(double dx){
+  HalfSpace & top = this->interface->getTop();
+  HalfSpace & bot = this->interface->getBot();
+
+  double top_mu = top.getMaterial().getShearModulus();      
+  double bot_mu = bot.getMaterial().getShearModulus();   
+  double mu = std::min(top_mu,bot_mu);
+  double k = 0.25*M_PI*mu/dx;
+  
+  unsigned int N = this->mesh.getNbGlobalNodes();
+  double * chi = new double [N];
+  double * xi = new double [N];
+  double * sigma = this->interface->getCohesion().component(1).storage();
+  double term0, term1, term2;
+  
+  double * top_velo = top.getVelo().component(0).storage();
+  double * bot_velo = bot.getVelo().component(0).storage();
+  
+  for (unsigned int i=0;i<N;++i){
+    double sig = std::abs(sigma[i]);
+
+    //std::cout << "sig = "<< sig << " ";
+    term0 = k*this->Dc(i)/sig/this->a(i);
+    term1 = (this->b(i)-this->a(i))/this->a(i);
+    term2 = term0 - term1;
+    chi[i] = 0.25*term2*term2 - term0;
+
+    //std::cout << "chi[i] ="<< chi[i] << " ";
+    if (chi[i] > 0){
+      xi[i] = std::min(this->a(i)/(k*this->Dc(i)-sig*(this->b(i)-this->a(i))),0.5);
+    } else {
+      xi[i] = std::min(1 - sig*(this->b(i)-this->a(i))/k/this->Dc(i),0.5);
+    }
+
+    //std::cout << "xi[i] = "<<  xi[i] << " ";
+    chi[i] = xi[i]*this->Dc(i)/std::max(std::abs(top_velo[i]),std::abs(bot_velo[i]));    
+    //std::cout << "z[i] = "<<  chi[i] << " ";
+    
+  }
+  
+  //std::cout << "\n";
+  delete[] xi;
+  double top_cs = top.getMaterial().getCs();
+  double bot_cs = bot.getMaterial().getCs();
+  double cs = std::max(top_cs,bot_cs);
+  double tmin = 0.5*dx/cs;
+ 
+  double tev = *std::min_element(chi,chi+N);
+  delete[] chi;
+  std::cout << "tev = " << tev << "\n";
+  std::cout << "tmin = " << tmin << "\n";
+
+  double dnev = tev/tmin;
+  long int nev = (long int) dnev;
+  std::cout << "nev = " << nev << "\n";
+  double time_step = std::max(tmin,nev*tmin);
+  return time_step;
 }
 
 /* -------------------------------------------------------------------------- */

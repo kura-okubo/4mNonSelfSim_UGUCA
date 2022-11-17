@@ -79,23 +79,27 @@ HalfSpaceDynamic::~HalfSpaceDynamic() {
 }
 
 /* -------------------------------------------------------------------------- */
-double HalfSpaceDynamic::getStableTimeStep() {
+/*double HalfSpaceDynamic::getStableTimeStep() {
   double delta_x = this->mesh.getDeltaX();
   double delta_z = this->mesh.getDeltaZ();
 
   if (this->mesh.getDim()==2)
     delta_z = delta_x;
   return std::min(delta_x,delta_z) / this->material->getCs();
-}
+}*/
 
 /* -------------------------------------------------------------------------- */
-void HalfSpaceDynamic::setTimeStep(double time_step) {
-  if (((time_step/this->getStableTimeStep()>0.35) && (this->mesh.getDim()==3)) ||
-      ((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2)))
-    throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
-  
-  HalfSpaceQuasiDynamic::setTimeStep(time_step);
-}
+/*void HalfSpaceDynamic::setTimeStep(double time_step, bool variable) {
+  if (variable == false){
+    if (((time_step/this->getStableTimeStep()>0.35) && (this->mesh.getDim()==3)) ||
+      		((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2))){
+      throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
+    } 
+    HalfSpaceQuasiDynamic::setTimeStep(time_step);
+  } else {
+    HalfSpaceQuasiDynamic::setTimeStep(time_step);
+  }
+}*/
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::initConvolutions() {

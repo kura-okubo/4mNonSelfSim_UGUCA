@@ -74,10 +74,10 @@ protected:
   /* ------------------------------------------------------------------------ */
 public:
   // set time step
-  virtual void setTimeStep(double time_step);
+  //virtual void setTimeStep(double time_step, bool variable = false);
 
   // get stable time step
-  virtual double getStableTimeStep();
+  //virtual double getStableTimeStep();
 
   // get limited history
   LimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }

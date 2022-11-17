@@ -98,10 +98,11 @@ void Interface::initPredictorCorrector(int iterations) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::setTimeStep(double time_step) {
-  this->time_step = time_step;
+void Interface::setTimeStep(double time_step, bool variable) {
+  double stable = this->getStableTimeStep();
+  this->time_step = time_step > stable ? stable : time_step;  
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->setTimeStep(time_step);
+    this->half_spaces[i]->setTimeStep(time_step, variable);
 }
 
 /* -------------------------------------------------------------------------- */

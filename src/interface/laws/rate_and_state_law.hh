@@ -76,6 +76,7 @@ public:
   void computeCohesiveForces(NodalField & cohesion,
 			     bool predicting = false);
 
+  double getTimeStep(double dx);
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
   virtual void init();
@@ -119,6 +120,7 @@ public:
   double Vplate;                      // plate velocity
   NodalFieldComponent Vw;             // for slip law with strong rate weakening
   double fw = -1.0;                   // for slip law with strong rate weakening
+
 };
 
 __END_UGUCA__

@@ -120,7 +120,7 @@ public:
   const Material &getMaterial() const { return (*this->material); }
 
   // set time step
-  virtual void setTimeStep(double time_step) { this->time_step = time_step; }
+  virtual void setTimeStep(double time_step, bool variable);
 
   // get side factor
   int getSideFactor() const { return this->side_factor; }
@@ -160,7 +160,8 @@ protected:
 
   // time step
   double time_step;
-
+  
+  double var_time_step;
   // used to know in which directions the tractions pull
   int side_factor;
 

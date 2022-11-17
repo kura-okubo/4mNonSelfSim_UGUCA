@@ -74,11 +74,36 @@ void HalfSpace::initPredictorCorrector() {
 }
 
 /* -------------------------------------------------------------------------- */
-double HalfSpace::getStableTimeStep() {
+/*double HalfSpace::getStableTimeStep() {
 #ifdef UCA_VERBOSE
   std::cout << "getStableTimeStep is not implemented for this HalfSpace" << std::endl;
 #endif
   return std::numeric_limits<double>::max();
+}*/
+
+/* -------------------------------------------------------------------------- */
+double HalfSpace::getStableTimeStep() {
+  double delta_x = this->mesh.getDeltaX();
+  double delta_z = this->mesh.getDeltaZ();
+  double factor;
+  if (this->mesh.getDim()==2){
+    delta_z = delta_x;
+    factor = 0.4;
+  }
+  if (this->mesh.getDim()==3){
+    factor = 0.35;
+  }
+  return factor*std::min(delta_x,delta_z) / this->material->getCs();
+}
+/* -------------------------------------------------------------------------- */
+void HalfSpace::setTimeStep(double time_step, bool variable) {
+  if (variable == false){
+    double stable = this->getStableTimeStep();
+    this->time_step = time_step > stable ? stable : time_step;
+  } else {
+    this->time_step = time_step > stable ? stable : time_step;
+    this->var_time_step = time_step;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
