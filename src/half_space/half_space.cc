@@ -42,6 +42,7 @@ HalfSpace::HalfSpace(FFTableMesh & mesh,
   name(name),
   mesh(mesh),
   time_step(0.),
+  var_time_step(0.),
   side_factor(side_factor),
   disp(mesh,name+"_disp"),
   velo(mesh,name+"_velo"),
@@ -97,36 +98,39 @@ double HalfSpace::getStableTimeStep() {
 }
 /* -------------------------------------------------------------------------- */
 void HalfSpace::setTimeStep(double time_step, bool variable) {
+  double stable = this->getStableTimeStep();
   if (variable == false){
-    double stable = this->getStableTimeStep();
-    this->time_step = time_step > stable ? stable : time_step;
+    this->time_step = (time_step > stable) ? stable : time_step;
   } else {
-    this->time_step = time_step > stable ? stable : time_step;
+    this->time_step = (time_step > stable) ? stable : time_step;
     this->var_time_step = time_step;
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpace::computeDisplacement(bool predicting) {
+void HalfSpace::computeDisplacement(bool predicting, bool variable) {
   this->computeDisplacement(this->disp,
 			    predicting ? this->velo_pc : this->velo,
-			    predicting ? this->disp_pc : this->disp);
+			    predicting ? this->disp_pc : this->disp,
+                            variable);
 }
 
 /* -------------------------------------------------------------------------- */
 // u_i+1 = u_i + dt * v_i
 void HalfSpace::computeDisplacement(NodalField & _disp,
 				    NodalField & _velo,
-				    NodalField & target) {
-
+				    NodalField & target,
+                                    bool variable ) {
+  double dt;
   for (int d = 0; d < this->mesh.getDim(); ++d) {
 
     double * disp_p = _disp.storage(d);
     double * velo_p = _velo.storage(d);
     double * target_p = target.storage(d);
+    dt = variable ? this->var_time_step : this->time_step;
 
     for (int n=0; n<target.getNbNodes(); ++n) {
-      target_p[n] = disp_p[n] + velo_p[n] * this->time_step;
+      target_p[n] = disp_p[n] + velo_p[n] * dt;
     }
   }
 }

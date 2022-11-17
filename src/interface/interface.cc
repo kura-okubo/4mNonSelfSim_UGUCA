@@ -116,9 +116,9 @@ double Interface::getStableTimeStep() {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::computeDisplacement(bool predicting) {
+void Interface::computeDisplacement(bool predicting, bool var_time_step) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->computeDisplacement(predicting);
+    this->half_spaces[i]->computeDisplacement(predicting, var_time_step);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -152,7 +152,7 @@ void Interface::correctVelocity(bool last_step) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::advanceTimeStep(bool dynamic) {
+void Interface::advanceTimeStep(bool dynamic, bool var_time_step) {
 
   // predictor-corrector
   for (int i = 0; i < this->nb_pc; ++i) {
@@ -163,7 +163,6 @@ void Interface::advanceTimeStep(bool dynamic) {
     // Predict
     // u* = u + v * dt
     this->computeDisplacement(true);
-    
     // f* -> compute cohesion -> tau_coh*
     this->computeCohesion(true);
     // tau_coh* -> compute residual -> tau_res*
@@ -177,7 +176,11 @@ void Interface::advanceTimeStep(bool dynamic) {
   }
 
   // compute displacement
-  this->computeDisplacement();
+  if (var_time_step){
+    this->computeDisplacement(false,true);
+  } else{
+    this->computeDisplacement();
+  }
   this->computeInternal(false,false,dynamic);
   this->computeCohesion();
   this->computeResidual();
