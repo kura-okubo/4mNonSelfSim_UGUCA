@@ -177,7 +177,7 @@ endfunction()
 
 # ------------------------------------------------------
 # test
-option(UCA_TEST "test" ON)
+option(UCA_TEST "test" OFF)
 if(${UCA_TEST})
   enable_testing()
   add_subdirectory(test)
@@ -200,7 +200,7 @@ endif()
 # ------------------------------------------------------
 # add simulation folder (if you like)
 # this folder does not exist
-option(UCA_SIMULATIONS "simulations" OFF)
+option(UCA_SIMULATIONS "simulations" ON)
 if (UCA_SIMULATIONS)
   add_subdirectory(simulations)
 endif()

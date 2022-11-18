@@ -226,7 +226,8 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
   fftw_complex * internal_fd[3];
   for (int d = 0; d < this->mesh.getDim(); ++d)
     internal_fd[d] = this->internal.fd_storage(d);
-
+  double acc=0, acc1=0;
+  double mu = this->material->getShearModulus();
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
 
     // ignore mode 0
@@ -242,7 +243,9 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     double H00_integrated = this->H00_pi[j]->getIntegral();
     double H01_integrated = this->H01_pi[j]->getIntegral();
     double H11_integrated = this->H11_pi[j]->getIntegral();
-    
+
+    acc1 = std::max(-this->side_factor * mu * wave_numbers[0][j]*H00_integrated ,acc1);
+
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
     if (this->mesh.getDim() == 2) {
@@ -274,8 +277,9 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     
     // set values to internal force
     for (int d = 0; d < this->mesh.getDim(); ++d) {
-      internal_fd[d][j][0] = std::real(F[d]);  // real part
-      internal_fd[d][j][1] = std::imag(F[d]);  // imag part
+        internal_fd[d][j][0] = std::real(F[d]);  // real part
+        internal_fd[d][j][1] = std::imag(F[d]);  // imag part
+        acc = std::max(acc,std::real(F[0]));
     }
   }
 

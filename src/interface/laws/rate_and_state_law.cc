@@ -173,16 +173,16 @@ double RateAndStateLaw::getTimeStep(double dx){
   double top_cs = top.getMaterial().getCs();
   double bot_cs = bot.getMaterial().getCs();
   double cs = std::max(top_cs,bot_cs);
-  double tmin = 0.5*dx/cs;
+  double tmin = this->interface->getTimeStep();
  
   double tev = *std::min_element(chi,chi+N);
   delete[] chi;
-  std::cout << "tev = " << tev << "\n";
+  /*std::cout << "tev = " << tev << "\n";
   std::cout << "tmin = " << tmin << "\n";
-
+  */
   double dnev = tev/tmin;
   long int nev = (long int) dnev;
-  std::cout << "nev = " << nev << "\n";
+  //std::cout << "nev = " << nev << "\n";
   double time_step = std::max(tmin,nev*tmin);
   return time_step;
 }

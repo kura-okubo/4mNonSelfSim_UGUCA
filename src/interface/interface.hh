@@ -124,7 +124,8 @@ public:
   virtual HalfSpace & getTop() = 0;
   virtual HalfSpace & getBot() = 0;
 
-  virtual void setTimeStep(double time_step, bool variable=false);
+  virtual void setTimeStep(double time_step);
+    virtual void setVariableTimeStep(double time_step);
   double getTimeStep() const { return this->time_step; }
 
   void setDynamic(bool fully_dynamic);

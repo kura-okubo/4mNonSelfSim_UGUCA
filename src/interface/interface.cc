@@ -29,6 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "interface.hh"
+#include <algorithm>
 
 __BEGIN_UGUCA__
 
@@ -79,7 +80,7 @@ void Interface::init(bool velocity_initial_conditions) {
     }
   }
 
-  this->computeInternal();
+  this->computeInternal(false, false ,false);
   this->computeCohesion();
   this->computeResidual();
   if (!velocity_initial_conditions)
@@ -98,12 +99,17 @@ void Interface::initPredictorCorrector(int iterations) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::setTimeStep(double time_step, bool variable) {
+void Interface::setTimeStep(double time_step) {
   double stable = this->getStableTimeStep();
   this->time_step = time_step > stable ? stable : time_step;  
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->setTimeStep(time_step, variable);
+    this->half_spaces[i]->setTimeStep(time_step);
 }
+/* -------------------------------------------------------------------------- */
+    void Interface::setVariableTimeStep(double var_time_step) {
+        for (unsigned int i=0;i<this->half_spaces.size();++i)
+            this->half_spaces[i]->setVariableTimeStep(var_time_step);
+    }
 
 /* -------------------------------------------------------------------------- */
 double Interface::getStableTimeStep() {
@@ -185,6 +191,17 @@ void Interface::advanceTimeStep(bool dynamic, bool var_time_step) {
   this->computeCohesion();
   this->computeResidual();
   this->computeVelocity();
+  /*double * disp = this->half_spaces[0]->getDisp().component(0).storage();
+  double * internal = this->half_spaces[0]->getInternal().component(0).storage();
+  double * velo = this->half_spaces[0]->getVelo().component(0).storage();
+  double * coh = this->getCohesion().component(0).storage();
+  std::cout << "max_disp = " << *std::max_element(disp,disp+1024) << "\n";
+  std::cout << "max_internal = " << *std::max_element(internal,internal+1024) << "\n";
+  std::cout << "min_internal = " << *std::min_element(internal,internal+1024) << "\n";
+  std::cout << "max_coh = " << *std::max_element(coh,coh+1024) << "\n";
+  std::cout << "min_coh = " << *std::max_element(coh,coh+1024) << "\n";
+  std::cout << "max_velo = " << *std::max_element(velo,velo+1024) << "\n";
+  std::cout << "ts = " << this->time_step << "\n"; */
 }
 
 /* -------------------------------------------------------------------------- */

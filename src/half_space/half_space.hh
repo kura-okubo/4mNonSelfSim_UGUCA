@@ -121,7 +121,10 @@ public:
   const Material &getMaterial() const { return (*this->material); }
 
   // set time step
-  virtual void setTimeStep(double time_step, bool variable);
+  virtual void setTimeStep(double time_step);
+
+  // set variable time step
+  virtual void setVariableTimeStep(double var_time_step);
 
   // get side factor
   int getSideFactor() const { return this->side_factor; }

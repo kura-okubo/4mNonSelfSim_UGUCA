@@ -97,22 +97,19 @@ double HalfSpace::getStableTimeStep() {
   return factor*std::min(delta_x,delta_z) / this->material->getCs();
 }
 /* -------------------------------------------------------------------------- */
-void HalfSpace::setTimeStep(double time_step, bool variable) {
-  double stable = this->getStableTimeStep();
-  if (variable == false){
-    this->time_step = (time_step > stable) ? stable : time_step;
-  } else {
-    this->time_step = (time_step > stable) ? stable : time_step;
-    this->var_time_step = time_step;
-  }
+void HalfSpace::setTimeStep(double time_step) {
+        this->time_step = time_step;
 }
-
+/* -------------------------------------------------------------------------- */
+void HalfSpace::setVariableTimeStep(double var_time_step) {
+            this->var_time_step = var_time_step;
+}
 /* -------------------------------------------------------------------------- */
 void HalfSpace::computeDisplacement(bool predicting, bool variable) {
   this->computeDisplacement(this->disp,
 			    predicting ? this->velo_pc : this->velo,
 			    predicting ? this->disp_pc : this->disp,
-                            variable);
+                variable);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -120,7 +117,7 @@ void HalfSpace::computeDisplacement(bool predicting, bool variable) {
 void HalfSpace::computeDisplacement(NodalField & _disp,
 				    NodalField & _velo,
 				    NodalField & target,
-                                    bool variable ) {
+                    bool variable ) {
   double dt;
   for (int d = 0; d < this->mesh.getDim(); ++d) {
 
