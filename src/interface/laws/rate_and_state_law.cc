@@ -138,20 +138,32 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
   this->interface->maintainShearGapForce(cohesion);
   double * coh_0_p = cohesion.storage(0);
 
-  // interface properties
-  const HalfSpace & top = this->interface->getTop();
-  const HalfSpace & bot = this->interface->getBot();
-  const Material & mat_top = top.getMaterial();
-  const Material & mat_bot = bot.getMaterial();
-  double fact_top = mat_top.getCs() / mat_top.getShearModulus();
-  double fact_bot = mat_bot.getCs() / mat_bot.getShearModulus();
-  double fact_both = fact_top + fact_bot;
 
+  bool double_hs;
+  double fact_top,fact_bot,fact_both;
+  const double * int0top_p, * int0bot_p;
+  // interface properties
+  if (this->interface->half_spaces.size()==2){
+    double_hs = true;
+    const HalfSpace & top = this->interface->getTop();
+    const HalfSpace & bot = this->interface->getBot();
+    const Material & mat_top = top.getMaterial();
+    const Material & mat_bot = bot.getMaterial();
+    fact_top = mat_top.getCs() / mat_top.getShearModulus();
+    fact_bot = mat_bot.getCs() / mat_bot.getShearModulus();
+    fact_both = fact_top + fact_bot;
+    int0top_p = top.getInternal().storage(0);
+    int0bot_p = bot.getInternal().storage(0);
+  } else {
+    double_hs = false;
+    const HalfSpace & top = this->interface->getTop();
+    const Material & mat_top = top.getMaterial();
+    fact_top = mat_top.getCs() / mat_top.getShearModulus();
+    int0top_p = top.getInternal().storage(0); 
+  }
   const double *a_p = this->a.storage();
   const double *b_p = this->b.storage();
   const double *Dc_p = this->Dc.storage();
-  const double *int0top_p = top.getInternal().storage(0);
-  const double *int0bot_p = bot.getInternal().storage(0);
   const double *ext0_p = this->interface->getLoad().storage(0);
 
   //  std::vector<NodalField *> gap_velo = this->interface->getBufferField();
@@ -194,9 +206,14 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
       ++iter;
       tau = a_p[i] * std::abs(coh_1_p[i]) * std::asinh(Z * (v_prev + Vplate));
       dtau = a_p[i] * std::abs(coh_1_p[i]) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
-      F = fact_both * (ext0_p[i] - tau) + fact_top * int0top_p[i] +
-          fact_bot * int0bot_p[i] - v_prev;
-      dF = -fact_both * dtau - 1.0;
+      if (double_hs){
+        F = fact_both * (ext0_p[i] - tau) + fact_top * int0top_p[i] +
+            fact_bot * int0bot_p[i] - v_prev;
+        dF = -fact_both * dtau - 1.0;
+      } else {
+        F = fact_top * (ext0_p[i] - tau +  int0top_p[i]) - v_prev;
+        dF = -fact_top * dtau - 1.0;
+      }
       v = v_prev - F / dF;
       rel_change = std::abs(F / dF / v_prev);
       // catching infinite loop when v is jumping across 0 more than 4 times

@@ -145,6 +145,7 @@ protected:
   // {top, bot}
   std::vector<HalfSpace *> half_spaces;
 
+  friend class RateAndStateLaw;
   // external loading
   NodalField load;
 
