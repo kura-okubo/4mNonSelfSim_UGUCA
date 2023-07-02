@@ -40,7 +40,7 @@ set(UGUCA_AUTHOR "David S. Kammer")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -std=c++17 " CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -std=c++17 -lstdc++fs " CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG " CACHE STRING "" FORCE )
 set(CMAKE_MACOSX_RPATH TRUE)
 
@@ -172,7 +172,7 @@ endif()
 # define add_simulation function
 function(add_simulation SIM_EXE SIM_SRC)
   add_executable(${SIM_EXE} ${SIM_SRC})
-  target_link_libraries(${SIM_EXE} uguca)
+  target_link_libraries(${SIM_EXE} uguca "stdc++fs")
 endfunction()
 
 # ------------------------------------------------------
