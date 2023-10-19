@@ -1,4 +1,5 @@
 #include "uca_common.hh"
+#include "wrap.hh"
 
 #include <pybind11/pybind11.h>
 
@@ -15,6 +16,9 @@ namespace uguca {
       .value("dynamic", _dynamic)
       .value("hybrid", _hybrid)
       .export_values();
+
+    wrap::wrapMesh(mod);
   }
+
 
 }
