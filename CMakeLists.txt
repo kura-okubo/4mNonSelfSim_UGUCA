@@ -204,3 +204,22 @@ option(UCA_SIMULATIONS "simulations" OFF)
 if (UCA_SIMULATIONS)
   add_subdirectory(simulations)
 endif()
+
+
+
+#------------------------------------------------------------------------ #
+# Python Wrapper                                                          #
+# ----------------------------------------------------------------------- #
+option (UCA_PYTHON "use pybind library" OFF)
+
+if(UCA_PYTHON)
+  include(FetchContent)
+  FetchContent_Declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11
+    GIT_TAG        v2.11.1
+  )
+
+  FetchContent_MakeAvailable(pybind11)
+  add_subdirectory (python) 
+endif(UCA_PYTHON)
