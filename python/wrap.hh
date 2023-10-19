@@ -12,7 +12,8 @@ namespace wrap {
   namespace py = pybind11;
 
   void wrapMesh(py::module& mod);
-  
+  void wrapHalfSpace(py::module& mod);
+  void wrapInterface(py::module& mod);
 }
   
 }

@@ -18,6 +18,8 @@ namespace uguca {
       .export_values();
 
     wrap::wrapMesh(mod);
+    wrap::wrapHalfSpace(mod);
+    wrap::wrapInterface(mod);
   }
 
 
