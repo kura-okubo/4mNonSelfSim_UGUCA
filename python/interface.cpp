@@ -3,8 +3,11 @@
 #include "barras_law.hh"
 #include "uca_base_mesh.hh"
 #include "uca_fftable_mesh.hh"
+#include "interface.hh"
 #include "bimat_interface.hh"
 #include "material.hh"
+#include "nodal_field.hh"
+#include "uca_dumper.hh"
 
 namespace uguca {
 
@@ -13,12 +16,16 @@ namespace uguca {
     using namespace py::literals;
 
     void wrapInterface(py::module& mod) {
+      
       py::class_<BimatInterface,
 		 std::shared_ptr<BimatInterface>>(mod, "BimatInterface")
 	.def(py::init<FFTableMesh&, Material&, Material&, InterfaceLaw&,
 	     const SolverMethod&>(),
 	     "mesh"_a, "top_material"_a, "bot_material"_a, "law"_a,
-	     "method"_a=_dynamic);
+	     "method"_a=_dynamic)
+	.def("getLoad",
+	     &BimatInterface::getLoad,
+	     py::return_value_policy::reference);
 
       
       py::class_<InterfaceLaw,
