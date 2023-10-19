@@ -23,6 +23,13 @@ namespace uguca {
 	     const SolverMethod&>(),
 	     "mesh"_a, "top_material"_a, "bot_material"_a, "law"_a,
 	     "method"_a=_dynamic)
+	.def("init",
+	     &BimatInterface::init)
+	.def("setTimeStep",
+	     &BimatInterface::setTimeStep)
+	.def("getStableTimeStep",
+	     &BimatInterface::getStableTimeStep,
+	     py::return_value_policy::reference)
 	.def("getLoad",
 	     &BimatInterface::getLoad,
 	     py::return_value_policy::reference);
