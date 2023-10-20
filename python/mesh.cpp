@@ -1,4 +1,7 @@
-#include "wrap.hh"
+#include <pybind11/functional.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 #include "uca_base_mesh.hh"
 #include "uca_fftable_mesh.hh"
 #include "uca_distributed_fftable_mesh.hh"
@@ -6,10 +9,15 @@
 #include "nodal_field_component.hh"
 #include "nodal_field.hh"
 
+
+#include "wrap.hh"
+
+
 namespace uguca {
 
   namespace wrap {
-
+    
+    
     using namespace py::literals;
 
     void wrapMesh(py::module& mod) {
@@ -28,19 +36,35 @@ namespace uguca {
 	     py::arg("Lx"), py::arg("Nx"), py::arg("initialize")=true)
 	.def(py::init<double, int, double, int, bool>(),
 	     py::arg("Lx"), py::arg("Nx"), py::arg("Lz"), py::arg("Nz"),
-	     py::arg("intialize")=true);
+	     py::arg("intialize")=true)
+	.def("getLocalCoords", [](SimpleMesh & mesh, int dir){
+	  	  
 
-      py::class_<NodalFieldComponent,
-	  std::shared_ptr<NodalFieldComponent>>(mod, "NodalFieldComponent")
-	.def(py::init<const std::string&>(),
-	     py::arg("name")="unnamed")
-	.def(py::init<BaseMesh&, int, const std::string&>(),
-	     py::arg("mesh"), py::arg("direction")=0,
-	     py::arg("name")="unnamed")
-	.def("setAllValuesTo",
-	     &NodalFieldComponent::setAllValuesTo)
-	.def("zeros",
-	     &NodalFieldComponent::zeros);
+	  auto data_ptr = mesh.getLocalCoords()[dir];
+		
+	  
+	  size_t shapes, strides;
+
+	  if (dir == 0){
+	    shapes = mesh.getNbGlobalNodesX();
+	    strides = mesh.getNbGlobalNodesZ()*sizeof(double);
+	  }
+	  else if (dir == 2){
+	    shapes = mesh.getNbGlobalNodesZ();	    
+	    strides = sizeof(double);
+	  }
+
+	  
+	  return py::array_t<double>(
+				     py::buffer_info(
+						     data_ptr,
+						     sizeof(double),
+						     py::format_descriptor<double>::format(),
+						     1,
+						     {shapes}, {strides}
+						     ));
+
+	});
 
       py::class_<NodalField, std::shared_ptr<NodalField>>(mod, "NodalField")
 	.def(py::init<const std::string&>(),

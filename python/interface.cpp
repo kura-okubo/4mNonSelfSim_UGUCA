@@ -7,6 +7,7 @@
 #include "bimat_interface.hh"
 #include "material.hh"
 #include "nodal_field.hh"
+
 #include "uca_dumper.hh"
 
 namespace uguca {
@@ -21,8 +22,8 @@ namespace uguca {
 		 std::shared_ptr<BimatInterface>>(mod, "BimatInterface")
 	.def(py::init<FFTableMesh&, Material&, Material&, InterfaceLaw&,
 	     const SolverMethod&>(),
-	     "mesh"_a, "top_material"_a, "bot_material"_a, "law"_a,
-	     "method"_a=_dynamic)
+	     py::arg("mesh"), py::arg("top_material"), py::arg("bot_material"), py::arg("law"),
+	     py::arg("method")=_dynamic)
 	.def("init",
 	     &BimatInterface::init)
 	.def("setTimeStep",
@@ -30,6 +31,18 @@ namespace uguca {
 	.def("getStableTimeStep",
 	     &BimatInterface::getStableTimeStep,
 	     py::return_value_policy::reference)
+	.def("initDump", [](BimatInterface& self, const std::string &bname,
+			const std::string &path){
+	  self.initDump(bname, path);
+	})
+	.def("registerDumpFields", [](BimatInterface& self, const std::string & field_names){
+	  self.registerDumpFields(field_names);
+	})
+	.def("dump", [](BimatInterface& self, unsigned int step, double time){
+	  self.dump(step, time);
+	})
+	.def("advanceTimeStep",
+	     &BimatInterface::advanceTimeStep)
 	.def("getLoad",
 	     &BimatInterface::getLoad,
 	     py::return_value_policy::reference);
@@ -41,8 +54,13 @@ namespace uguca {
       py::class_<BarrasLaw, InterfaceLaw,
 		 std::shared_ptr<BarrasLaw>>(mod, "BarrasLaw")
 	.def(py::init<BaseMesh&, double, double, std::string&>(),
-	     "mesh"_a, "tau_max_default"_a, "delta_c_default"_a,
-	     "name"_a="blaw");
+	     py::arg("mesh"), py::arg("tau_max_default"), py::arg("delta_c_default"),
+	     py::arg("name")="blaw")
+	.def("getTauMax",
+	     &BarrasLaw::getTauMax, py::return_value_policy::reference)
+	.def("getDc",
+	     &BarrasLaw::getDc, py::return_value_policy::reference);
+
     }
 
 

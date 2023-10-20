@@ -3,6 +3,7 @@ pybind11_add_module(puguca MODULE
   mesh.cpp
   half_space.cpp
   interface.cpp
+  io.cpp
 )
 
 target_link_libraries(puguca PRIVATE uguca)

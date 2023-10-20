@@ -2,6 +2,7 @@
 #define __WRAP_HH__
 
 #include "uca_common.hh"
+#include "cast.hh"
 
 #include <pybind11/pybind11.h>
 
@@ -14,6 +15,7 @@ namespace wrap {
   void wrapMesh(py::module& mod);
   void wrapHalfSpace(py::module& mod);
   void wrapInterface(py::module& mod);
+  void wrapIo(py::module& mod);
 }
   
 }

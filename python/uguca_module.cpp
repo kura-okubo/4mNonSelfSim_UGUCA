@@ -20,6 +20,7 @@ namespace uguca {
     wrap::wrapMesh(mod);
     wrap::wrapHalfSpace(mod);
     wrap::wrapInterface(mod);
+    wrap::wrapIo(mod);
   }
 
 
