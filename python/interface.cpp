@@ -1,10 +1,12 @@
 #include "wrap.hh"
 #include "interface_law.hh"
 #include "barras_law.hh"
+#include "linear_coulomb_friction_law.hh"
 #include "uca_base_mesh.hh"
 #include "uca_fftable_mesh.hh"
 #include "interface.hh"
 #include "bimat_interface.hh"
+#include "unimat_shear_interface.hh"
 #include "material.hh"
 #include "nodal_field.hh"
 
@@ -47,6 +49,39 @@ namespace uguca {
 	     &BimatInterface::getLoad,
 	     py::return_value_policy::reference);
 
+      py::class_<UnimatShearInterface,
+		 std::shared_ptr<UnimatShearInterface>>(mod,
+						     "UnimatShearInterface")
+	.def(py::init<FFTableMesh&, Material&, InterfaceLaw&,
+	     const SolverMethod&>(),
+	     py::arg("mesh"), py::arg("top_material"), py::arg("law"),
+	     py::arg("method")=_dynamic)
+	.def("init",
+	     &UnimatShearInterface::init)
+	.def("setTimeStep",
+	     &UnimatShearInterface::setTimeStep)
+	.def("getStableTimeStep",
+	     &UnimatShearInterface::getStableTimeStep,
+	     py::return_value_policy::reference)
+	.def("initDump", [](UnimatShearInterface& self,
+			    const std::string &bname,
+			    const std::string &path){
+	  self.initDump(bname, path);
+	})
+	.def("registerDumpFields", [](UnimatShearInterface& self,
+				      const std::string & field_names){
+	  self.registerDumpFields(field_names);
+	})
+	.def("dump", [](UnimatShearInterface& self, unsigned int step,
+			double time){
+	  self.dump(step, time);
+	})
+	.def("advanceTimeStep",
+	     &UnimatShearInterface::advanceTimeStep)
+	.def("getLoad",
+	     &UnimatShearInterface::getLoad,
+	     py::return_value_policy::reference);
+
       
       py::class_<InterfaceLaw,
 		 std::shared_ptr<InterfaceLaw>>(mod, "InterfaceLaw");
@@ -60,6 +95,29 @@ namespace uguca {
 	     &BarrasLaw::getTauMax, py::return_value_policy::reference)
 	.def("getDc",
 	     &BarrasLaw::getDc, py::return_value_policy::reference);
+
+      py::class_<LinearCoulombFrictionLaw, InterfaceLaw,
+		 std::shared_ptr<LinearCoulombFrictionLaw>>(mod,
+						   "LinearCoulombFrictionLaw")
+	.def(py::init<BaseMesh&, double, double, double,
+	     double, std::string&>(),
+	     py::arg("mesh"), py::arg("mu_s_default"),
+	     py::arg("mu_k_default"),
+	     py::arg("d_c_default"),
+	     py::arg("char_reg_time")=0.,
+	     py::arg("name")="lcflaw")
+	.def("getMuS",
+	     &LinearCoulombFrictionLaw::getMuS,
+	     py::return_value_policy::reference)
+	.def("getMuK",
+	     &LinearCoulombFrictionLaw::getMuK,
+	     py::return_value_policy::reference)
+	.def("getDc",
+	     &LinearCoulombFrictionLaw::getDc,
+	     py::return_value_policy::reference)
+	.def("getCharacteristicTime",
+	     &LinearCoulombFrictionLaw::getCharacteristicTime,
+	     py::return_value_policy::reference);
 
     }
 

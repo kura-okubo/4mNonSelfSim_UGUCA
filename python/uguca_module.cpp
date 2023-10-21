@@ -11,10 +11,10 @@ namespace uguca {
     mod.doc() = "python module of uguca";
 
     py::enum_<SolverMethod>(mod, "SolverMethod")
-      .value("static", _static)
-      .value("quasi_dynamic", _quasi_dynamic)
-      .value("dynamic", _dynamic)
-      .value("hybrid", _hybrid)
+      .value("static", SolverMethod::_static)
+      .value("quasi_dynamic", SolverMethod::_quasi_dynamic)
+      .value("dynamic", SolverMethod::_dynamic)
+      .value("hybrid", SolverMethod::_hybrid)
       .export_values();
 
     wrap::wrapMesh(mod);

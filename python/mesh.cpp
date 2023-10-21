@@ -16,8 +16,7 @@
 namespace uguca {
 
   namespace wrap {
-    
-    
+        
     using namespace py::literals;
 
     void wrapMesh(py::module& mod) {
