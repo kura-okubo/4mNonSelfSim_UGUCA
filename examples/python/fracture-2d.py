@@ -1,22 +1,22 @@
-import puguca
+import uguca as ug
 import numpy as np
 
 length = 1.
 nb_elements = 1024
 
-mesh = puguca.SimpleMesh(Lx=length, Nx=nb_elements)
+mesh = ug.SimpleMesh(Lx=length, Nx=nb_elements)
 
 coords_x = mesh.getLocalCoords(0)
 
-law = puguca.BarrasLaw(mesh, 3.5e6, 2e-5)
+law = ug.BarrasLaw(mesh, 3.5e6, 2e-5)
 
-top_mat = puguca.Material(7e9, 0.33, 2000)
+top_mat = ug.Material(7e9, 0.33, 2000)
 top_mat.readPrecomputedKernels();
 
-bot_mat = puguca.Material(5e9, 0.25, 1200)
+bot_mat = ug.Material(5e9, 0.25, 1200)
 bot_mat.readPrecomputedKernels();
 
-interface = puguca.BimatInterface(mesh, top_mat, bot_mat, law)
+interface = ug.BimatInterface(mesh, top_mat, bot_mat, law)
 
 loads = interface.getLoad()
 loads.component(0)[:] = 2e6

@@ -1,10 +1,10 @@
-import puguca
+import uguca as ug
 import numpy as np
 
 lengths = [0.25, 0.25]
 nb_elements = [128, 128]
 
-mesh = puguca.SimpleMesh(Lx=lengths[0], Nx=nb_elements[0],
+mesh = ug.SimpleMesh(Lx=lengths[0], Nx=nb_elements[0],
                          Lz=lengths[1], Nz=nb_elements[1])
 
 coords_x = mesh.getLocalCoords(0)
@@ -12,12 +12,12 @@ coords_z = mesh.getLocalCoords(2)
 print(coords_x)
 print(coords_z)
 
-law = puguca.BarrasLaw(mesh, 3.5e6, 2e-5)
+law = ug.BarrasLaw(mesh, 3.5e6, 2e-5)
 
-top_mat = puguca.Material(7e9, 0.33, 2000)
+top_mat = ug.Material(7e9, 0.33, 2000)
 top_mat.readPrecomputedKernels();
 
-interface = puguca.DefRigInterface(mesh, top_mat, law)
+interface = ug.DefRigInterface(mesh, top_mat, law)
 
 loads = interface.getLoad()
 loads.component(1)[:] = 1e6

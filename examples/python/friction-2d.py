@@ -1,4 +1,4 @@
-import puguca
+import uguca as ug
 import numpy as np
 import sys
 
@@ -9,16 +9,16 @@ mu_s = 0.8
 mu_k = 0.2
 mus_ampl = 0.15
 
-mesh = puguca.SimpleMesh(Lx=length, Nx=nb_elements)
+mesh = ug.SimpleMesh(Lx=length, Nx=nb_elements)
 
 coords_x = mesh.getLocalCoords(0)
 
-law = puguca.LinearCoulombFrictionLaw(mesh, mu_s, mu_k, 1e-5)
+law = ug.LinearCoulombFrictionLaw(mesh, mu_s, mu_k, 1e-5)
 
-top_mat = puguca.Material(7e9, 0.33, 2000)
+top_mat = ug.Material(7e9, 0.33, 2000)
 top_mat.readPrecomputedKernels();
 
-interface = puguca.UnimatShearInterface(mesh, top_mat, law)
+interface = ug.UnimatShearInterface(mesh, top_mat, law)
 
 total_duration = 2.3e-4
 time_factor = 0.4

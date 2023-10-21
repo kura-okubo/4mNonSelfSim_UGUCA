@@ -221,5 +221,5 @@ if(UCA_PYTHON)
   )
 
   FetchContent_MakeAvailable(pybind11)
-  add_subdirectory (python) 
+  add_subdirectory(python) 
 endif(UCA_PYTHON)
