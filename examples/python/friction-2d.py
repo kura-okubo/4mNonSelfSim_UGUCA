@@ -26,12 +26,11 @@ time_step = time_factor*interface.getStableTimeStep()
 interface.setTimeStep(time_step)
 
 mus = law.getMuS()
-mus_min = sys.float_info.max
 mus[:] = mu_s + mus_ampl*(1.0*np.sin(2*coords_x*np.pi) +
                           0.5*np.cos(12*coords_x*np.pi) +
                           0.7*np.sin(18*coords_x*np.pi))
 
-mus_min = min(mus_min, np.min(mus))
+mus_min = np.min(mus)
 
 
 normal_load = -5e6

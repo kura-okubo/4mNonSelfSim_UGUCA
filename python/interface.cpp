@@ -7,6 +7,7 @@
 #include "interface.hh"
 #include "bimat_interface.hh"
 #include "unimat_shear_interface.hh"
+#include "defrig_interface.hh"
 #include "material.hh"
 #include "nodal_field.hh"
 
@@ -80,6 +81,40 @@ namespace uguca {
 	     &UnimatShearInterface::advanceTimeStep)
 	.def("getLoad",
 	     &UnimatShearInterface::getLoad,
+	     py::return_value_policy::reference);
+
+      
+      py::class_<DefRigInterface,
+		 std::shared_ptr<DefRigInterface>>(mod,
+						 "DefRigInterface")
+	.def(py::init<FFTableMesh&, Material&, InterfaceLaw&,
+	     const SolverMethod&>(),
+	     py::arg("mesh"), py::arg("top_material"), py::arg("law"),
+	     py::arg("method")=_dynamic)
+	.def("init",
+	     &DefRigInterface::init)
+	.def("setTimeStep",
+	     &DefRigInterface::setTimeStep)
+	.def("getStableTimeStep",
+	     &DefRigInterface::getStableTimeStep,
+	     py::return_value_policy::reference)
+	.def("initDump", [](DefRigInterface& self,
+			    const std::string &bname,
+			    const std::string &path){
+	  self.initDump(bname, path);
+	})
+	.def("registerDumpFields", [](DefRigInterface& self,
+				      const std::string & field_names){
+	  self.registerDumpFields(field_names);
+	})
+	.def("dump", [](DefRigInterface& self, unsigned int step,
+			double time){
+	  self.dump(step, time);
+	})
+	.def("advanceTimeStep",
+	     &DefRigInterface::advanceTimeStep)
+	.def("getLoad",
+	     &DefRigInterface::getLoad,
 	     py::return_value_policy::reference);
 
       

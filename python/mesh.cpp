@@ -45,11 +45,11 @@ namespace uguca {
 	  size_t shapes, strides;
 
 	  if (dir == 0){
-	    shapes = mesh.getNbGlobalNodesX();
-	    strides = mesh.getNbGlobalNodesZ()*sizeof(double);
+	    shapes = mesh.getNbLocalNodes();
+	    strides = sizeof(double);
 	  }
 	  else if (dir == 2){
-	    shapes = mesh.getNbGlobalNodesZ();	    
+	    shapes = mesh.getNbLocalNodes();	    
 	    strides = sizeof(double);
 	  }
 

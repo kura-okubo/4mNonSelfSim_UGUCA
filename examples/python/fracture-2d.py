@@ -13,7 +13,7 @@ law = puguca.BarrasLaw(mesh, 3.5e6, 2e-5)
 top_mat = puguca.Material(7e9, 0.33, 2000)
 top_mat.readPrecomputedKernels();
 
-bot_mat = puguca.Material(5e9, 0.33, 1200)
+bot_mat = puguca.Material(5e9, 0.25, 1200)
 bot_mat.readPrecomputedKernels();
 
 interface = puguca.BimatInterface(mesh, top_mat, bot_mat, law)
