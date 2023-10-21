@@ -43,25 +43,17 @@ namespace uguca {
 		
 	  
 	  size_t shapes, strides;
-
-	  if (dir == 0){
-	    shapes = mesh.getNbLocalNodes();
-	    strides = sizeof(double);
-	  }
-	  else if (dir == 2){
-	    shapes = mesh.getNbLocalNodes();	    
-	    strides = sizeof(double);
-	  }
-
-	  
+	  shapes = mesh.getNbLocalNodes();
+	  strides = sizeof(double);
+	  	  
 	  return py::array_t<double>(
-				     py::buffer_info(
-						     data_ptr,
-						     sizeof(double),
-						     py::format_descriptor<double>::format(),
-						     1,
-						     {shapes}, {strides}
-						     ));
+		      py::buffer_info(
+				      data_ptr,
+				      sizeof(double),
+				      py::format_descriptor<double>::format(),
+				      1,
+				      {shapes}, {strides}
+				      ));
 
 	});
 
