@@ -19,10 +19,24 @@ namespace uguca {
 
     using namespace py::literals;
 
+    class PyInterfaceLaw : public InterfaceLaw {
+    public:
+      using InterfaceLaw::InterfaceLaw;
+
+      void computeCohesiveForces(NodalField& cohesion,
+				 bool predicting = false) override {
+	// NOLINTNEXTLINE
+	PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, cohesion, predicting);
+      }
+    };
+    
+
     void wrapInterface(py::module& mod) {
+
+      py::class_<Interface, std::shared_ptr<Interface>>(mod, "Interface");
       
       py::class_<BimatInterface,
-		 std::shared_ptr<BimatInterface>>(mod, "BimatInterface")
+		 std::shared_ptr<BimatInterface>, Interface>(mod, "BimatInterface")
 	.def(py::init<FFTableMesh&, Material&, Material&, InterfaceLaw&,
 	     const SolverMethod&>(),
 	     py::arg("mesh"), py::arg("top_material"), py::arg("bot_material"), py::arg("law"),
@@ -38,6 +52,9 @@ namespace uguca {
 			const std::string &path){
 	  self.initDump(bname, path);
 	})
+	.def("computeGap", [](BimatInterface& self, NodalField & gap, bool predicting){
+	  self.computeGap(gap, predicting);
+	})
 	.def("registerDumpFields", [](BimatInterface& self, const std::string & field_names){
 	  self.registerDumpFields(field_names);
 	})
@@ -51,7 +68,7 @@ namespace uguca {
 	     py::return_value_policy::reference);
 
       py::class_<UnimatShearInterface,
-		 std::shared_ptr<UnimatShearInterface>>(mod,
+		 std::shared_ptr<UnimatShearInterface>, Interface>(mod,
 						     "UnimatShearInterface")
 	.def(py::init<FFTableMesh&, Material&, InterfaceLaw&,
 	     const SolverMethod&>(),
@@ -119,8 +136,15 @@ namespace uguca {
 
       
       py::class_<InterfaceLaw,
-		 std::shared_ptr<InterfaceLaw>>(mod, "InterfaceLaw");
-      
+		 std::shared_ptr<InterfaceLaw>, PyInterfaceLaw>(mod, "InterfaceLaw")
+	.def(py::init<BaseMesh&>(),
+	     py::arg("mesh"))
+	.def("computeCohesiveForces",
+	[](InterfaceLaw & self, NodalField & cohesion,
+	bool predicting=false) {
+      self.computeCohesiveForces(cohesion, predicting);
+    });
+	  
       py::class_<BarrasLaw, InterfaceLaw,
 		 std::shared_ptr<BarrasLaw>>(mod, "BarrasLaw")
 	.def(py::init<BaseMesh&, double, double, std::string&>(),
