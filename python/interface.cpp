@@ -54,6 +54,8 @@ namespace uguca {
 	.def("computeGap", [](BimatInterface& self, NodalField & gap, bool predicting){
 	  self.computeGap(gap, predicting);
 	})
+	.def("closingNormalGapForce",
+	     &BimatInterface::closingNormalGapForce)
 	.def("registerDumpFields", [](BimatInterface& self, const std::string & field_names){
 	  self.registerDumpFields(field_names);
 	})
@@ -143,6 +145,9 @@ namespace uguca {
 	     py::return_value_policy::reference)
 	.def("getInterface",
 	     &InterfaceLaw::getInterface)
+	.def("getMesh",
+	     &InterfaceLaw::getMesh,
+	     py::return_value_policy::reference)
 	.def("computeCohesiveForces",
 	     [](InterfaceLaw & self, bool predicting=false) {
 	       self.computeCohesiveForces(predicting);

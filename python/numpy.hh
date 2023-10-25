@@ -4,7 +4,6 @@
 #include "uca_coommon.hh"
 #include "nodal_field_component.hh"
 
-
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
@@ -19,9 +18,9 @@ using numpy = py::array_t<double, py::array::c_style | py::array::forecast>;
   
 class NodalFieldComponentNumpy : public NodalFieldComponent {
 public:
-  NodalFieldComponent(numpy & buffer) : NodalFieldComponent {
-    this->nb_components = 1;
-    this->data.wrapMemory(buffer.mutable_data(), buffer.size());
+  NodalFieldComponentNumpy(numpy & buffer) : NodalFieldComponent {
+    this->direction = 0;
+    this->field = buffer.ptr();
   }
 };
 

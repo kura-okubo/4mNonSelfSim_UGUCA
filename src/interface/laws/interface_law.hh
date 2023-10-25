@@ -73,9 +73,14 @@ public:
    this->interface = interface;
  };
 
+  BaseMesh& getMesh() {
+   return this->mesh;
+ };
+
   Interface* getInterface() {
    return this->interface;
  };
+
 
   NodalField &  getCohesion();
 

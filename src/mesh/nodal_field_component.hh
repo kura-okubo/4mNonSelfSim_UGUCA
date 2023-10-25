@@ -51,6 +51,7 @@ public:
     direction(0),
     field(NULL) {}
 
+
   NodalFieldComponent(BaseMesh & mesh,
 		      int direction=0,
 		      const std::string & name = "unnamed") :
@@ -113,6 +114,8 @@ public:
   inline double * storage() { return this->field; }
   inline const double * storage() const { return this->field; }
 
+  inline void setField(double * field) { this->field = field; }
+  
   // get name
   const std::string & getName() const { return this->name; }
   

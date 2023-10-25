@@ -55,8 +55,18 @@ namespace pybind11{
       PYBIND11_TYPE_CASTER(type, _("NodalFieldComponentWrap"));
 
       /// Conversion part 1 ---- (Python -> C++)
-      bool load(py::handle /*src*/, bool /*convert*/) {      
-	return false;
+      bool load(py::handle src, bool /*convert*/) {
+
+	auto buf = array_type<double>::ensure(src);
+	if (!buf)
+	  return false;
+
+	auto dims = buf.ndim();
+	if (dims != 1)
+	  return false;
+
+        value.setField(buf.mutable_data());
+	return true;
       }
 
       
