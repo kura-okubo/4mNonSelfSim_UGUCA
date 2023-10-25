@@ -73,8 +73,7 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(NodalField & cohesion,
-			     bool predicting = false);
+  void computeCohesiveForces(bool predicting = false);
 
   // dumper function
   virtual void registerDumpField(const std::string & field_name);

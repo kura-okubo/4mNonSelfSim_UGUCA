@@ -41,6 +41,7 @@
 __BEGIN_UGUCA__
 
 class Interface; // <--- don't know if this works --------------------------
+class NodalField;
 
 class InterfaceLaw {
   /* ------------------------------------------------------------------------ */
@@ -56,8 +57,7 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeCohesiveForces(NodalField & cohesion,
-                                     bool predicting = false) = 0;
+  virtual void computeCohesiveForces(bool predicting = false) = 0;
 
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
@@ -72,6 +72,13 @@ public:
  virtual void setInterface(Interface *interface) {
    this->interface = interface;
  };
+
+  Interface* getInterface() {
+   return this->interface;
+ };
+
+  NodalField &  getCohesion();
+
 
  /* ------------------------------------------------------------------------ */
  /* Class Members                                                            */

@@ -65,8 +65,10 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearCoulombFrictionLaw::computeCohesiveForces(NodalField & cohesion,
-						     bool predicting) {
+void LinearCoulombFrictionLaw::computeCohesiveForces(bool predicting) {
+
+  
+  NodalField & cohesion = this->interface->getCohesion();
 
   // find forces needed to close normal gap
   NodalFieldComponent & coh1 = cohesion.component(1);

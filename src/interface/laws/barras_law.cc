@@ -52,9 +52,9 @@ BarrasLaw::BarrasLaw(BaseMesh & mesh,
 }
 
 /* -------------------------------------------------------------------------- */
-void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
-                                      bool predicting) {
+void BarrasLaw::computeCohesiveForces(bool predicting) {
 
+  NodalField & cohesion = this->interface->getCohesion();
   // find current gap
   //std::vector<NodalField *> gap = this->interface->getBufferField();
   NodalField gap(this->mesh);

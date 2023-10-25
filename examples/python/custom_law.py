@@ -8,12 +8,14 @@ class CustomLaw(ug.InterfaceLaw):
         self.delta_c = np.zeros(mesh.getNbLocalNodesAlloc(), dtype=float)
         self.gap_norm = np.zeros(mesh.getNbLocalNodesAlloc(), dtype=float)
         
-    def computeCohesiveForces(self, cohesion, predicting):
+    def computeCohesiveForces(self, predicting):
         print('working')
-        #gap = ug.NodalField(self.mesh)
-        #super().interface.computeGap(gap, predicting)
-        #print(cohesion.component(1))
-
+        cohesion = self.getCohesion()
+        print(cohesion.component(1))
+        interface = self.getInterface()
+        load = interface.getLoad()
+        print(load.component(1))
+        
 
 length = 1.
 nb_elements = 1024

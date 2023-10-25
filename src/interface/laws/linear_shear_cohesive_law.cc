@@ -53,8 +53,10 @@ LinearShearCohesiveLaw::LinearShearCohesiveLaw(BaseMesh & mesh,
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
-                                                   bool predicting) {
+void LinearShearCohesiveLaw::computeCohesiveForces(bool predicting) {
+
+  
+  NodalField & cohesion = this->interface->getCohesion();
 
   // find forces needed to close normal gap
   NodalFieldComponent & coh1 = cohesion.component(1);

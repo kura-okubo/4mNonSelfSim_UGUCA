@@ -116,7 +116,7 @@ int main(){
   // check stick: tau0 < mus*sig & u=0
   double tau0v = 0.9*mus*sig;
   tau0.setAllValuesTo(tau0v);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh0.at(0) - tau0v) / tau0v > 1e-5) || (coh0.at(0) * tau0v < 0)) {
     std::cout << "stick failed (" << tau0v << "): " << coh0.at(0) << std::endl;
     return 1; // failure
@@ -125,7 +125,7 @@ int main(){
   // check stick-to-slip: tau0 > tauc & u=0
   tau0v = 1.1*mus*sig;
   tau0.setAllValuesTo(tau0v);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh0.at(0) - mus*sig) / (mus*sig) > 1e-5) || (coh0.at(0) * tau0v < 0)) {
     std::cout << "stick-to-slip failed (" << (mus*sig) << "): " << coh0.at(0) << std::endl;
     return 1; // failure
@@ -137,7 +137,7 @@ int main(){
   double u0v = 0.7*dc;
   u0.setAllValuesTo(u0v);
   val = (mus - u0v/dc*(mus - muk)) * sig;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0)) {
     std::cout << "weakening failed (" << val << "): " << coh0.at(0) << std::endl;
     return 1; // failure
@@ -149,7 +149,7 @@ int main(){
   u0v = 1.1*dc;
   u0.setAllValuesTo(u0v);
   val = muk*sig;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0)) {
     std::cout << "residual failed (" << val << "): " << coh0.at(0) << std::endl;
     return 1; // failure
@@ -161,14 +161,14 @@ int main(){
   u0v = -1.1*dc;
   u0.setAllValuesTo(u0v);
   val = -muk*sig;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0)) {
     std::cout << "negative failed (" << val << "): " << coh0.at(0) << std::endl;
     return 1; // failure
   }
 
   // check no penetration: sig0 < 0
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh1.at(0) - sig) / sig > 1e-5) || (coh1.at(0) * sig < 0)) {
     std::cout << "no penetration failed (" << sig << "): " << coh1.at(0) << std::endl;
     return 1; // failure
@@ -177,7 +177,7 @@ int main(){
   // check no adhesion: sig0 > 0
   double sig0v = -sig;
   sig0.setAllValuesTo(sig0v);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if (std::abs(coh1.at(0)) > 1e-8) {
     std::cout << "no adhesion failed (" << 0. << "): " << coh1.at(0) << std::endl;
     return 1; // failure

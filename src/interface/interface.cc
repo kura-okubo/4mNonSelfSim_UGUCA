@@ -185,7 +185,7 @@ void Interface::advanceTimeStep(bool dynamic) {
 
 /* -------------------------------------------------------------------------- */
 void Interface::computeCohesion(bool predicting) {
-  this->law->computeCohesiveForces(this->cohesion, predicting);
+  this->law->computeCohesiveForces(predicting);
 }
 
 /* -------------------------------------------------------------------------- */

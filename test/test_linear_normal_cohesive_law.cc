@@ -85,7 +85,7 @@ int main(){
   // check: sigma0 < sigmac & u=0
   double sigma0v = 0.9*sigmac;
   sigma0.setAllValuesTo(sigma0v);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh1.at(0) - sigma0v) / sigma0v > 1e-5)
       || (coh1.at(0) * sigma0v < 0)) {
     std::cout << "cohesion failed (" << sigma0v << "): "
@@ -96,7 +96,7 @@ int main(){
   // check: sigma0 > sigmac & u=0
   sigma0v = 1.1*sigmac;
   sigma0.setAllValuesTo(sigma0v);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh1.at(0) - sigmac) / sigmac > 1e-5)
       || (coh1.at(0) * sigma0v < 0)) {
     std::cout << "onset failed (" << sigmac << "): "
@@ -110,7 +110,7 @@ int main(){
   double u1v = 0.7*dc;
   u1.setAllValuesTo(u1v);
   double val = sigmac - u1v/dc*sigmac;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh1.at(0) - val) / val > 1e-5)
       || (coh1.at(0) * sigma0v < 0)) {
     std::cout << "weakening failed (" << val << "): "
@@ -124,7 +124,7 @@ int main(){
   u1v = 1.1*dc;
   u1.setAllValuesTo(u1v);
   val = 0;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh1.at(0) - val) / val > 1e-5)
       || (coh1.at(0) * sigma0v < 0)) {
     std::cout << "residual failed (" << val << "): "
@@ -135,7 +135,7 @@ int main(){
   // check no penetration: sig0 < 0
   double sig0v = -2*sigmac;
   sigma0.setAllValuesTo(sig0v);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(coh1.at(0) - sig0v) / sig0v > 1e-5)
       || (coh1.at(0) * sig0v < 0)) {
     std::cout << "no penetration failed (" << sig0v << "): "

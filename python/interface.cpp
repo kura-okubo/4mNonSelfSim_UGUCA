@@ -23,10 +23,9 @@ namespace uguca {
     public:
       using InterfaceLaw::InterfaceLaw;
 
-      void computeCohesiveForces(NodalField& cohesion,
-				 bool predicting = false) override {
+      void computeCohesiveForces(bool predicting = false) override {
 	// NOLINTNEXTLINE
-	PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, cohesion, predicting);
+	PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, predicting);
       }
     };
     
@@ -139,11 +138,15 @@ namespace uguca {
 		 std::shared_ptr<InterfaceLaw>, PyInterfaceLaw>(mod, "InterfaceLaw")
 	.def(py::init<BaseMesh&>(),
 	     py::arg("mesh"))
+	.def("getCohesion",
+	     &InterfaceLaw::getCohesion,
+	     py::return_value_policy::reference)
+	.def("getInterface",
+	     &InterfaceLaw::getInterface)
 	.def("computeCohesiveForces",
-	[](InterfaceLaw & self, NodalField & cohesion,
-	bool predicting=false) {
-      self.computeCohesiveForces(cohesion, predicting);
-    });
+	     [](InterfaceLaw & self, bool predicting=false) {
+	       self.computeCohesiveForces(predicting);
+	     });
 	  
       py::class_<BarrasLaw, InterfaceLaw,
 		 std::shared_ptr<BarrasLaw>>(mod, "BarrasLaw")

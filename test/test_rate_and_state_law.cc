@@ -92,7 +92,7 @@ int main(){
   NodalField cohesion(mesh);
   NodalFieldComponent & coh0 = cohesion.component(0);
   
-  law.computeCohesiveForces(cohesion);
+  law.computeCohesiveForces();
   if ((std::abs(coh0.at(0) - tau) / tau > tol) || (coh0.at(0) * tau < 0)) {
     std::cout << "stick failed (" << tau << "): " << coh0.at(0) << std::endl;
     return 1; // failure
