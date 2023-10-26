@@ -63,15 +63,21 @@ namespace uguca {
 	.def(py::init<const std::string&>(),
 	     py::arg("name")="unnamed")
 	.def(py::init<BaseMesh&, const std::string&>(),
-	     py::arg("name"),
+	     py::arg("mesh"),
 	     py::arg("name")="unnamed")
-	.def("component",
-	     &NodalField::component, py::return_value_policy::reference)
-	.def("setAllValuesTo",
-	     &NodalField::setAllValuesTo)
-	.def("zeros",
-	     &NodalField::zeros);
-
+	.def("computeNorm",
+	[](NodalField& self, NodalFieldComponent& norm,
+	   int ignore_dir) {
+	  self.computeNorm(norm, ignore_dir);
+	},
+	py::arg("norm"),
+	py::arg("ignore_dir") = -1)
+    .def("component",
+	 &NodalField::component, py::return_value_policy::reference)
+    .def("setAllValuesTo",
+	 &NodalField::setAllValuesTo)
+    .def("zeros",
+	 &NodalField::zeros);
     }
     
   }

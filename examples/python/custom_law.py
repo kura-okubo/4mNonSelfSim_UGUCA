@@ -2,36 +2,45 @@ import uguca as ug
 import numpy as np
 
 class CustomLaw(ug.InterfaceLaw):
-    def __init__(self, mesh):
+    def __init__(self, mesh, tau_max, delta_c):
         super().__init__(mesh)
-        self.tau_max = np.zeros(mesh.getNbLocalNodesAlloc(), dtype=float)
-        self.delta_c = np.zeros(mesh.getNbLocalNodesAlloc(), dtype=float)
-        self.gap_norm = np.zeros(mesh.getNbLocalNodesAlloc(), dtype=float)
+        self.tau_max = np.full(mesh.getNbLocalNodesAlloc(), tau_max)
+        self.delta_c = np.full(mesh.getNbLocalNodesAlloc(), delta_c)
+        self.gap_norm = np.zeros(mesh.getNbLocalNodesAlloc())
+        self.gap = ug.NodalField(mesh)
         
     def computeCohesiveForces(self, predicting):
         
         cohesion = self.getCohesion()
-        print(cohesion.component(1))
-
         interface = self.getInterface()
-        load = interface.getLoad()
-        print(load.component(1))
         
-        gap = ug.NodalField(super().getMesh())
-        
-        
-        py_cohesion = np.zeros(super().getMesh().getNbLocalNodesAlloc())
-        interface.closingNormalGapForce(py_cohesion, predicting)
-        print(py_cohesion)
+        # find current gap
+        interface.computeGap(self.gap, predicting)
+        gaps_array = np.array((self.gap.component(0), self.gap.component(1)))
+        self.gap_norm = np.linalg.norm(gaps_array, axis=0)
 
-        
+        # find forces needed to close normal gap
+        cohesion_force = cohesion.component(1)
+        interface.closingNormalGapForce(cohesion_force, predicting)
 
-        
+        # find force needed to maintain shear gap
+        interface.maintainShearGapForce(cohesion)
+        tau_shear = np.abs(cohesion.component(1))
+
+        alpha_field = np.zeros(self.getMesh().getNbLocalNodesAlloc())
+        strength = self.tau_max[:] * np.maximum(0, 1.-self.gap_norm/self.delta_c)
+
+        cohesion_force = np.minimum(cohesion_force, strength)
+        alpha_field = np.minimum(1, np.abs(strength/tau_shear))
+
+        cohesion.component(0)[:] *= alpha_field[:]
+
+
 length = 1.
 nb_elements = 1024
 
 mesh = ug.SimpleMesh(Lx=length, Nx=nb_elements)
-law = CustomLaw(mesh)
+law = CustomLaw(mesh, tau_max=3.5e6, delta_c=2e-5)
 
 top_mat = ug.Material(7e9, 0.33, 2000)
 top_mat.readPrecomputedKernels();
@@ -41,7 +50,6 @@ bot_mat.readPrecomputedKernels();
 
 
 interface = ug.BimatInterface(mesh, top_mat, bot_mat, law)
-
 
 loads = interface.getLoad()
 loads.component(0)[:] = 2e6

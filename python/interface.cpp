@@ -56,6 +56,8 @@ namespace uguca {
 	})
 	.def("closingNormalGapForce",
 	     &BimatInterface::closingNormalGapForce)
+	.def("maintainShearGapForce",
+	     &BimatInterface::maintainShearGapForce)
 	.def("registerDumpFields", [](BimatInterface& self, const std::string & field_names){
 	  self.registerDumpFields(field_names);
 	})
