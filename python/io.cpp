@@ -21,9 +21,7 @@ namespace uguca {
 	.value("CSV", BaseIO::Format::CSV)
 	.value("Binary", BaseIO::Format::Binary);
 
-      
-      py::class_<Dumper, std::shared_ptr<Dumper>>(mod, "Dumper");
-
+   
       py::class_<BaseIO, std::shared_ptr<BaseIO>>(mod, "BaseIO")
 	.def("initIO",
 	     &BaseIO::initIO)
@@ -31,6 +29,9 @@ namespace uguca {
 	     &BaseIO::load)
 	.def("dump",
 	     &BaseIO::dump);
+
+      py::class_<Dumper, BaseIO,
+		 std::shared_ptr<Dumper>>(mod, "Dumper");
       
       py::class_<Restart, BaseIO,
 		 std::shared_ptr<Restart>>(mod, "Restart")

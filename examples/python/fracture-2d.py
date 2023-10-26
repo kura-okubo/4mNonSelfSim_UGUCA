@@ -35,7 +35,7 @@ tau_max = law.getTauMax()
 tau_max[indexes] = 0.
 
 
-interface.initDump('fracture_2d_example-py', '.')
+interface.initDump('fracture_2d_example', '.')
 interface.registerDumpFields('cohesion_0,cohesion_1,top_disp_0,top_disp_1,bot_disp_0,bot_disp_1,tau_max')
 interface.dump(0, 0)
 
@@ -45,6 +45,6 @@ nb_time_steps = int(total_duration/time_step)
 for s in range(nb_time_steps):
     interface.advanceTimeStep(True)
 
-    if s%100 == 0:
+    if s%10 == 0:
         print(s)
         interface.dump(s, s*time_step)
