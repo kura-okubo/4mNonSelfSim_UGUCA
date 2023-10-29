@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
   // mesh
   double length   = data.get<double>("length");
-  int nb_elements = data.get<int>("nb_elements");
+  int nb_elements = data.getOrUse<int>("nb_elements",512); // getOrUse let's you set default value
   SimpleMesh mesh(length, nb_elements);
 
   // constitutive interface law

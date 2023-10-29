@@ -273,8 +273,50 @@ bool ParameterReader::get<bool>(std::string key,
 }
 
 /* -------------------------------------------------------------------------- */
+template<>
+std::string ParameterReader::getOrUse<std::string>(std::string key,
+						   std::string alt_value,
+						   std::string section) const {
+  return this->getSection(section).get<std::string>(key, alt_value);
+}
+
+/* -------------------------------------------------------------------------- */
+template<>
+double ParameterReader::getOrUse<double>(std::string key,
+					 double alt_value,
+					 std::string section) const {
+  return this->getSection(section).get<double>(key, alt_value);
+}
+
+/* -------------------------------------------------------------------------- */
+template<>
+int ParameterReader::getOrUse<int>(std::string key,
+				   int alt_value,
+				   std::string section) const {
+  return this->getSection(section).get<int>(key, alt_value);
+}
+
+/* -------------------------------------------------------------------------- */
+template<>
+unsigned int ParameterReader::getOrUse<unsigned int>(std::string key,
+						     unsigned int alt_value,
+						     std::string section) const {
+  return this->getSection(section).get<unsigned int>(key, alt_value);
+}
+
+/* -------------------------------------------------------------------------- */
+template<>
+bool ParameterReader::getOrUse<bool>(std::string key,
+				     bool alt_value,
+				     std::string section) const {
+  return this->getSection(section).get<bool>(key, alt_value);
+}
+
+
+/* -------------------------------------------------------------------------- */
 bool ParameterReader::has(std::string key, std::string section) const {
   return this->getSection(section).has(key);
 }
+
 
 __END_UGUCA__
