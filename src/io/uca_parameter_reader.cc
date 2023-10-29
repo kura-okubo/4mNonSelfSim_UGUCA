@@ -318,5 +318,4 @@ bool ParameterReader::has(std::string key, std::string section) const {
   return this->getSection(section).has(key);
 }
 
-
 __END_UGUCA__

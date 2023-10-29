@@ -65,7 +65,7 @@ std::string InputSection::get(std::string key) const {
 // not strictly needed, but so that user always uses template (avoid confusion)
 template<>
 std::string InputSection::get<std::string>(std::string key) const {
-    return this->get(key);
+  return this->get(key);
 }
 
 template<>
