@@ -54,10 +54,7 @@ std::string InputSection::get(std::string key) const {
 
   // if not in map
   if (it == this->data.end()) {
-    std::cerr << " *** ERROR *** This data was not in input file. "
-	      << "You need the following line in your input file: ";
-    std::cerr << key << " = ???" << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::invalid_argument("Data missing in input file: "+key);
   }
 
   else
@@ -65,16 +62,36 @@ std::string InputSection::get(std::string key) const {
 }
 
 /* -------------------------------------------------------------------------- */
-// not stricly needed, but so that user always uses template (avoid confusion)
+// not strictly needed, but so that user always uses template (avoid confusion)
 template<>
 std::string InputSection::get<std::string>(std::string key) const {
-  return this->get(key);
+    return this->get(key);
+}
+
+template<>
+std::string InputSection::get<std::string>(std::string key, std::string av) const {
+  try {
+    return this->get<std::string>(key);
+  }
+  catch (const std::invalid_argument& e) {
+    return av;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 template<>
 double InputSection::get<double>(std::string key) const {
-	return std::stod(this->get(key));
+  return std::stod(this->get(key));
+}
+
+template<>
+double InputSection::get<double>(std::string key, double av) const {
+  try {
+    return this->get<double>(key);
+  }
+  catch (const std::invalid_argument& e) {
+    return av;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -88,6 +105,16 @@ int InputSection::get<int>(std::string key) const {
   return std::stoi(value);
 }
 
+template<>
+int InputSection::get<int>(std::string key, int av) const {
+  try {
+    return this->get<int>(key);
+  }
+  catch (const std::invalid_argument& e) {
+    return av;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 template<>
 unsigned int InputSection::get<unsigned int>(std::string key) const {
@@ -96,6 +123,16 @@ unsigned int InputSection::get<unsigned int>(std::string key) const {
     throw std::runtime_error("negative value turned into unsigned int"+value);
   }
   return (unsigned int)(value);
+}
+
+template<>
+unsigned int InputSection::get<unsigned int>(std::string key, unsigned int av) const {
+  try {
+    return this->get<unsigned int>(key);
+  }
+  catch (const std::invalid_argument& e) {
+    return av;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -112,6 +149,16 @@ bool InputSection::get<bool>(std::string key) const {
     throw std::runtime_error("boolean cannot be "+value);
   }
   return b;
+}
+
+template<>
+bool InputSection::get<bool>(std::string key, bool av) const {
+  try {
+    return this->get<bool>(key);
+  }
+  catch (const std::invalid_argument& e) {
+    return av;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
