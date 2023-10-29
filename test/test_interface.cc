@@ -59,7 +59,8 @@ public:
 
 class TestHalfSpace : public HalfSpaceDynamic {
 public:
-  TestHalfSpace(SimpleMesh & mesh, int side_factor) : HalfSpaceDynamic(mesh, side_factor) {}
+  TestHalfSpace(Material & material, SimpleMesh & mesh, int side_factor)
+    : HalfSpaceDynamic(material, mesh, side_factor) {}
   void computeDisplacement(bool = false) {
     computeDisplacementCalled = true;
   }
@@ -109,9 +110,8 @@ public:
 class TestInterface : public Interface {
 public:
  TestInterface(SimpleMesh &mesh, InterfaceLaw &law, Material &material)
-     : Interface(mesh, law), top(mesh, 1) {
+   : Interface(mesh, law), top(material, mesh, 1) {
    half_spaces.push_back(&top);
-   top.setMaterial(&material);
    constructed = true;
  }
   // pure virtual functions

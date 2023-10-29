@@ -32,7 +32,7 @@
 #define __HALF_SPACE_QUASIDYNAMIC_H__
 /* -------------------------------------------------------------------------- */
 #include "half_space.hh"
-#include "preint_kernel.hh"
+#include "convolutions.hh"
 
 __BEGIN_UGUCA__
 
@@ -42,7 +42,7 @@ class HalfSpaceQuasiDynamic : public HalfSpace {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceQuasiDynamic(FFTableMesh & mesh, int side_factor,
+  HalfSpaceQuasiDynamic(Material & material, FFTableMesh & mesh, int side_factor,
 			const std::string & name = "half_space");
 
   virtual ~HalfSpaceQuasiDynamic();
@@ -82,6 +82,7 @@ protected:
 		  std::complex<double> conv_H11_U1_j,
 		  std::complex<double> conv_H22_U0_j,
 		  std::complex<double> conv_H22_U2_j);				   
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -92,11 +93,9 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // convolutions
-  std::vector<PreintKernel *> H00_pi;
-  std::vector<PreintKernel *> H01_pi;
-  std::vector<PreintKernel *> H11_pi;
-  std::vector<PreintKernel *> H22_pi;
+  
+  // convolution kernels
+  Convolutions convolutions; 
 
 };
 

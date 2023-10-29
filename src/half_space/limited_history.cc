@@ -5,8 +5,8 @@
  * @author Gabriele Albertini <ga288@cornell.edu>
  * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Sun Jul 10 2022
+ * @date last modification: Sun Jul 10 2022
  *
  * @brief  TODO
  *
@@ -33,20 +33,25 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-LimitedHistory::LimitedHistory(unsigned int size) :
-  nb_history_points(0),
-  size(size) {
+LimitedHistory::LimitedHistory(FFTableMesh & mesh) :
+  dimension(mesh.getDim()), nbfft(mesh.getNbLocalFFT()) {
 
-  this->index_now = 0;
-  this->values = new double[size];
-
-  for (unsigned int i=0; i<this->size; ++i)
-    this->values[i] = 0.;
+  this->history.resize(this->dimension*this->nbfft);
+  for (unsigned int i=0; i<this->dimension*this->nbfft; ++i) {
+    this->history[i] = std::make_shared<ModalLimitedHistory>();
+  }
 }
 
 /* -------------------------------------------------------------------------- */
-LimitedHistory::~LimitedHistory() {
-  delete[] this->values;
+void LimitedHistory::registerKernel(Convolutions::PIKernelVector & pi_kernels,
+				    unsigned int dim) {
+
+  if (pi_kernels.size() != this->nbfft)
+    throw std::runtime_error("incorrect number of pi_kernels provided for register in LimitedHistory");
+  
+  for (unsigned int j=0; j<this->nbfft; ++j) {
+    this->get(dim, j)->registerKernel(pi_kernels[j]);
+  }
 }
 
 __END_UGUCA__

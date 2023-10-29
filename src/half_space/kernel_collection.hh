@@ -36,6 +36,7 @@
 #include "kernel.hh"
 
 #include <string>
+#include <stdexcept>
 
 __BEGIN_UGUCA__
 
@@ -63,10 +64,7 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  Kernel * getH00() { return this->H00; }
-  Kernel * getH01() { return this->H01; }
-  Kernel * getH11() { return this->H11; }
-  Kernel * getH22() { return this->H22; }
+  inline Kernel * get(const Kernel::Krnl krnl);
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -79,6 +77,29 @@ private:
   Kernel * H22;
 
 };
+
+/* -------------------------------------------------------------------------- */
+/* inline functions                                                           */
+/* -------------------------------------------------------------------------- */
+inline Kernel * KernelCollection::get(const Kernel::Krnl krnl) {
+
+  switch (krnl) {
+  case Kernel::Krnl::H00: {
+    return this->H00;
+  }
+  case Kernel::Krnl::H01: {
+    return this->H01;
+  }
+  case Kernel::Krnl::H11: {
+    return this->H11;
+  }
+  case Kernel::Krnl::H22: {
+    return this->H22;
+  }
+  default:
+    throw std::runtime_error("Unknown kernel");
+  }
+}
 
 __END_UGUCA__
 

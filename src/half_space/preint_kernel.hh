@@ -34,7 +34,7 @@
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include "kernel.hh"
-#include "limited_history.hh"
+#include "modal_limited_history.hh"
 
 #include <vector>
 #include <complex>
@@ -62,9 +62,8 @@ public:
   void multiplyBy(double factor);
 
   // compute convolution of kernel with a history
-  std::complex<double> convolve(const LimitedHistory * U_r,
-				const LimitedHistory * U_i);
-  
+  std::complex<double> convolve(const ModalLimitedHistory * U);
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

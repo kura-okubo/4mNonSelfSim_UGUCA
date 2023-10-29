@@ -67,11 +67,7 @@ int main(){
     Material mat = Material(71e9, 0.33, 2777);
     mat.readPrecomputedKernels();
 
-    HalfSpaceDynamic hs2(msh,1);
-
-    hs2.setMaterial(&mat);
-
-
+    HalfSpaceDynamic hs2(mat,msh,1);
 
     // --------------------------------------------------------------
     if (prank==0)
@@ -361,9 +357,8 @@ int main(){
     Material mat = Material(71e9, 0.33, 2777);
     mat.readPrecomputedKernels();
 
-    HalfSpaceDynamic hs3(msh3,1);
+    HalfSpaceDynamic hs3(mat,msh3,1);
 
-    hs3.setMaterial(&mat);
     double dt=hs3.getStableTimeStep()*0.1;
 
     hs3.setTimeStep(dt);

@@ -58,9 +58,7 @@ int main(){
     Material mat = Material(71e9, 0.33, 2777);
     mat.readPrecomputedKernels();
 
-    HalfSpaceQuasiDynamic hs2(msh,1);
-
-    hs2.setMaterial(&mat);
+    HalfSpaceQuasiDynamic hs2(mat,msh,1);
 
     NodalFieldComponent & u0 = hs2.getDisp().component(0);
     NodalFieldComponent & u1 = hs2.getDisp().component(1);
@@ -135,9 +133,7 @@ int main(){
     Material mat = Material(71e9, 0.33, 2777);
     mat.readPrecomputedKernels();
 
-    HalfSpaceQuasiDynamic hs3(msh3,1);
-
-    hs3.setMaterial(&mat);
+    HalfSpaceQuasiDynamic hs3(mat,msh3,1);
 
     double dx = msh3.getDeltaX();
     double cs = mat.getCs();

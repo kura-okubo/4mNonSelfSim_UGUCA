@@ -42,15 +42,12 @@ BimatInterface::BimatInterface(FFTableMesh & mesh,
 			       const SolverMethod & method) :
   Interface(mesh, law)
 {
-  this->top = HalfSpace::newHalfSpace(mesh,  1, this->name+"_top", method);
-  this->bot = HalfSpace::newHalfSpace(mesh, -1, this->name+"_bot", method);
+  this->top = HalfSpace::newHalfSpace(top_material, mesh,  1, this->name+"_top", method);
+  this->bot = HalfSpace::newHalfSpace(bot_material, mesh, -1, this->name+"_bot", method);
   
   this->half_spaces.resize(2);
   this->half_spaces[0] = this->top;
   this->half_spaces[1] = this->bot;
-
-  this->top->setMaterial(&top_material);
-  this->bot->setMaterial(&bot_material);
 }
 
 /* -------------------------------------------------------------------------- */

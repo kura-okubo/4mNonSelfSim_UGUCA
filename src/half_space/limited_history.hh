@@ -2,13 +2,11 @@
  * @file   limited_history.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Sun Jul 10 2022
+ * @date last modification: Sun Jul 10 2022
  *
- * @brief  TODO
+ * @brief  Limited history for all dimensions and modes
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -33,106 +31,69 @@
 #define __LIMITED_HISTORY_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include <iostream>
-#include <fstream>
+#include "uca_fftable_mesh.hh"
+#include "modal_limited_history.hh"
+#include "convolutions.hh"
+
+#include <memory>
 
 __BEGIN_UGUCA__
 
 class LimitedHistory {
+  
+  friend class BaseIO;
+  
+  /* ------------------------------------------------------------------------ */
+  /* Typedefs                                                                 */
+  /* ------------------------------------------------------------------------ */
+protected:
+  typedef std::vector<std::shared_ptr<ModalLimitedHistory>> LHVector;
+  
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  LimitedHistory(unsigned int size);
-  virtual ~LimitedHistory();
+  LimitedHistory(FFTableMesh & mesh);
+  virtual ~LimitedHistory() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // at the current value of the history
-  inline void addCurrentValue(double value);
-  inline void changeCurrentValue(double value);
 
-  inline void setSteadyState(double value);
+  // registers Kernel to all modes of a history
+  void registerKernel(Convolutions::PIKernelVector & pi_kernels,
+		      unsigned int dim);
   
-  // get history value at index with index=0 : now
-  inline double at(unsigned int index) const;
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->size; };
-  unsigned int getNbHistoryPoints() const { return std::min(this->nb_history_points,
-							    this->size); };
-  unsigned int getIndexNow() const {return this->index_now; }
-  double * getValues() const {return this->values; }
-
-  // for restart
-  void setNbHistoryPoints(int hp) { this->nb_history_points = hp; }
-  void setIndexNow(int idx) { this->index_now = idx; }
+  std::shared_ptr<ModalLimitedHistory> get(unsigned int dim,
+					   unsigned int wave_number) {
+    return this->history[dim*this->nbfft+wave_number];
+  }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // number of accumulated history points
-  unsigned int nb_history_points;
+  // copy of spatial dimension for fast use in get accessor
+  unsigned int dimension;
 
-  // number of history entries
-  unsigned int size;
-
-  // index pointing to the newest entry
-  unsigned int index_now;
-
-  // values
-  double * values;
+  // copy of nbfft for fast useful
+  unsigned int nbfft;
+  
+  // past values of field in frequency domain
+  // each LimitedHistory is for a given dimension d and wave number q
+  LHVector history;
 };
 
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::addCurrentValue(double value) {
 
-  if (this->index_now == 0)
-    this->index_now = this->size;
-
-  this->index_now -= 1;
-
-  this->values[this->index_now] = value;
-
-  // increase the counter of history points
-  this->nb_history_points = std::min(this->nb_history_points + 1,
-				     this->size);
-}
-
-/* -------------------------------------------------------------------------- */
-inline void LimitedHistory::changeCurrentValue(double value) {
-  this->values[this->index_now] = value;
-}
-
-/* -------------------------------------------------------------------------- */
-inline void LimitedHistory::setSteadyState(double value) {
-  this->nb_history_points = this->size;
-  double * v_p = this->values;
-  for (unsigned int i=0; i<this->size; ++i){
-    *v_p = value;
-    ++v_p;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-inline double LimitedHistory::at(unsigned int index) const {
-  if (index >= this->size) {
-    std::cerr << "try to access history value beyond existence" << std::endl;
-    throw index;
-  }
-
-  unsigned int i = (this->index_now + index) % this->size;
-  return this->values[i];
-}
 
 __END_UGUCA__
 

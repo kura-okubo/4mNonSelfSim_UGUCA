@@ -43,7 +43,7 @@ class HalfSpaceDynamic : public HalfSpaceQuasiDynamic {
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceDynamic(FFTableMesh & mesh, int side_factor,
+  HalfSpaceDynamic(Material & material, FFTableMesh & mesh, int side_factor,
 		   const std::string & name = "half_space");
 
   virtual ~HalfSpaceDynamic();
@@ -80,8 +80,7 @@ public:
   virtual double getStableTimeStep();
 
   // get limited history
-  LimitedHistory & getLimitedHistoryReal(int d, int j) { return *(this->U_r[d][j]); }
-  LimitedHistory & getLimitedHistoryImag(int d, int j) { return *(this->U_i[d][j]); }
+  LimitedHistory & getLimitedHistory() { return U_history; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -90,9 +89,8 @@ protected:
 
   // past values of displacement in frequency domain
   // each LimitedHistory is for a given wave number q
-  std::vector<std::vector<LimitedHistory *> > U_r;
-  std::vector<std::vector<LimitedHistory *> > U_i;
-
+  LimitedHistory U_history;
+  
   // keeps information if previous step was dynamic
   bool previously_dynamic;
 };

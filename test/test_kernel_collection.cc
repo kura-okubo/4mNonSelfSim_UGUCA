@@ -65,10 +65,10 @@ int main(){
   KernelCollection kc1;
   kc1.readPrecomputedKernels(nu, pstress);
 
-  Kernel * kc1H[4] = { kc1.getH00(),
-		       kc1.getH01(),
-		       kc1.getH11(),
-		       kc1.getH22() };
+  Kernel * kc1H[4] = { kc1.get(Kernel::Krnl::H00),
+		       kc1.get(Kernel::Krnl::H01),
+		       kc1.get(Kernel::Krnl::H11),
+		       kc1.get(Kernel::Krnl::H22) };
 
 
   // --------------------------------------

@@ -204,27 +204,35 @@ void BaseIO::dumpHistory(std::fstream * dump_file,
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
-      (*dump_file) << limited_history.getSize() << this->separator;
-      (*dump_file) << limited_history.getNbHistoryPoints() << this->separator;
-      (*dump_file) << limited_history.getIndexNow() << std::endl;
+      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+	(*dump_file) << limited_history.history[i]->getSize() << this->separator;
+	(*dump_file) << limited_history.history[i]->getNbHistoryPoints() << this->separator;
+	(*dump_file) << limited_history.history[i]->getIndexNow() << std::endl;
+      }
       break;
     }
     case Format::Binary: {
-      float temp = (float)(limited_history.getSize());
-      (*dump_file).write((char *)&temp, sizeof(float));
-      temp = (float)(limited_history.getNbHistoryPoints());
-      (*dump_file).write((char *)&temp, sizeof(float));
-      temp = (float)(limited_history.getIndexNow());
-      (*dump_file).write((char *)&temp, sizeof(float));
+      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+	float temp = (float)(limited_history.history[i]->getSize());
+	(*dump_file).write((char *)&temp, sizeof(float));
+	temp = (float)(limited_history.history[i]->getNbHistoryPoints());
+	(*dump_file).write((char *)&temp, sizeof(float));
+	temp = (float)(limited_history.history[i]->getIndexNow());
+	(*dump_file).write((char *)&temp, sizeof(float));
+      }
       break;
     }
     default:
       throw std::runtime_error("Unsupported output format.");
   }
 
-  int size = limited_history.getSize();
-  const double * lh_data = limited_history.getValues();
-  this->write(dump_file, lh_data, size);
+  for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+    int size = limited_history.history[i]->getSize();
+    const double * lh_real_data = limited_history.history[i]->real();
+    this->write(dump_file, lh_real_data, size);
+    const double * lh_imag_data = limited_history.history[i]->imag();
+    this->write(dump_file, lh_imag_data, size);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -276,36 +284,44 @@ void BaseIO::loadHistory(std::fstream * load_file,
     case Format::ASCII:
     case Format::CSV: {
       std::string line;
-      std::getline(*load_file,line);
-      std::stringstream ss(line);
-      double temp;
-      ss >> temp;
-      if (temp != limited_history.getSize()) 
-	throw std::runtime_error("reloaded Limited History is of incorrect size");
-      ss >> temp;
-      limited_history.setNbHistoryPoints((int)temp);
-      ss >> temp;
-      limited_history.setIndexNow((int)temp);
+      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+	std::getline(*load_file,line);
+	std::stringstream ss(line);
+	double temp;
+	ss >> temp;
+	if (temp != limited_history.history[i]->getSize()) 
+	  throw std::runtime_error("reloaded Limited History is of incorrect size");
+	ss >> temp;
+	limited_history.history[i]->nb_history_points = (int)temp;
+	ss >> temp;
+	limited_history.history[i]->index_now = (int)temp;
+      }
       break;
     }
     case Format::Binary: {
-      float temp;
-      (*load_file).read((char *)&temp, sizeof(float));
-      if (temp != limited_history.getSize()) 
-	throw std::runtime_error("reloaded Limited History is of incorrect size");
-      (*load_file).read((char *)&temp, sizeof(float));
-      limited_history.setNbHistoryPoints((int)temp);
-      (*load_file).read((char *)&temp, sizeof(float));
-      limited_history.setIndexNow((int)temp);
+      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+	float temp;
+	(*load_file).read((char *)&temp, sizeof(float));
+	if (temp != limited_history.history[i]->getSize()) 
+	  throw std::runtime_error("reloaded Limited History is of incorrect size");
+	(*load_file).read((char *)&temp, sizeof(float));
+	limited_history.history[i]->nb_history_points = (int)temp;
+	(*load_file).read((char *)&temp, sizeof(float));
+	limited_history.history[i]->index_now = (int)temp;
+      }
       break;
     }
     default:
       throw std::runtime_error("Unsupported output format.");
   }
-  
-  int size = limited_history.getSize();
-  double * lh_data = limited_history.getValues();
-  this->read(load_file, lh_data, size);
+
+  for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+    int size = limited_history.history[i]->getSize();
+    double * lh_real_data = const_cast<double*>(limited_history.history[i]->real());
+    this->read(load_file, lh_real_data, size);
+    double * lh_imag_data = const_cast<double*>(limited_history.history[i]->imag());
+    this->read(load_file, lh_imag_data, size);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -335,14 +351,16 @@ void BaseIO::read(std::fstream * load_file,
       break;
     }
     case Format::Binary: {
-      float temp = 0.;
+      float temp = 0.;/*
       std::fstream * to_count = load_file;
       int count = 0;
       while ((*to_count).read((char *)&temp, sizeof(float))) {
 	count++;
       }
       if (count != size) 
-	throw std::runtime_error("BaseIO read: wrong number of entries "+std::to_string(count)+"!="+std::to_string(size));
+	throw std::runtime_error("BaseIO read: wrong number of entries
+      "+std::to_string(count)+"!="+std::to_string(size));
+		      */
       // get values
       for (int n = 0; n < size; ++n) {
 	(*load_file).read((char *)&temp, sizeof(float));
