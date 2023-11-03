@@ -83,6 +83,11 @@ public:
   template<typename T>
   T get(std::string key, std::string section = ParameterReader::general) const;
 
+  /// get value or use
+  template<typename T>
+  T getOrUse(std::string key, T alt_value, std::string section = ParameterReader::general) const;
+
+  /// check if key exists in a given section
   bool has(std::string key, std::string section = ParameterReader::general) const;
   
   /* ------------------------------------------------------------------------ */

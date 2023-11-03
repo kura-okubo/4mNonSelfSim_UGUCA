@@ -68,6 +68,10 @@ public:
   template<typename T>
   T get(std::string key) const;
 
+  /// returns value for key at type T or a provided alternative value
+  template<typename T>
+  T get(std::string key, T alternative_value) const;
+  
   /// check if key is in data
   bool has(std::string key) const;
 
