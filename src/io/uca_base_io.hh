@@ -31,7 +31,6 @@
 
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "nodal_field_component.hh"
 #include "nodal_field.hh"
 #include "limited_history.hh"
 
@@ -48,7 +47,7 @@ public:
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
 protected:
-  typedef std::map<const std::string, NodalFieldComponent *> FieldMap;
+  typedef std::map<const std::string, NodalField *> FieldMap;
   typedef std::map<const std::string, LimitedHistory *> HistoryMap;
   typedef std::map<const std::string, std::fstream *> FileMap;
 
@@ -69,13 +68,10 @@ public:
 		      const Format format = Format::ASCII);
 
   virtual void registerIO(const std::string & name,
-			  NodalFieldComponent & nodal_field);
-  virtual void registerIO(const std::string & name,
 			  NodalField & nodal_field);
   virtual void registerIO(const std::string & name,
 			  LimitedHistory & lim_history);
 
-  virtual void registerIO(NodalFieldComponent & nodal_field);
   virtual void registerIO(NodalField & nodal_field);
   
   virtual void dump(unsigned int step, double time = 0.);
@@ -89,9 +85,9 @@ protected:
   virtual void closeFiles(bool release_memory);
 
   void dumpField(std::fstream * dump_file,
-		 const NodalFieldComponent & nodal_field);
+		 const NodalField & nodal_field);
   void loadField(std::fstream * load_file,
-		 NodalFieldComponent & nodal_field);
+		 NodalField & nodal_field);
 
   void dumpHistory(std::fstream * dump_file,
 		   const LimitedHistory & limited_history);

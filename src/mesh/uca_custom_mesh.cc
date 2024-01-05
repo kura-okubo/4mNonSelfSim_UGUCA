@@ -31,7 +31,7 @@
 #include "uca_custom_mesh.hh"
 #include "static_communicator_mpi.hh"
 #include "uca_simple_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 
 #include <iomanip>
 #include <cmath>
@@ -109,7 +109,7 @@ void CustomMesh::init(std::vector<double> & x_coords,
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void CustomMesh::forwardFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
 
@@ -140,7 +140,7 @@ void CustomMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void CustomMesh::backwardFFT(FFTableNodalField & nodal_field) {
 
   SimpleMesh::backwardFFT(nodal_field_comp);
   this->sortAndScatterCustomNodes(nodal_field_comp.storage(), this->root);

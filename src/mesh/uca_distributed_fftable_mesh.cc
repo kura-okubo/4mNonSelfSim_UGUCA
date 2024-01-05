@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_distributed_fftable_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 
 #include <assert.h>
 #include <iostream>
@@ -121,14 +121,14 @@ void DistributedFFTableMesh::init() {
 }
 
 /* -------------------------------------------------------------------------- */
-void DistributedFFTableMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void DistributedFFTableMesh::forwardFFT(FFTableNodalField & nodal_field) {
   
   FFTableMesh::forwardFFT(nodal_field_comp);
   this->sortAndScatterFFTModes(nodal_field_comp.fd_storage(), this->root);
 }
   
 /* -------------------------------------------------------------------------- */
-void DistributedFFTableMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void DistributedFFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
   
   this->gatherAndSortFFTModes(nodal_field_comp.fd_storage(), this->root);
   FFTableMesh::backwardFFT(nodal_field_comp);

@@ -6,7 +6,7 @@
  * @author Chun-Yu Ke <ck659@cornell.edu>
  *
  * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date last modification: Fri Jan 5 2024
  *
  * @brief  TODO
  *
@@ -32,9 +32,10 @@
 #ifndef __NODAL_FIELD_H__
 #define __NODAL_FIELD_H__
 /* -------------------------------------------------------------------------- */
-#include "uca_common.hh"
-#include "nodal_field_component.hh"
+#include <stdexcept>
 #include <vector>
+#include "uca_common.hh"
+#include "uca_base_mesh.hh"
 /* -------------------------------------------------------------------------- */
 
 __BEGIN_UGUCA__
@@ -48,11 +49,13 @@ public:
 						     initialized(false),
 						     mesh(NULL) {}
   NodalField(BaseMesh & mesh,
+	     SpatialDirectionSet components = {_x},
 	     const std::string & name = "unnamed") : name(name),
 						     initialized(false)
-  { this->init(mesh); }
+  { this->init(mesh,components); }
   
-  virtual ~NodalField() { this->free(); }
+  virtual ~NodalField() {}
+  //this->free(); }
 
 private:
   // private copy constructor: NodalField cannot be copied (for now to debug)
@@ -62,22 +65,23 @@ private:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init(BaseMesh & mesh);
-  virtual void free();
+  virtual void init(BaseMesh & mesh, SpatialDirectionSet components);
+  //virtual void free();
 
 public:
   void zeros();
-  void setAllValuesTo(double value);
+
+  // if d provided, only do it on that component
+  void setAllValuesTo(double value, int d = -1);
 
   // compute element-wise norm of field
-  void computeNorm(NodalFieldComponent & norm,
-		   int ignore_dir = -1) const;
+  //void computeNorm(NodalFieldComponent & norm,
+  //int ignore_dir = -1) const;
 
   // multiply component of field element-wise with scalar
-  void multiplyByScalar(int component,
-			const NodalFieldComponent & scalar);
+  void multiplyByScalarField(const NodalField & scalar, int d);
   // multiply all component of field element-wise with scalar
-  void multiplyByScalar(const NodalFieldComponent & scalar);
+  void multiplyByScalarField(const NodalField & scalar);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -87,16 +91,25 @@ public:
   std::string getName() const { return this->name; }
   
   // get dimension
-  int getDim() const { return this->mesh->getDim(); }
+  //int getDim() const { return this->mesh->getDim(); }
   
   // get number of nodes
-  int getNbNodes() const { return this->mesh->getNbLocalNodes(); };
+  int getNbNodes() const { return this->mesh->getNbLocalNodes(); }
 
-  inline NodalFieldComponent & component(int i) { return (*this->field[i]); }
+  // get number of components
+  int getNbComponents() const { return this->components.size(); }
+  
+  // access the value of node n (reading and writing)
+  inline double & operator()(int n, int d=0);
+  inline const double & operator()(int n, int d=0) const;
+  
+  //  inline NodalFieldComponent & component(int i) { return (*this->field[i]); }
   
   // access to storage
-  inline double * storage(int i) { return this->field[i]->storage(); }
-  inline const double * storage(int i) const { return this->field[i]->storage(); }
+  inline double * data(int i = 0);
+  inline const double * data(int = 0) const;
+  //{ return this->field[i]->storage(); }
+  //inline const double * data(int i) const { return this->field[i]->storage(); }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -111,9 +124,44 @@ protected:
   // associated mesh
   BaseMesh * mesh;
 
-  // nodal field
-  std::vector<NodalFieldComponent * > field;
+  // components: boolean indicating if component exists
+  //std::vector<bool> components;
+  SpatialDirectionSet components;
+
+  // start indices for each component
+  std::vector<int> start;
+  
+  // storage: x1,x2,...,xn,y1,y2,...,yn,z1,z2,...,zn
+  std::vector<double> storage;
 };
+
+
+/* -------------------------------------------------------------------------- */
+/* inline functions                                                           */
+/* -------------------------------------------------------------------------- */
+inline double & NodalField::operator()(int n, int d) {
+  if (!this->components.test(d)) 
+    throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+  return this->storage[this->start[d]+n];
+}
+
+inline const double & NodalField::operator()(int n, int d) const {
+  if (!this->components.test(d)) 
+    throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+  return this->storage[this->start[d]+n];
+}
+
+inline double * NodalField::data(int d) {
+  if (!this->components.test(d))
+    throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+  return this->storage.data() + this->start[d];
+}
+
+inline const double * NodalField::data(int d) const {
+  if (!this->components.test(d))
+    throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+  return this->storage.data() + this->start[d];
+}
 
 __END_UGUCA__
 

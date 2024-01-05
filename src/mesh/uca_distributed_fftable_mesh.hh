@@ -62,8 +62,8 @@ public:
   virtual void init();
 
   //virtual void registerForFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void forwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void backwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void forwardFFT(FFTableNodalField & nodal_field);
+  virtual void backwardFFT(FFTableNodalField & nodal_field);
   
 protected:
   // for parallel implementation of computeStressFourierCoeff()

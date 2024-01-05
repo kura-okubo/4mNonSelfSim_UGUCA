@@ -49,9 +49,9 @@ set(UGUCA_HEADER
   mesh/uca_custom_mesh.hh
 
   # nodal fields
-  mesh/nodal_field_component.hh
+  #mesh/nodal_field_component.hh
   mesh/nodal_field.hh
-  mesh/fftable_nodal_field_component.hh
+  #mesh/fftable_nodal_field_component.hh
   mesh/fftable_nodal_field.hh
   
   # kernels and material
@@ -107,9 +107,9 @@ set(UGUCA_SRC
   mesh/uca_custom_mesh.cc
 
   # nodal fields
-  mesh/nodal_field_component.cc
+  #mesh/nodal_field_component.cc
   mesh/nodal_field.cc
-  mesh/fftable_nodal_field_component.cc
+  #mesh/fftable_nodal_field_component.cc
   mesh/fftable_nodal_field.cc
 
   # kernels and material

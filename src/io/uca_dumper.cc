@@ -196,7 +196,7 @@ void Dumper::initDump(const std::string & bname,
 /* -------------------------------------------------------------------------- */
 // registers field and opens file
 void Dumper::registerIO(const std::string & field_name,
-			NodalFieldComponent & nodal_field) {
+			NodalField & nodal_field) {
 
   // define path to file
   int rank = StaticCommunicatorMPI::getInstance()->whoAmI();

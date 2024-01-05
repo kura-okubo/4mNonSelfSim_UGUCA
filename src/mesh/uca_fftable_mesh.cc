@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_fftable_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 #include "static_communicator_mpi.hh"
 
 #include <cmath>
@@ -128,7 +128,7 @@ void FFTableMesh::freeSpectralSpace() {
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::registerForFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::registerForFFT(FFTableNodalField & nodal_field) {
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
@@ -167,7 +167,7 @@ void FFTableMesh::registerForFFT(FFTableNodalFieldComponent & nodal_field_comp) 
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::unregisterForFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::unregisterForFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
@@ -177,7 +177,7 @@ void FFTableMesh::unregisterForFFT(FFTableNodalFieldComponent & nodal_field_comp
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::forwardFFT(FFTableNodalField & nodal_field) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
     fftw_execute(this->forward_plans[nodal_field_comp.getFFTWPlanId()]);
@@ -185,7 +185,7 @@ void FFTableMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
 }
   
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
