@@ -37,8 +37,9 @@ __BEGIN_UGUCA__
 HalfSpaceDynamic::HalfSpaceDynamic(Material & material,
 				   FFTableMesh & mesh,
 				   int side_factor,
+				   SpatialDirectionSet components,
 				   const std::string & name) :
-  HalfSpaceQuasiDynamic(material, mesh, side_factor, name),
+  HalfSpaceQuasiDynamic(material, mesh, side_factor, components, name),
   U_history(mesh),
   previously_dynamic(true) {
   
@@ -140,7 +141,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     
     for (int d = 0; d < this->mesh.getDim(); ++d) {
       
-      std::complex<double> Udj = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
+      std::complex<double> Udj = {_disp.fd_p(j,d)[0], _disp.fd_p(j,d)[1]};
       
       if (correcting) {
         this->U_history.get(d,j)->changeCurrentValue(Udj);
@@ -163,7 +164,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   // access to fourier coefficients of stresses
   fftw_complex * internal_fd[3];
   for (int d = 0; d < this->mesh.getDim(); ++d)
-    internal_fd[d] = this->internal.fd_storage(d);
+    internal_fd[d] = this->internal.fd_data(d);
  
   
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
@@ -175,7 +176,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     std::vector<std::complex<double>> U;
     U.resize(this->mesh.getDim());
     for (int d=0; d<this->mesh.getDim(); ++d)
-      U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
+      U[d] = {_disp.fd_p(j,d)[0], _disp.fd_p(j,d)[1]};
     
     // to be computed
     std::vector<std::complex<double>> F;
@@ -245,8 +246,8 @@ void HalfSpaceDynamic::setSteadyState(bool predicting) {
 
     for (int d = 0; d < this->mesh.getDim(); ++d) {
 
-      this->U_history.get(d,j)->setSteadyState({_disp.fd(d,j)[0],
-						_disp.fd(d,j)[1]});
+      this->U_history.get(d,j)->setSteadyState({_disp.fd_p(j,d)[0],
+	                                        _disp.fd_p(j,d)[1]});
     }
   }
 }

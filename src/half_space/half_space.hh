@@ -49,6 +49,7 @@ class HalfSpace {
 public:
   // side factor top=1 bot=-1
   HalfSpace(Material & material, FFTableMesh & mesh, int side_factor,
+	    SpatialDirectionSet components,
 	    const std::string & name = "half_space");
 
   virtual ~HalfSpace();
@@ -57,6 +58,7 @@ public:
   static HalfSpace * newHalfSpace(Material & material,
 				  FFTableMesh & mesh,
 				  int side_factor,
+				  SpatialDirectionSet components,
 				  const std::string & name,
 				  const SolverMethod & method);
   

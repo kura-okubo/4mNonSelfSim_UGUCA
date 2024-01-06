@@ -45,6 +45,7 @@ class BimatInterface : public Interface {
 public:
 
   BimatInterface(FFTableMesh & mesh,
+		 SpatialDirectionSet components,
 		 Material & top_material,
 		 Material & bot_material,
 		 InterfaceLaw & law,
@@ -58,7 +59,7 @@ public:
 public:
 
   // compute force needed to close normal gap
-  virtual void closingNormalGapForce(NodalFieldComponent & close_force,
+  virtual void closingNormalGapForce(NodalField & close_force,
 				     bool predicting = false);
 
   // compute force needed to maintain current shear gap

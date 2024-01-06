@@ -78,17 +78,17 @@ public:
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent & getGc()   { return this->G_c;   }
-  NodalFieldComponent & getTauc() { return this->tau_c; }
-  NodalFieldComponent & getTaur() { return this->tau_r; }
+  NodalField & getGc()   { return this->G_c;   }
+  NodalField & getTauc() { return this->tau_c; }
+  NodalField & getTaur() { return this->tau_r; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  NodalFieldComponent G_c;
-  NodalFieldComponent tau_c;
-  NodalFieldComponent tau_r;
+  NodalField G_c;
+  NodalField tau_c;
+  NodalField tau_r;
 };
 
 __END_UGUCA__

@@ -71,16 +71,16 @@ public:
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent & getTauMax() { return this->tau_max; }
-  NodalFieldComponent & getDc()     { return this->delta_c; }
+  NodalField & getTauMax() { return this->tau_max; }
+  NodalField & getDc()     { return this->delta_c; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  NodalFieldComponent tau_max;
-  NodalFieldComponent delta_c;
-  NodalFieldComponent gap_norm;
+  NodalField tau_max;
+  NodalField delta_c;
+  NodalField gap_norm;
 };
 
 __END_UGUCA__

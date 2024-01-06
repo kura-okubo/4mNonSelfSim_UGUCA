@@ -57,8 +57,11 @@ class FFTableNodalField : public NodalField {
   /* ------------------------------------------------------------------------ */
 public:
   FFTableNodalField(const std::string & name = "unnamed") : NodalField(name) {}
-  FFTableNodalField(FFTableMesh & mesh,
+  /*FFTableNodalField(FFTableMesh & mesh,
 		    SpatialDirectionSet components = {_x},
+		    const std::string & name = "unnamed");*/
+  FFTableNodalField(FFTableMesh & mesh,
+		    SpatialDirectionSet components = {0},
 		    const std::string & name = "unnamed");
 
   virtual ~FFTableNodalField() {}
@@ -71,13 +74,17 @@ private:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init(FFTableMesh & mesh,
-		    SpatialDirectionSet components);
+  // clears the NodalField and reinitializes it
+  virtual void init(BaseMesh & mesh, SpatialDirectionSet components) {
+    NodalField::init(mesh, components);
+    this->init();
+  }
+private:
+  virtual void init();
 
+public:
   void forwardFFT();
   void backwardFFT();
-
-protected:
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -123,13 +130,13 @@ protected:
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
 inline fftw_complex & FFTableNodalField::fd_p(int f, int d) {
-  if (!this->components.test(d)) 
+  if (!this->components.count(d)) 
     throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
   return this->fd_storage[this->fd_start[d]+f];
 }
 
 inline fftw_complex * FFTableNodalField::fd_data(int d) {
-  if (!this->components.test(d))
+  if (!this->components.count(d))
     throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
   return this->fd_storage.data() + this->fd_start[d];
 }

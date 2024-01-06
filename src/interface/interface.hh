@@ -49,6 +49,7 @@ class Interface : public Dumper {
 public:
 
   Interface(FFTableMesh & mesh,
+	    SpatialDirectionSet components,
 	    InterfaceLaw & law,
 	    const std::string & name = "interface");
 
@@ -57,6 +58,7 @@ public:
 protected:
   // for inheritate object: infinite boundary
   Interface(FFTableMesh & mesh,
+	    SpatialDirectionSet components,
 	    const std::string & name = "interface");
   
   /* ------------------------------------------------------------------------ */

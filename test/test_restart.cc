@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
   LinearShearCohesiveLaw law(mesh, 1., 2e6);
   
-  BimatInterface interface(mesh, top_mat, bot_mat, law);
+  BimatInterface interface(mesh, {_x,_y,_z}, top_mat, bot_mat, law);
   interface.setTimeStep(0.3*interface.getStableTimeStep());
   interface.init();
   
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
   // test dump and read of NodalFieldComponent
   std::cout << "start: dump and reload NodalFieldComponent" << std::endl;
   int rs_number = 1;
-  NodalFieldComponent nf1(mesh,"nf1");
+  NodalField nf1(mesh,"nf1");
   restart_dump.registerIO(nf1);
   restart_load.registerIO(nf1);
   
@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
 
   // check
   for (int i=0; i<nf1.getNbNodes(); ++i) {
-    if (std::abs((nf1.at(i) - nf1v) / nf1v) > 1e-6) {
-      std::cerr << "should be " << nf1v << ": " << nf1.at(i) << std::endl;
+    if (std::abs((nf1(i) - nf1v) / nf1v) > 1e-6) {
+      std::cerr << "should be " << nf1v << ": " << nf1(i) << std::endl;
       return 1; // failure
     }
   }
@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
 
   // check
   for (int i=0; i<nf1.getNbNodes(); ++i) {
-    if (std::abs((nf1.at(i) - nf2v)/nf2v) > 1e-6) {
-      std::cerr << "should be " << nf2v << ": " << nf1.at(i) << std::endl;
+    if (std::abs((nf1(i) - nf2v)/nf2v) > 1e-6) {
+      std::cerr << "should be " << nf2v << ": " << nf1(i) << std::endl;
       return 1; // failure
     }
   }
@@ -136,10 +136,10 @@ int main(int argc, char *argv[]) {
   restart_load.load(rs_number);
 
   // check
-  for (int d=0; d<nf3.getDim(); ++d) {
+  for (int d=0; d<nf3.getNbComponents(); ++d) {
     for (int i=0; i<nf3.getNbNodes(); ++i) {
-      if (std::abs((nf3.component(d).at(i) - nf3v) / nf3v) > 1e-6) {
-	std::cerr << "should be " << nf3v << ": " << nf3.component(d).at(i) << std::endl;
+      if (std::abs((nf3(i,d) - nf3v) / nf3v) > 1e-6) {
+	std::cerr << "should be " << nf3v << ": " << nf3(i,d) << std::endl;
 	return 1; // failure
       }
     }
@@ -196,10 +196,10 @@ int main(int argc, char *argv[]) {
   }
       
   NodalField & to_check = interface.getCohesion();
-  for (int d=0; d<to_check.getDim(); ++d) {
+  for (int d=0; d<to_check.getNbComponents(); ++d) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
-      if (std::abs((to_check.component(d).at(i) - nf4v) / nf4v) > 1e-6) {
-	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
+      if (std::abs((to_check(i,d) - nf4v) / nf4v) > 1e-6) {
+	std::cerr << "should be " << nf4v << ": " << to_check(i,d) << std::endl;
 	return 1; // failure
       }
     }
@@ -249,10 +249,10 @@ int main(int argc, char *argv[]) {
     return 1; // failure
   }
 
-  for (int d=0; d<to_check.getDim(); ++d) {
+  for (int d=0; d<to_check.getNbComponents(); ++d) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
-      if (std::abs((to_check.component(d).at(i) - nf4v) / nf4v) > 1e-6) {
-	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
+      if (std::abs((to_check(i,d) - nf4v) / nf4v) > 1e-6) {
+	std::cerr << "should be " << nf4v << ": " << to_check(i,d) << std::endl;
 	return 1; // failure
       }
     }
@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
   Restart wrong_restart_load("rs1",folder);
   Restart wrong_restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
   
-  NodalFieldComponent wrong_nf1(wrong_mesh,"nf1");
+  NodalField wrong_nf1(wrong_mesh,"nf1");
   wrong_restart_load.registerIO(wrong_nf1);
   wrong_restart_load_binary.registerIO(wrong_nf1);
   
@@ -320,7 +320,7 @@ int main(int argc, char *argv[]) {
 
   
   LinearShearCohesiveLaw wrong_law(wrong_mesh, 1., 2e6);
-  BimatInterface wrong_interface(wrong_mesh, top_mat, bot_mat, wrong_law);
+  BimatInterface wrong_interface(wrong_mesh, {_x,_y,_z}, top_mat, bot_mat, wrong_law);
   wrong_interface.setTimeStep(0.3*wrong_interface.getStableTimeStep());
   wrong_interface.init();
   wrong_interface.registerToRestart(wrong_restart_load);

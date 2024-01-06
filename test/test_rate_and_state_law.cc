@@ -40,10 +40,12 @@
 using namespace uguca;
 
 int main(){
+
   std::cout << "start test: test_rate_and_state_law" << std::endl;
 
   // information for checks
   SimpleMesh mesh(1., 2);
+  //SpatialDirectionSet in_plane = atialDirectionSet{_x,_y};
   double a = 0.008;
   double b = 0.012;
   double Dc = 0.02;
@@ -60,28 +62,28 @@ int main(){
   std::cout << "check constructor" << std::endl;
   RateAndStateLaw law(mesh, a, b, Dc, V0, f0, theta,
                       RateAndStateLaw::EvolutionLaw::AgingLaw, true, 0);
-  UnimatShearInterface interface(mesh, material, law);
+  UnimatShearInterface interface(mesh, {_x,_y}, material, law);
   interface.setTimeStep(1e-8);
-  interface.getTop().getVelo().component(0).setAllValuesTo(Vinit);
-  interface.getLoad().component(0).setAllValuesTo(tau);
-  interface.getLoad().component(1).setAllValuesTo(-sigma);
+  interface.getTop().getVelo().setAllValuesTo(Vinit, 0);
+  interface.getLoad().setAllValuesTo(tau, 0);
+  interface.getLoad().setAllValuesTo(-sigma, 1);
   std::cout << "constructor correct -> success" << std::endl;
 
   std::cout << "check data" << std::endl;
   double tol = 1e-5;
-  NodalFieldComponent & A_tmp = law.getA();
-  if (std::abs(A_tmp.at(0) - a) / a > tol) {
-    std::cout << "wrong a: " << A_tmp.at(0) << std::endl;
+  NodalField & A_tmp = law.getA();
+  if (std::abs(A_tmp(0) - a) / a > tol) {
+    std::cout << "wrong a: " << A_tmp(0) << std::endl;
     return 1;  // failure
   }
-  NodalFieldComponent & B_tmp = law.getB();
-  if (std::abs(B_tmp.at(0) - b) / b > tol) {
-    std::cout << "wrong b: " << B_tmp.at(0) << std::endl;
+  NodalField & B_tmp = law.getB();
+  if (std::abs(B_tmp(0) - b) / b > tol) {
+    std::cout << "wrong b: " << B_tmp(0) << std::endl;
     return 1;  // failure
   }
-  NodalFieldComponent & Theta_tmp = law.getTheta();
-  if (std::abs(Theta_tmp.at(0) - theta) / theta > tol) {
-    std::cout << "wrong theta: " << Theta_tmp.at(0) << std::endl;
+  NodalField & Theta_tmp = law.getTheta();
+  if (std::abs(Theta_tmp(0) - theta) / theta > tol) {
+    std::cout << "wrong theta: " << Theta_tmp(0) << std::endl;
     return 1;  // failure
   }
   std::cout << "data correct -> success" << std::endl;
@@ -90,11 +92,10 @@ int main(){
 
   // fill empty cohesion vector for testing
   NodalField cohesion(mesh);
-  NodalFieldComponent & coh0 = cohesion.component(0);
   
   law.computeCohesiveForces(cohesion);
-  if ((std::abs(coh0.at(0) - tau) / tau > tol) || (coh0.at(0) * tau < 0)) {
-    std::cout << "stick failed (" << tau << "): " << coh0.at(0) << std::endl;
+  if ((std::abs(cohesion(0,0) - tau) / tau > tol) || (cohesion(0,0) * tau < 0)) {
+    std::cout << "stick failed (" << tau << "): " << cohesion(0,0) << std::endl;
     return 1; // failure
   }
 

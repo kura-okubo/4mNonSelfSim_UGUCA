@@ -28,25 +28,35 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include "fftable_nodal_field.hh"
+#include <cstring>
+#include <typeinfo>
 #include <stdexcept>
+#include <iostream>
+#include "fftable_nodal_field.hh"
+#include "uca_distributed_fftable_mesh.hh"
+#include "uca_simple_mesh.hh"
+#include "uca_custom_mesh.hh"
 
 __BEGIN_UGUCA__
+
+/* -------------------------------------------------------------------------- */
+/*FFTableNodalField::FFTableNodalField(FFTableMesh & mesh,
+				     SpatialDirectionSet components,
+				     const std::string & name) :
+  NodalField(mesh,components,name) {
+  this->init();
+}
 
 /* -------------------------------------------------------------------------- */
 FFTableNodalField::FFTableNodalField(FFTableMesh & mesh,
 				     SpatialDirectionSet components,
 				     const std::string & name) :
   NodalField(mesh,components,name) {
-  // free from nodal field initialization
-  //this->free();
-  this->init(mesh,components);
+  this->init();
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableNodalField::init(FFTableMesh & mesh, SpatialDirectionSet components) {
-
-  NodalField::init(mesh,components);
+void FFTableNodalField::init() {
   
   /*
   // do not initialize twice
@@ -70,8 +80,8 @@ void FFTableNodalField::init(FFTableMesh & mesh, SpatialDirectionSet components)
   this->fd_start = {0};
   for (size_t i = 0; i < _spatial_dir_count; ++i) {
     int new_start = this->fd_start.back();
-    if (this->components.test(i)) {
-      new_start += mesh.getNbLocalFFTAlloc();
+    if (this->components.count(i)) {
+      new_start += ((FFTableMesh *)this->mesh)->getNbLocalFFTAlloc();
     }
     this->fd_start.push_back(new_start);
   }
@@ -84,8 +94,14 @@ void FFTableNodalField::init(FFTableMesh & mesh, SpatialDirectionSet components)
 #endif // UCA_VERBOSE
 
   // allocate space in storage and fill with zeros
-  this->fd_storage.resize(this->fd_start.back(),{0,0});
-  
+  //this->fd_storage.resize(this->fd_start.back()),{0,0}); // does not work because vector of array
+  std::vector<fftw_complex> tmp(this->fd_start.back());
+  //std::fill(tmp.begin(), tmp.end(), fftw_complex{0.0, 0.0});
+  for (auto& element : tmp) {
+    element[0] = 0.0;
+    element[1] = 0.0;
+  }
+  this->fd_storage.swap(tmp);
 
   ((FFTableMesh *)this->mesh)->registerForFFT(*this);
 }

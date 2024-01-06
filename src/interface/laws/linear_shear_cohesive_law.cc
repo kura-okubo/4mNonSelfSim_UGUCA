@@ -57,37 +57,25 @@ void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
                                                    bool predicting) {
 
   // find forces needed to close normal gap
-  NodalFieldComponent & coh1 = cohesion.component(1);
-  this->interface->closingNormalGapForce(coh1, predicting);
+  this->interface->closingNormalGapForce(cohesion, predicting);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of shear cohesion
-  NodalFieldComponent shear_trac_norm(this->mesh, "shear_trac_norm");
+  NodalField shear_trac_norm(this->mesh, "shear_trac_norm");
   cohesion.computeNorm(shear_trac_norm, 1);
-  double * tau_shear = shear_trac_norm.storage();
 
   // find current gap
-  //NodalField gap = this->interface->getBufferField();
   NodalField gap(this->mesh, "gap");
   this->interface->computeGap(gap, predicting);
 
   // compute norm of shear gap
-  NodalFieldComponent shear_gap_norm(this->mesh, "shear_gap_norm");
+  NodalField shear_gap_norm(this->mesh, "shear_gap_norm");
   gap.computeNorm(shear_gap_norm, 1);
-  double * shear_gap = shear_gap_norm.storage();
-
-  // interface properties
-  double * Gc = this->G_c.storage();
-  double * tauc = this->tau_c.storage();
-  double * taur = this->tau_r.storage();
-
-  double * p_coh1 = coh1.storage();
 
   // to be filled
-  NodalFieldComponent alpha_field(this->mesh, "alpha");
-  double * alpha = alpha_field.storage();
+  NodalField alpha(this->mesh, "alpha");
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
@@ -95,22 +83,22 @@ void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
 
     // avoid penetration "at any cost"
     // apply no normal cohesive force
-    p_coh1[n] = std::min(p_coh1[n], 0.);
+    cohesion(n,1) = std::min(cohesion(n,1), 0.);
 
-    double slope = pow(tauc[n] - taur[n],2) / 2. / Gc[n];
-    double strength = std::max(tauc[n] - shear_gap[n] * slope,
-			       taur[n]);
+    double slope = pow(tau_c(n) - tau_r(n),2) / 2. / G_c(n);
+    double strength = std::max(tau_c(n) - shear_gap_norm(n) * slope,
+			       tau_r(n));
 
     // maximal shear cohesive force given by strength.
     // keep orientation of shear force
-    alpha[n] = std::min(1.,std::abs(strength / tau_shear[n]));
+    alpha(n) = std::min(1.,std::abs(strength / shear_trac_norm(n)));
   }
 
   // only in shear direction
-  for (int d=0; d<cohesion.getDim(); ++d) {
+  for (int d=0; d<cohesion.getNbComponents(); ++d) {
     if (d==1) // ignore normal direction
       continue;
-    cohesion.multiplyByScalar(d,alpha_field);
+    cohesion.multiplyByScalarField(alpha,d);
   }
 }
 

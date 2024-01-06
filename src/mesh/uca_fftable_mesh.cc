@@ -133,36 +133,38 @@ void FFTableMesh::registerForFFT(FFTableNodalField & nodal_field) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
 
-    fftw_plan forward_plan = NULL;
-    fftw_plan backward_plan = NULL;
-    if (this->dim==2) {
-      forward_plan = fftw_plan_dft_r2c_1d(this->nb_nodes_x_global,
-					  nodal_field_comp.storage(),
-					  nodal_field_comp.fd_storage(),
-					  FFTW_MEASURE);
-      
-      backward_plan = fftw_plan_dft_c2r_1d(this->nb_nodes_x_global,
-					   nodal_field_comp.fd_storage(),
-					   nodal_field_comp.storage(),
-					   FFTW_MEASURE);
-    }
-    else if (this->dim==3) {
-      forward_plan = fftw_plan_dft_r2c_2d(this->nb_nodes_x_global,
-					  this->nb_nodes_z_global,
-					  nodal_field_comp.storage(),
-					  nodal_field_comp.fd_storage(),
-					  FFTW_MEASURE);
-      backward_plan = fftw_plan_dft_c2r_2d(this->nb_nodes_x_global,
-					   this->nb_nodes_z_global,
-					   nodal_field_comp.fd_storage(),
-					   nodal_field_comp.storage(),
-					   FFTW_MEASURE);
-    }
-    this->forward_plans.push_back(forward_plan);
-    this->backward_plans.push_back(backward_plan);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+
+      // access relevant storage
+      double * nfc = nodal_field.data(d);
+      fftw_complex * fd_nfc = nodal_field.fd_data(d);
+
+      // set plans to NULL
+      fftw_plan forward_plan = NULL;
+      fftw_plan backward_plan = NULL;
+
+      // create fftw plans for relevant dimension
+      if (this->dim==2) {
+	forward_plan = fftw_plan_dft_r2c_1d(this->nb_nodes_x_global,
+					    nfc, fd_nfc, FFTW_MEASURE);
+	backward_plan = fftw_plan_dft_c2r_1d(this->nb_nodes_x_global,
+					     fd_nfc, nfc, FFTW_MEASURE);
+      }
+      else if (this->dim==3) {
+	forward_plan = fftw_plan_dft_r2c_2d(this->nb_nodes_x_global,
+					    this->nb_nodes_z_global,
+					    nfc, fd_nfc, FFTW_MEASURE);
+	backward_plan = fftw_plan_dft_c2r_2d(this->nb_nodes_x_global,
+					     this->nb_nodes_z_global,
+					     fd_nfc, nfc, FFTW_MEASURE);
+      }
+      this->forward_plans.push_back(forward_plan);
+      this->backward_plans.push_back(backward_plan);
     
-    // set the fftw_plan_id of the nodal field component (can do because friend)
-    nodal_field_comp.fftw_plan_id = this->forward_plans.size()-1;
+      // set the fftw_plan_id of the nodal field component (can do because friend)
+      nodal_field.fftw_plan_ids[d] = this->forward_plans.size()-1;
+    }
   }
 }
 
@@ -171,8 +173,11 @@ void FFTableMesh::unregisterForFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
-    fftw_destroy_plan(this->forward_plans[nodal_field_comp.getFFTWPlanId()]);
-    fftw_destroy_plan(this->backward_plans[nodal_field_comp.getFFTWPlanId()]);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+      fftw_destroy_plan(this->forward_plans[nodal_field.getFFTWPlanId(d)]);
+      fftw_destroy_plan(this->backward_plans[nodal_field.getFFTWPlanId(d)]);
+    }
   }
 }
 
@@ -180,7 +185,10 @@ void FFTableMesh::unregisterForFFT(FFTableNodalField & nodal_field) {
 void FFTableMesh::forwardFFT(FFTableNodalField & nodal_field) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
-    fftw_execute(this->forward_plans[nodal_field_comp.getFFTWPlanId()]);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+      fftw_execute(this->forward_plans[nodal_field.getFFTWPlanId(d)]);
+    }
   }
 }
   
@@ -189,12 +197,16 @@ void FFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
-    fftw_execute(this->backward_plans[nodal_field_comp.getFFTWPlanId()]);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+
+      fftw_execute(this->backward_plans[nodal_field.getFFTWPlanId(d)]);
     
-    double nb_nodes_global = this->getNbGlobalNodes();
-    double * p_field = nodal_field_comp.storage();
-    for (int i=0; i<this->nb_nodes_local_alloc; ++i) { // for fftw_mpi it includes padding
-      p_field[i] /= nb_nodes_global;
+      double nb_nodes_global = this->getNbGlobalNodes();
+      double * p_field = nodal_field.data(d);
+      for (int i=0; i<this->nb_nodes_local_alloc; ++i) { // for fftw_mpi it includes padding
+	p_field[i] /= nb_nodes_global;
+      }
     }
   }
 }

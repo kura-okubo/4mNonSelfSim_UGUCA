@@ -56,52 +56,42 @@ void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
                                       bool predicting) {
 
   // find current gap
-  //std::vector<NodalField *> gap = this->interface->getBufferField();
   NodalField gap(this->mesh);
   this->interface->computeGap(gap, predicting);
   gap.computeNorm(this->gap_norm);
-  double *gap_norm_p = this->gap_norm.storage();
 
   // find forces needed to close normal gap
-  NodalFieldComponent & coh1 = cohesion.component(1);
-  this->interface->closingNormalGapForce(coh1, predicting);
-  double * p_coh1 = coh1.storage();
+  this->interface->closingNormalGapForce(cohesion, predicting);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of shear cohesion
-  NodalFieldComponent shear_trac_norm(this->mesh);
+  NodalField shear_trac_norm(this->mesh);
   cohesion.computeNorm(shear_trac_norm, 1);
-  double * tau_shear = shear_trac_norm.storage();
-
-  // interface properties
-  double *tauc = this->tau_max.storage();
-  double *dc = this->delta_c.storage();
 
   // to be filled
-  NodalFieldComponent alpha_field(this->mesh);
-  double * alpha = alpha_field.storage();
+  NodalField alpha(this->mesh);
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
   for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
 
-    double rel_gap = gap_norm_p[n] / dc[n];
-    double strength = tauc[n] * std::max(0., 1 - rel_gap);
+    double rel_gap = this->gap_norm(n) / delta_c(n);
+    double strength = tau_max(n) * std::max(0., 1 - rel_gap);
 
-    p_coh1[n] = std::min(p_coh1[n], strength);
+    cohesion(n,1) = std::min(cohesion(n,1), strength);
 
     // maximal shear cohesive force given by strength.
     // keep orientation of shear force
-    alpha[n] = std::min(1.,std::abs(strength / tau_shear[n]));
+    alpha(n) = std::min(1.,std::abs(strength / shear_trac_norm(n)));
   }
 
   // only in shear direction
-  for (int d=0; d<cohesion.getDim(); ++d) {
+  for (int d=0; d<cohesion.getNbComponents(); ++d) {
     if (d==1) // ignore normal direction
       continue;
-    cohesion.multiplyByScalar(d,alpha_field);
+    cohesion.multiplyByScalarField(alpha,d);
   }
 }
 

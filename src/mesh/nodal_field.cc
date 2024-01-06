@@ -35,6 +35,32 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
+/*NodalField::NodalField(BaseMesh & mesh,
+		       SpatialDirectionSet components,
+		       const std::string & name) :
+  name(name),
+  initialized(false) {
+
+  // convert components to set of int
+  std::set<int> int_components;
+  for (size_t i = 0; i < components.size(); ++i)
+    int_components.insert(static_cast<int>(i));
+
+  // initialize
+  this->init(mesh, int_components);
+}
+
+/* -------------------------------------------------------------------------- */
+NodalField::NodalField(BaseMesh & mesh,
+		       SpatialDirectionSet components,
+		       const std::string & name) :
+  name(name),
+  initialized(false) {
+  // initialize
+  this->init(mesh, components);
+}
+
+/* -------------------------------------------------------------------------- */
 void NodalField::init(BaseMesh & mesh, SpatialDirectionSet components) {
   // do not initialize twice
   if (this->initialized)
@@ -47,7 +73,7 @@ void NodalField::init(BaseMesh & mesh, SpatialDirectionSet components) {
   this->start = {0};
   for (size_t i = 0; i < _spatial_dir_count; ++i) {
     int new_start = this->start.back();
-    if (this->components.test(i)) {
+    if (this->components.count(i)) {
       new_start += mesh.getNbLocalNodesAlloc();
     }
     this->start.push_back(new_start);
@@ -91,7 +117,7 @@ void NodalField::setAllValuesTo(double value, int d) {
     throw std::runtime_error("NodalField: cannot set value\n");
 
   // check that this component exists
-  if (d!=-1 && !this->components.test(d)) 
+  if (d!=-1 && !this->components.count(d)) 
     throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
   
   // if it should apply to all components
@@ -104,11 +130,21 @@ void NodalField::setAllValuesTo(double value, int d) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*
-void NodalField::computeNorm(NodalFieldComponent & norm,
+void NodalField::computeNorm(NodalField & norm,
 			     int ignore_dir) const {
   norm.zeros();
-  double * norm_p = norm.storage();
+
+  for (int n=0; n<this->getNbNodes(); ++n) {
+    for (const auto& d : this->components) {
+      if (d == ignore_dir) continue;
+
+      norm(n) += (*this)(n,d) * (*this)(n,d);
+    }
+    norm(n) = std::sqrt(norm(n));
+  }
+
+  /*
+  double * norm_p = norm.data();
 
   for (int d=0; d<this->getDim(); ++d) {
     if (d == ignore_dir) continue;
@@ -123,13 +159,14 @@ void NodalField::computeNorm(NodalFieldComponent & norm,
   for (int n=0; n<this->getNbNodes(); ++n) {
     norm_p[n] = std::sqrt(norm_p[n]);
   }
+  */
 }
 
 /* -------------------------------------------------------------------------- */
 void NodalField::multiplyByScalarField(const NodalField & scalar, int d) {
 
   // check that this component exists
-  if (!this->components.test(d)) 
+  if (!this->components.count(d)) 
     throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
 
   // check that both have same length
@@ -145,8 +182,19 @@ void NodalField::multiplyByScalarField(const NodalField & scalar, int d) {
 
 /* -------------------------------------------------------------------------- */
 void NodalField::multiplyByScalarField(const NodalField & scalar) {
-  for (size_t i = 0; i < this->components.size(); ++i)
-    this->multiplyByScalarField(scalar,static_cast<int>(i));
+  //for (size_t i = 0; i < this->components.size(); ++i)
+  for (const auto& d : this->components)
+    this->multiplyByScalarField(scalar,d);
+}
+
+/* -------------------------------------------------------------------------- */
+void NodalField::copyDataFrom(const NodalField & other) {
+  this->name = other.name;
+  this->initialized = other.initialized;
+  this->mesh = other.mesh;
+  this->components = other.components;
+  this->start = other.start;
+  this->storage = other.storage;
 }
 
 

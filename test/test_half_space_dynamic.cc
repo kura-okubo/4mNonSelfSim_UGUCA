@@ -64,10 +64,11 @@ int main(){
     int nb_elements = 16;
 
     SimpleMesh msh(length,nb_elements);
+    SpatialDirectionSet sds{_x,_y};
     Material mat = Material(71e9, 0.33, 2777);
     mat.readPrecomputedKernels();
 
-    HalfSpaceDynamic hs2(mat,msh,1);
+    HalfSpaceDynamic hs2(mat,msh,1,sds);
 
     // --------------------------------------------------------------
     if (prank==0)
@@ -121,31 +122,29 @@ int main(){
     else
       std::cout << "check computeDisplacement (prank>0)" << std::endl;
 
-    NodalFieldComponent & v0 = hs2.getVelo().component(0);
-    NodalFieldComponent & v1 = hs2.getVelo().component(1);
+    NodalField & v = hs2.getVelo();
     
-    for (int i=0; i<v0.getNbNodes(); ++i){
-      v0.set(i)=0.3*cos(i*3)+sin(i*2);
-      v1.set(i)=0.5*cos(i*6)+0.4*(sin(i));
+    for (int i=0; i<v.getNbNodes(); ++i){
+      v(i,0)=0.3*cos(i*3)+sin(i*2);
+      v(i,1)=0.5*cos(i*6)+0.4*(sin(i));
       // std::cout << (*v0)(i)<<std::endl;
     }
     
     hs2.computeDisplacement();
-    NodalFieldComponent & u0 = hs2.getDisp().component(0);
-    NodalFieldComponent & u1 = hs2.getDisp().component(1);
+    NodalField & u = hs2.getDisp();
 
-    for (int i=0; i<u0.getNbNodes(); ++i){
-      double err = std::abs(u0.at(i) - dt*v0.at(i));
+    for (int i=0; i<u.getNbNodes(); ++i){
+      double err = std::abs(u(i,0) - dt*v(i,0));
       if (err>1e-12) {
-	std::cout << u0.at(i) << " != " << dt*v0.at(i)
+	std::cout << u(i,0) << " != " << dt*v(i,0)
 		  << " diff=" << err << " (prank=="
 		  << prank << ")" << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
       }
-      err = std::abs(u1.at(i) - dt*v1.at(i));
+      err = std::abs(u(i,1) - dt*v(i,1));
       if (err>1e-12) {
-	std::cout << u1.at(i) << " != " << dt*v1.at(i)
+	std::cout << u(i,1) << " != " << dt*v(i,1)
 		  << " diff=" << err << " (prank=="
 		  << prank << ")" << std::endl;
 	std::cout << "failed" << std::endl;
@@ -159,10 +158,8 @@ int main(){
       std::cout << "check initPredictorCorrector (prank>0)" << std::endl;
     
     hs2.initPredictorCorrector();
-    NodalFieldComponent & up0 = hs2.getDisp(true).component(0);
-    NodalFieldComponent & up1 = hs2.getDisp(true).component(1);
-    NodalFieldComponent & vp0 = hs2.getVelo(true).component(0);
-    NodalFieldComponent & vp1 = hs2.getVelo(true).component(1);
+    NodalField & up = hs2.getDisp(true);
+    NodalField & vp = hs2.getVelo(true);
 
     if (prank==0) {
       std::cout << "initPredictorCorrector success (prank==0)" << std::endl;
@@ -174,13 +171,13 @@ int main(){
     }
 
     hs2.updateVelocity();
-    for (int i=0; i<vp0.getNbNodes(); ++i){
-      if (std::abs(vp0.at(i) - v0.at(i))>1e-12) {
+    for (int i=0; i<vp.getNbNodes(); ++i){
+      if (std::abs(vp(i,0) - v(i,0))>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
       }
-      if (std::abs(vp1.at(i) - v1.at(i))>1e-12) {
+      if (std::abs(vp(i,1) - v(i,1))>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
@@ -194,13 +191,13 @@ int main(){
 
     hs2.computeDisplacement(true);
 
-    for (int i=0; i<up0.getNbNodes(); ++i){
-      if (std::abs(up0.at(i) - dt*v0.at(i)-u0.at(i))>1e-12) {
+    for (int i=0; i<up.getNbNodes(); ++i){
+      if (std::abs(up(i,0) - dt*v(i,0)-u(i,0))>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
       }
-      if (std::abs(up1.at(i) - dt*v1.at(i)-u1.at(i))>1e-12) {
+      if (std::abs(up(i,1) - dt*v(i,1)-u(i,1))>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
@@ -212,18 +209,18 @@ int main(){
     else
       std::cout << "check correct velocity (prank>0)" << std::endl;
 
-    for (int i=0; i<v0.getNbNodes(); ++i){
-      v0.set(i)*=3;
-      v1.set(i)*=3;
+    for (int i=0; i<v.getNbNodes(); ++i){
+      v(i,0)*=3;
+      v(i,1)*=3;
     }
     hs2.correctVelocity(false);
-    for (int i=0; i<vp0.getNbNodes(); ++i){
-      if (std::abs(vp0.at(i)/2-v0.at(i)/3)>1e-12) {
+    for (int i=0; i<vp.getNbNodes(); ++i){
+      if (std::abs(vp(i,0)/2-v(i,0)/3)>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
       }
-      if (std::abs(vp1.at(i)/2-v1.at(i)/3)>1e-12) {
+      if (std::abs(vp(i,1)/2-v(i,1)/3)>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
@@ -236,13 +233,13 @@ int main(){
       std::cout << "check correct velocity last (prank>0)" << std::endl;
     
     hs2.correctVelocity(true);
-    for (int i=0; i<vp0.getNbNodes(); ++i){
-      if (std::abs(vp0.at(i)/2-v0.at(i)/2.5)>1e-12) {
+    for (int i=0; i<vp.getNbNodes(); ++i){
+      if (std::abs(vp(i,0)/2-v(i,0)/2.5)>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
       }
-      if (std::abs(vp1.at(i)/2-v1.at(i)/2.5)>1e-12) {
+      if (std::abs(vp(i,1)/2-v(i,1)/2.5)>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
@@ -267,28 +264,27 @@ int main(){
 
     hs2.computeInternal();
 
-    FFTableNodalFieldComponent & s0 = hs2.getInternal().component(0);
-    FFTableNodalFieldComponent & s1 = hs2.getInternal().component(1);
+    FFTableNodalField & s = hs2.getInternal();
 
     if (prank==0) { // real space computations are on 0 rank process
       if (false) {
 	std::cout<<"solution"<<std::endl
-		 << std::setprecision(12) << s0.fd(4)[0] << ", " << s0.fd(4)[1] << std::endl
-		 << s1.fd(2)[0] << ", " << s1.fd(2)[1] << std::endl;
+		 << std::setprecision(12) << s.fd_p(4,0)[0] << ", " << s.fd_p(4,0)[1] << std::endl
+		 << s.fd_p(2,1)[0] << ", " << s.fd_p(2,1)[1] << std::endl;
       }
       else {
-	if (std::abs(s0.fd(4)[0]- (-138070.216931))>1e-6 ||
-	    std::abs(s0.fd(4)[1]- (731156.525273))>1e-6) {
+	if (std::abs(s.fd_p(4,0)[0]- (-138070.216931))>1e-6 ||
+	    std::abs(s.fd_p(4,0)[1]- (731156.525273))>1e-6) {
 	  std::cout << "prank == " << prank << std::endl;
 	  std::cout << "failed 4" << std::endl
-		    << s0.fd(4)[0] << ", " << s0.fd(4)[1] << std::endl;
+		    << s.fd_p(4,0)[0] << ", " << s.fd_p(4,0)[1] << std::endl;
 	  return 1; // failure
 	}
-	if (std::abs(s1.fd(2)[0]- (-44634.1170066))>1e-6 ||
-	    std::abs(s1.fd(2)[1]- (7529.73118974))>1e-6) {
+	if (std::abs(s.fd_p(2,1)[0]- (-44634.1170066))>1e-6 ||
+	    std::abs(s.fd_p(2,1)[1]- (7529.73118974))>1e-6) {
 	  std::cout << "prank == " << prank << std::endl;
 	  std::cout << std::setprecision(12) << "failed 2" << std::endl
-		    << s1.fd(2)[0] << ", " << s1.fd(2)[1] << std::endl;
+		    << s.fd_p(2,1)[0] << ", " << s.fd_p(2,1)[1] << std::endl;
 	  return 1; // failure
 	}
       }
@@ -299,15 +295,14 @@ int main(){
     else
       std::cout << "check computeResidual (prank>0)" << std::endl;
 
-    NodalField & u = hs2.getDisp();
+    u = hs2.getDisp();
     hs2.computeResidual(u);
 
-    NodalFieldComponent & r0 = hs2.getResidual().component(0);
-    NodalFieldComponent & r1 = hs2.getResidual().component(1);
+    NodalField & res = hs2.getResidual();
 
-    for (int i=0;i<r0.getNbNodes();++i){
-      if (std::abs(r1.at(i)-(s1.at(i)+u1.at(i)))>1e-10) {
-	std::cout<<r1.at(i)<<" != "<<(s1.at(i)+u1.at(i))<<std::endl;
+    for (int i=0;i<res.getNbNodes();++i){
+      if (std::abs(res(i,1)-(s(i,1)+u(i,1)))>1e-10) {
+	std::cout<<res(i,1)<<" != "<<(s(i,1)+u(i,1))<<std::endl;
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure
@@ -321,17 +316,17 @@ int main(){
     
     hs2.computeVelocity();
     if (prank==0) // real space computations are on 0 rank process
-    for (int i=0;i<v0.getNbNodes();++i){
-      if (std::abs(v0.at(i) - ( mat.getCs()/mat.getShearModulus()*r0.at(i)) )>1e-12) {
+    for (int i=0;i<v.getNbNodes();++i){
+      if (std::abs(v(i,0) - ( mat.getCs()/mat.getShearModulus()*res(i,0)) )>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed 0" << std::endl
-		  << v0.at(i) << " != " << ( mat.getCs()/mat.getShearModulus()*r0.at(i)) << std::endl;
+		  << v(i,0) << " != " << ( mat.getCs()/mat.getShearModulus()*res(i,0)) << std::endl;
 	return 1; // failure
       }
-      if (std::abs(v1.at(i) - ( mat.getCs()/mat.getShearModulus()/(mat.getCp()/mat.getCs())*r1.at(i)) )>1e-12) {
+      if (std::abs(v(i,1) - ( mat.getCs()/mat.getShearModulus()/(mat.getCp()/mat.getCs())*res(i,1)) )>1e-12) {
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed 1" << std::endl
-		  << v1.at(i) << " != " << ( mat.getCs()/mat.getShearModulus()/ (mat.getCp()/mat.getCs()) *r1.at(i) ) << std::endl;
+		  << v(i,1) << " != " << ( mat.getCs()/mat.getShearModulus()/ (mat.getCp()/mat.getCs()) *res(i,1) ) << std::endl;
 	return 1; // failure
       }
     }
@@ -357,7 +352,7 @@ int main(){
     Material mat = Material(71e9, 0.33, 2777);
     mat.readPrecomputedKernels();
 
-    HalfSpaceDynamic hs3(mat,msh3,1);
+    HalfSpaceDynamic hs3(mat,msh3,1,{_x,_y,_z});
 
     double dt=hs3.getStableTimeStep()*0.1;
 
@@ -366,17 +361,15 @@ int main(){
     hs3.initPredictorCorrector();
     hs3.initConvolutions();
 
-    NodalFieldComponent & u0 = hs3.getDisp().component(0);
-    NodalFieldComponent & u1 = hs3.getDisp().component(1);
-    NodalFieldComponent & u2 = hs3.getDisp().component(2);
+    NodalField & disp = hs3.getDisp();
 
     if (prank==0) {
       for (int i=0; i<nb_x; ++i){
 	for (int j=0; j<nb_z; ++j){
 	  int ij =i*nb_z+j;
-	  u0.set(ij)=0.3*cos(i*3+6)+sin(i*2+1) +2*cos(j*2)+sin(j*6-2);
-	  u1.set(ij)=0.5*cos(i*6)+0.4*(sin(i+2))-1*cos(j*7)+sin(j*9-5);
-	  u2.set(ij)=0.5*cos(i*6+5)+0.4*(sin(i-2))+0.5*cos(5-j*2)+sin(j);;
+	  disp(ij,0)=0.3*cos(i*3+6)+sin(i*2+1) +2*cos(j*2)+sin(j*6-2);
+	  disp(ij,1)=0.5*cos(i*6)+0.4*(sin(i+2))-1*cos(j*7)+sin(j*9-5);
+	  disp(ij,2)=0.5*cos(i*6+5)+0.4*(sin(i-2))+0.5*cos(5-j*2)+sin(j);;
 	}
       }
     }
@@ -387,31 +380,29 @@ int main(){
     {
       std::cout<<"test computeStressFourierCoeff 3D (prank==0)"<<std::endl;
       
-      FFTableNodalFieldComponent & s0 = hs3.getInternal().component(0);
-      FFTableNodalFieldComponent & s1 = hs3.getInternal().component(1);
-      FFTableNodalFieldComponent & s2 = hs3.getInternal().component(2);
+      FFTableNodalField & inter = hs3.getInternal();
       
       if (false) {
 	std::cout<<"solution"<<std::endl
 		 << std::setprecision(12)
-		 << s0.at(4) << std::endl
-		 << s1.at(62) << std::endl
-		 << s2.at(47) << std::endl;
+		 << inter(4,0) << std::endl
+		 << inter(62,1) << std::endl
+		 << inter(47,2) << std::endl;
       }
       else {
-	if (std::abs(s0.at(4) - (-99443675301.1))>1e3) {
+	if (std::abs(inter(4,0) - (-99443675301.1))>1e3) {
 	  std::cout << "failed 4" << std::endl
-		    << s0.at(4) << std::endl;
+		    << inter(4,0) << std::endl;
 	  return 1; // failure
 	}
-	if (std::abs(s1.at(62) - (17019761277.7))>1e-1) {
+	if (std::abs(inter(62,1) - (17019761277.7))>1e-1) {
 	  std::cout << "failed 62" << std::endl
-		    << s1.at(62) << std::endl;
+		    << inter(62,1) << std::endl;
 	  return 1; // failure
 	}
-	if (std::abs(s2.at(47) - (5687137976.34))>1e-2) {
+	if (std::abs(inter(47,2) - (5687137976.34))>1e-2) {
 	  std::cout << "failed 47" << std::endl
-		    << s2.at(47) << std::endl;
+		    << inter(47,2) << std::endl;
 	  return 1; // failure
 	}
       }

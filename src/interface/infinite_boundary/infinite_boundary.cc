@@ -35,14 +35,15 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 InfiniteBoundary::InfiniteBoundary(FFTableMesh & mesh,
+				   SpatialDirectionSet components,
 				   int side_factor,
 				   Material & material,
 				   const std::string & name,
 				   const SolverMethod & method) :
-  Interface(mesh,name),
-  external(mesh,"external") {
+  Interface(mesh,components,name),
+  external(mesh,components,"external") {
 
-  this->hs = HalfSpace::newHalfSpace(material, mesh, side_factor, this->name+"_hs", method);
+  this->hs = HalfSpace::newHalfSpace(material, mesh, side_factor, components, this->name+"_hs", method);
   
   this->half_spaces.resize(1);
   this->half_spaces[0] = this->hs;
@@ -100,9 +101,9 @@ void InfiniteBoundary::computeExternal() {
   int sf = this->hs->getSideFactor();
   
   for (int d = 0; d < this->mesh.getDim(); ++d) {
-    double *int_p =  this->hs->getInternal().storage(d);
-    double *ext_p =  this->external.storage(d);
-    double *velo_p = this->hs->getVelo().storage(d);
+    double *int_p =  this->hs->getInternal().data(d);
+    double *ext_p =  this->external.data(d);
+    double *velo_p = this->hs->getVelo().data(d);
     double eta_d = eta[d];
 
     for (int n = 0; n < this->external.getNbNodes(); ++n) {
