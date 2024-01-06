@@ -76,7 +76,7 @@ int main() {
   
   // dumping
   interface.initDump("basic_example","."); // args: name, path
-  interface.registerDumpField("cohesion_0");
+  interface.registerDumpField("cohesion");
   interface.dump(0,0); // args: time-step, time
   unsigned int dump_int = std::max(1, nb_time_steps/300);
 
