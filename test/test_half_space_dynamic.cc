@@ -295,14 +295,14 @@ int main(){
     else
       std::cout << "check computeResidual (prank>0)" << std::endl;
 
-    u = hs2.getDisp();
+    NodalField & hs2_u = hs2.getDisp();
     hs2.computeResidual(u);
 
     NodalField & res = hs2.getResidual();
 
     for (int i=0;i<res.getNbNodes();++i){
-      if (std::abs(res(i,1)-(s(i,1)+u(i,1)))>1e-10) {
-	std::cout<<res(i,1)<<" != "<<(s(i,1)+u(i,1))<<std::endl;
+      if (std::abs(res(i,1)-(s(i,1)+hs2_u(i,1)))>1e-10) {
+	std::cout<<res(i,1)<<" != "<<(s(i,1)+hs2_u(i,1))<<std::endl;
 	std::cout << "prank=" << prank << std::endl;
 	std::cout << "failed" << std::endl;
 	return 1; // failure

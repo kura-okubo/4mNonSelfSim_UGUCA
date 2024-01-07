@@ -78,30 +78,15 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 void LinearCoulombFrictionLaw::computeCohesiveForces(NodalField & cohesion,
 						     bool predicting) {
 
-
-
-  double coh0 = cohesion(0,0);
-  double coh1 = cohesion(0,1);
-
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);
-
-  coh0 = cohesion(0,0);
-  coh1 = cohesion(0,1);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
-  coh0 = cohesion(0,0);
-  coh1 = cohesion(0,1);
-
   // get norm of shear cohesion
   NodalField shear_trac_norm(this->mesh);
   cohesion.computeNorm(shear_trac_norm, 1);
-
-  coh0 = cohesion(0,0);
-  coh1 = cohesion(0,1);
-
   
   // find current gap
   NodalField gap(this->mesh, cohesion.getComponents());
@@ -177,7 +162,6 @@ void LinearCoulombFrictionLaw::computeRegContactPressure(NodalField & cohesion,
     // regularized
     if (this->char_time(n) > 0) {
       // interface opened -> no history to preserve
-      double toto = cohesion(n,1);
       if (std::abs(cohesion(n,1)) < 1e-12)
 	reg_cont_pres(n) = 0.;
       else
