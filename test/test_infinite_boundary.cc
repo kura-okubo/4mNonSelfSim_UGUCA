@@ -140,6 +140,7 @@ int main() {
   double** coord_tmp = mesh.getLocalCoords();
 
   InfiniteBoundary infinite_boundary(mesh,
+				     {_x,_y,_z},
 				     side_factor,
 				     mat);
 
@@ -149,16 +150,17 @@ int main() {
   infinite_boundary.initConvolutions();
   
 
+  NodalField & inf_bc_ext = infinite_boundary.getExternal();
+  FFTableNodalField & inf_bc_dsp = infinite_boundary.getDisp();
+  NodalField & inf_bc_vel = infinite_boundary.getVelo();
+
+  inf_bc_ext.zeros();
+  inf_bc_dsp.zeros();
+  
   // populate fields
   for (int i=0; i<dim; ++i) {
-    NodalFieldComponent & inf_bc_ext = infinite_boundary.getExternal().component(i);
-    FFTableNodalFieldComponent & inf_bc_dsp = infinite_boundary.getDisp().component(i);
-    NodalFieldComponent & inf_bc_vel = infinite_boundary.getVelo().component(i);
-      
-    inf_bc_ext.zeros();
-    inf_bc_dsp.zeros();
     for (int n=0; n<inf_bc_vel.getNbNodes(); ++n){
-      inf_bc_vel.set(n)=coord_tmp[0][n]*coord_tmp[2][n]+coord_tmp[0][n]+coord_tmp[2][n];
+      inf_bc_vel(n,i)=coord_tmp[0][n]*coord_tmp[2][n]+coord_tmp[0][n]+coord_tmp[2][n];
     }
   }
 
@@ -171,11 +173,9 @@ int main() {
   double Cp = mat.getCp();
   std::vector<double> eta = {1.0, Cp / Cs, 1.0};
   for (int i=0; i<dim; ++i) {
-    NodalFieldComponent & inf_bc_ext = infinite_boundary.getExternal().component(i);
-    NodalFieldComponent & inf_bc_vel = infinite_boundary.getVelo().component(i);
     for (int n=0; n<inf_bc_ext.getNbNodes(); ++n){
-      if(std::abs(inf_bc_ext.at(n)-
-		  (- side_factor * mu/Cs*eta[i]*inf_bc_vel.at(n)))>1e-12){
+      if(std::abs(inf_bc_ext(n,i)-
+		  (- side_factor * mu/Cs*eta[i]*inf_bc_vel(n,i)))>1e-12){
 	std::cout<<"error "<<std::endl;
 	return 1;
       }
@@ -187,28 +187,28 @@ int main() {
   std::cout<<"test advance time step Dirichlet "<<prank<<std::endl;
   infinite_boundary.advanceTimeStepDirichlet();
   {
-    NodalFieldComponent & u0 = infinite_boundary.getDisp().component(0);
+    NodalField & disp = infinite_boundary.getDisp();
     
     if (false) {
       std::cout<<"solution"<<std::endl
 	       << std::setprecision(12)
-	       << u0(4) << ", "
-	       << u0(9) << std::endl;
+	       << disp(4,0) << ", "
+	       << disp(9,0) << std::endl;
     }
     else {
       if (psize==1) {
-	if (std::abs(u0(4)- 0.003)>1e-6 ||
-	    std::abs(u0(9)- 0.002)>1e-6) {
+	if (std::abs(disp(4,0)- 0.003)>1e-6 ||
+	    std::abs(disp(9,0)- 0.002)>1e-6) {
 	  std::cout << "failed" << std::endl
-		    << u0(4) << ", "
-		    << u0(9) << std::endl;
+		    << disp(4,0) << ", "
+		    << disp(9,0) << std::endl;
 	  return 1; // failure
 	}
       }
       else {
-	if ((prank==0 && std::abs(u0(4)- 0.003)>1e-6) ||
-	    (prank==1 && std::abs(u0(4)- 0.002)>1e-6)) {
-	  std::cout << "prank=" << prank << ": " << u0(4) << std::endl << std::flush;
+	if ((prank==0 && std::abs(disp(4,0)- 0.003)>1e-6) ||
+	    (prank==1 && std::abs(disp(4,0)- 0.002)>1e-6)) {
+	  std::cout << "prank=" << prank << ": " << disp(4,0) << std::endl << std::flush;
 	  std::cout << "failed" << std::endl;
 	  return 1; // failure
 	}
@@ -220,28 +220,28 @@ int main() {
   std::cout<<"test predict time step Dirichlet "<<prank<<std::endl;  
   infinite_boundary.predictTimeStepDirichlet();
   {
-    NodalFieldComponent & u0 = infinite_boundary.getDisp(1).component(0);
+    NodalField & disp = infinite_boundary.getDisp(1);
 
     if (false) {
       std::cout<<"solution"<<std::endl
 	       << std::setprecision(12)
-	       << u0.at(4) << ", "
-	       << u0.at(9) << std::endl;
+	       << disp(4,0) << ", "
+	       << disp(9,0) << std::endl;
     }
     else {
       if (psize==1) {
-	if (std::abs(u0.at(4)- (-2.00839640955e-05))>1e-12 ||
-	    std::abs(u0.at(9)- (-2.86716308883e-07))>1e-12) {
+	if (std::abs(disp(4,0)- (-2.00839640955e-05))>1e-12 ||
+	    std::abs(disp(9,0)- (-2.86716308883e-07))>1e-12) {
 	  std::cout << "failed" << std::endl
-		    << u0.at(4) << ", "
-		    << u0.at(9) << std::endl;
+		    << disp(4,0) << ", "
+		    << disp(9,0) << std::endl;
 	  return 1; // failure
 	}
       }
       else {
-	if ((prank==0 && std::abs(u0.at(4)- (-2.00839640955e-05))>1e-12) ||
-	    (prank==1 && std::abs(u0.at(4)- (-2.86716308883e-07))>1e-12)) {
-	  std::cout << "prank=" << prank << ": " << u0(4) << std::endl << std::flush;
+	if ((prank==0 && std::abs(disp(4,0)- (-2.00839640955e-05))>1e-12) ||
+	    (prank==1 && std::abs(disp(4,0)- (-2.86716308883e-07))>1e-12)) {
+	  std::cout << "prank=" << prank << ": " << disp(4,0) << std::endl << std::flush;
 	  std::cout << "failed" << std::endl;
 	  return 1; // failure
 	}

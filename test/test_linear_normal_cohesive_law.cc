@@ -73,7 +73,7 @@ int main(){
   std::cout << "check computeCohesiveForces" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh);
+  NodalField cohesion(mesh, {_x,_y});
 
   // access to various properties needed to apply values
   NodalField & load = interface.getLoad();

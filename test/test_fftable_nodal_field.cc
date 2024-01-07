@@ -50,22 +50,20 @@ int main() {
   FFTableMesh mesh(length_x,nb_points_x,
 		  length_z,nb_points_z);
   
-  FFTableNodalField Ftf(mesh);
-  NodalField Field(mesh);
+  FFTableNodalField ftf(mesh, {_x,_y,_z});
+  NodalField solution(mesh, {_x,_y,_z});
 
   double ** coords = mesh.getLocalCoords();
 
   // initiate field and ftf
-  for (int d=0; d<mesh.getDim(); ++d) {
-    FFTableNodalFieldComponent & ftf = Ftf.component(d);
-    NodalFieldComponent & field = Field.component(d);
+  for (const auto& d : solution.getComponents()) {
     for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
       for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
 	int ij = i*mesh.getNbGlobalNodesZ()+j;
 	double x = coords[0][ij];
 	double z = coords[2][ij];
-	field.set(ij) = 1.0+cos(x*4*M_PI)*sin(z*8*M_PI)+cos(x*2*M_PI);
-	ftf.set(ij) = field.at(ij);
+	solution(ij,d) = 1.0+cos(x*4*M_PI)*sin(z*8*M_PI)+cos(x*2*M_PI);
+	ftf(ij,d) = solution(ij,d);
       }
     }
   }
@@ -73,21 +71,19 @@ int main() {
   std::cout << "fftable field initialized" << std::endl
 	    << "check forward and backward fft" << std::endl;
 
-  Ftf.forwardFFT();
-  Ftf.setAllValuesTo(0.0);
-  Ftf.backwardFFT();
+  ftf.forwardFFT();
+  ftf.setAllValuesTo(0.0);
+  ftf.backwardFFT();
 
   // check
-  for (int d=0; d<mesh.getDim(); ++d) {
-    FFTableNodalFieldComponent & ftf = Ftf.component(d);
-    NodalFieldComponent & field = Field.component(d);
+  for (const auto& d : solution.getComponents()) {
     for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
       for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
 	int ij = i*mesh.getNbGlobalNodesZ()+j;
-	if (fabs(field.at(ij) - ftf.at(ij))>1e-12) {
+	if (fabs(solution(ij,d) - ftf(ij,d))>1e-12) {
 	  std::cout <<"("<<i<<","<<j<<") "
-		    << field.at(ij) << " != " << ftf.at(ij) << " -> "
-		    << fabs(field.at(ij) - ftf.at(ij)) << "\n";
+		    << solution(ij,d) << " != " << ftf(ij,d) << " -> "
+		    << fabs(solution(ij,d) - ftf(ij,d)) << "\n";
 	  std::cout <<"2D FFT failed"<< std::endl;
 	  return 1;
 	}

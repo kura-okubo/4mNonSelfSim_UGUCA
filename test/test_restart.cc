@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
   // test dump and read of NodalFieldComponent
   std::cout << "start: dump and reload NodalFieldComponent" << std::endl;
   int rs_number = 1;
-  NodalField nf1(mesh,"nf1");
+  NodalField nf1(mesh);
+  nf1.setName("nf1");
   restart_dump.registerIO(nf1);
   restart_load.registerIO(nf1);
   
@@ -124,7 +125,8 @@ int main(int argc, char *argv[]) {
 
   // test dump and read of NodalField
   std::cout << "start: dump and reload NodalField" << std::endl;
-  NodalField nf3(mesh, "nf3");
+  NodalField nf3(mesh);
+  nf3.setName("nf3");
   restart_dump.registerIO(nf3);
   restart_load.registerIO(nf3);
   
@@ -136,7 +138,7 @@ int main(int argc, char *argv[]) {
   restart_load.load(rs_number);
 
   // check
-  for (int d=0; d<nf3.getNbComponents(); ++d) {
+  for (const auto& d : nf3.getComponents()) {
     for (int i=0; i<nf3.getNbNodes(); ++i) {
       if (std::abs((nf3(i,d) - nf3v) / nf3v) > 1e-6) {
 	std::cerr << "should be " << nf3v << ": " << nf3(i,d) << std::endl;
@@ -196,7 +198,7 @@ int main(int argc, char *argv[]) {
   }
       
   NodalField & to_check = interface.getCohesion();
-  for (int d=0; d<to_check.getNbComponents(); ++d) {
+  for (const auto& d : to_check.getComponents()) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
       if (std::abs((to_check(i,d) - nf4v) / nf4v) > 1e-6) {
 	std::cerr << "should be " << nf4v << ": " << to_check(i,d) << std::endl;
@@ -249,7 +251,7 @@ int main(int argc, char *argv[]) {
     return 1; // failure
   }
 
-  for (int d=0; d<to_check.getNbComponents(); ++d) {
+  for (const auto& d : to_check.getComponents()) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
       if (std::abs((to_check(i,d) - nf4v) / nf4v) > 1e-6) {
 	std::cerr << "should be " << nf4v << ": " << to_check(i,d) << std::endl;
@@ -284,7 +286,8 @@ int main(int argc, char *argv[]) {
   Restart wrong_restart_load("rs1",folder);
   Restart wrong_restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
   
-  NodalField wrong_nf1(wrong_mesh,"nf1");
+  NodalField wrong_nf1(wrong_mesh);
+  wrong_nf1.setName("nf1");
   wrong_restart_load.registerIO(wrong_nf1);
   wrong_restart_load_binary.registerIO(wrong_nf1);
   

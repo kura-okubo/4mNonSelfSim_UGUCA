@@ -42,13 +42,18 @@ BarrasLaw::BarrasLaw(BaseMesh & mesh,
 		     double delta_c_default,
 		     const std::string & name) :
   InterfaceLaw(mesh,name),
-  tau_max(mesh,name+"_tau_max"),
-  delta_c(mesh,name+"_delta_c"),
-  gap_norm(mesh,name+"_gap_norm")
+  tau_max(mesh),
+  delta_c(mesh),
+  gap_norm(mesh)
 {
   this->tau_max.setAllValuesTo(tau_max_default);
+  this->tau_max.setName(name+"_tau_max");
+  
   this->delta_c.setAllValuesTo(delta_c_default);
+  this->delta_c.setName(name+"_delta_c");
+  
   this->gap_norm.zeros();
+  this->gap_norm.setName(name+"_gap_norm");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -56,7 +61,7 @@ void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
                                       bool predicting) {
 
   // find current gap
-  NodalField gap(this->mesh);
+  NodalField gap(this->mesh, cohesion.getComponents());
   this->interface->computeGap(gap, predicting);
   gap.computeNorm(this->gap_norm);
 
@@ -88,7 +93,7 @@ void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in shear direction
-  for (int d=0; d<cohesion.getNbComponents(); ++d) {
+  for (const auto& d : cohesion.getComponents()) {
     if (d==1) // ignore normal direction
       continue;
     cohesion.multiplyByScalarField(alpha,d);

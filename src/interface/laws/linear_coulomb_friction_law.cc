@@ -44,12 +44,12 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 						   double char_reg_time,
 						   const std::string & name) :
   InterfaceLaw(mesh,name),
-  reg_contact_pressure(mesh,name+"_reg_cont_pres"),
-  mu_s(mesh,name+"_mu_s"),
-  mu_k(mesh,name+"_mu_k"),
-  d_c(mesh,name+"_d_c"),
-  char_time(mesh,name+"_char_time"),
-  reg_cont_pres_tmp(mesh,name+"_reg_cont_pres_tmp")
+  reg_contact_pressure(mesh),
+  mu_s(mesh),
+  mu_k(mesh),
+  d_c(mesh),
+  char_time(mesh),
+  reg_cont_pres_tmp(mesh)
 {
   if (d_c_default < 1e-12) {
     std::cerr << "d_c cannot be zero, and it is currently: " << d_c_default << std::endl;
@@ -57,29 +57,54 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
   }
 
   this->initialized = false;
-  this->reg_contact_pressure.setAllValuesTo(0. );
+
+  this->reg_contact_pressure.setAllValuesTo(0.);
+  this->reg_contact_pressure.setName(name+"_reg_cont_pres");
+  
   this->mu_s.setAllValuesTo(mu_s_default);
+  this->mu_s.setName(name+"_mus_s");
+  
   this->mu_k.setAllValuesTo(mu_k_default);
+  this->mu_k.setName(name+"_mu_k");
+  
   this->d_c.setAllValuesTo(d_c_default);
+  this->d_c.setName(name+"_d_c");
+  
   this->char_time.setAllValuesTo(char_reg_time);
+  this->char_time.setName(name+"_chart_time");
 }
 
 /* -------------------------------------------------------------------------- */
 void LinearCoulombFrictionLaw::computeCohesiveForces(NodalField & cohesion,
 						     bool predicting) {
 
+
+
+  double coh0 = cohesion(0,0);
+  double coh1 = cohesion(0,1);
+
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);
 
+  coh0 = cohesion(0,0);
+  coh1 = cohesion(0,1);
+
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
+
+  coh0 = cohesion(0,0);
+  coh1 = cohesion(0,1);
 
   // get norm of shear cohesion
   NodalField shear_trac_norm(this->mesh);
   cohesion.computeNorm(shear_trac_norm, 1);
 
+  coh0 = cohesion(0,0);
+  coh1 = cohesion(0,1);
+
+  
   // find current gap
-  NodalField gap(this->mesh);
+  NodalField gap(this->mesh, cohesion.getComponents());
   this->interface->computeGap(gap, predicting);
 
   // compute norm of shear gap
@@ -93,7 +118,7 @@ void LinearCoulombFrictionLaw::computeCohesiveForces(NodalField & cohesion,
     }
     this->initialized = true;
   }
-
+  
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
   for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
@@ -134,7 +159,7 @@ void LinearCoulombFrictionLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in shear direction
-  for (int d=0; d<cohesion.getNbComponents(); ++d) {
+  for (const auto& d : cohesion.getComponents()) {
     if (d==1) // ignore normal direction
       continue;
     cohesion.multiplyByScalarField(alpha,d);
@@ -152,6 +177,7 @@ void LinearCoulombFrictionLaw::computeRegContactPressure(NodalField & cohesion,
     // regularized
     if (this->char_time(n) > 0) {
       // interface opened -> no history to preserve
+      double toto = cohesion(n,1);
       if (std::abs(cohesion(n,1)) < 1e-12)
 	reg_cont_pres(n) = 0.;
       else

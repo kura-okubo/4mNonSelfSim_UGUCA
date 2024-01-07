@@ -63,31 +63,40 @@ RateAndStateLaw::RateAndStateLaw(
        double plate_velocity,
        const std::string & name):
   InterfaceLaw(mesh,name),
-  theta(mesh,name+"_theta"),
-  theta_pc(name+"_pctheta"),  // not allocated
-  V(mesh,name+"_V"),
-  iterations(mesh,name+"_iter"),
-  rel_error(mesh,name+"_rel_error"),
+  theta(mesh),
+  theta_pc(),  // not allocated
+  V(mesh),
+  iterations(mesh),
+  rel_error(mesh),
   V0(V0),
   f0(f0),
-  a(mesh,name+"_a"),
-  b(mesh,name+"_b"),
-  Dc(mesh,name+"_Dc"),
+  a(mesh),
+  b(mesh),
+  Dc(mesh),
   predictor_corrector(predictor_corrector),
   evolution_law(evolution_law),
   Vplate(plate_velocity),
-  Vw(name+"_vw") // not allocated
+  Vw() // not allocated
 {
   this->theta.setAllValuesTo(theta_default);
+  this->theta.setName(name+"_theta");
+  
   this->a.setAllValuesTo(a_default);
+  this->a.setName(name+"_a");
+  
   this->b.setAllValuesTo(b_default);
+  this->b.setName(name+"_b");
+  
   this->Dc.setAllValuesTo(Dc_default);
+  this->Dc.setName(name+"_Dc");
 
   if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening) {
     this->Vw.init(mesh, V.getComponents());
+    this->Vw.setName(name+"_vw");
   }
   if (predictor_corrector) {
     this->theta_pc.init(mesh, theta.getComponents());
+    this->theta_pc.setName(name+"_pctheta");
   }
 }
 
@@ -148,7 +157,7 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
   const NodalField & intbot = bot.getInternal();
   const NodalField & ext = this->interface->getLoad();
 
-  NodalField gap_velo(this->mesh);
+  NodalField gap_velo(this->mesh, cohesion.getComponents());
   // compute delta_dot: do not use v* here -- predicting = false
   this->interface->computeGapVelocity(gap_velo, false);
   // pass true to compute slip rate only in shear directions vectorially

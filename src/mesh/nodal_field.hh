@@ -56,8 +56,12 @@ public:
   NodalField(BaseMesh & mesh,
 	     SpatialDirectionSet components = {_x},
 	     const std::string & name = "unnamed");
-  NodalField(BaseMesh & mesh,
-	     const std::string & name) : NodalField(mesh,SpatialDirectionSet{0},name) {}
+
+  //NodalField(BaseMesh & mesh) : NodalField(mesh,SpatialDirectionSet{0},"unnamed") {}
+  //NodalField(BaseMesh & mesh,
+  //const std::string & name) : NodalField(mesh,SpatialDirectionSet{0},name) {}
+  //NodalField(BaseMesh & mesh,
+  //SpatialDirectionSet components) : NodalField(mesh,components,"unnamed") {}
   
   virtual ~NodalField() {}
   //this->free(); }
@@ -98,6 +102,9 @@ public:
 public:
   // get name of nodal field
   std::string getName() const { return this->name; }
+
+  // set name of nodal field
+  void setName(const std::string & name) { this->name = name; }
   
   // get dimension
   //int getDim() const { return this->mesh->getDim(); }

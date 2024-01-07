@@ -309,7 +309,7 @@ int main(){
 
   // Check Interface::combineLoadAndCohesion
   // --------------------------------------------------------------
-  NodalField field(mesh);
+  NodalField field(mesh, {_x,_y,_z});
   field.setAllValuesTo(1,0);
   field.setAllValuesTo(2,1);
   field.setAllValuesTo(3,2);

@@ -43,13 +43,18 @@ LinearShearCohesiveLaw::LinearShearCohesiveLaw(BaseMesh & mesh,
 					       double tau_r_default,
 					       const std::string & name) :
   InterfaceLaw(mesh,name),
-  G_c(mesh,name+"_G_c"),
-  tau_c(mesh,name+"_tau_c"),
-  tau_r(mesh,name+"_tau_r")
+  G_c(mesh),
+  tau_c(mesh),
+  tau_r(mesh)
 {
   this->G_c.setAllValuesTo(Gc_default);
+  this->G_c.setName(name+"_G_c");
+  
   this->tau_c.setAllValuesTo(tau_c_default);
+  this->tau_c.setName(name+"_tau_c");
+  
   this->tau_r.setAllValuesTo(tau_r_default);
+  this->tau_r.setName(name+"_tau_r");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -63,19 +68,19 @@ void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of shear cohesion
-  NodalField shear_trac_norm(this->mesh, "shear_trac_norm");
+  NodalField shear_trac_norm(this->mesh);
   cohesion.computeNorm(shear_trac_norm, 1);
 
   // find current gap
-  NodalField gap(this->mesh, "gap");
+  NodalField gap(this->mesh, cohesion.getComponents());
   this->interface->computeGap(gap, predicting);
 
   // compute norm of shear gap
-  NodalField shear_gap_norm(this->mesh, "shear_gap_norm");
+  NodalField shear_gap_norm(this->mesh);
   gap.computeNorm(shear_gap_norm, 1);
 
   // to be filled
-  NodalField alpha(this->mesh, "alpha");
+  NodalField alpha(this->mesh);
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
@@ -95,7 +100,7 @@ void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
   }
 
   // only in shear direction
-  for (int d=0; d<cohesion.getNbComponents(); ++d) {
+  for (const auto& d : cohesion.getComponents()) {
     if (d==1) // ignore normal direction
       continue;
     cohesion.multiplyByScalarField(alpha,d);

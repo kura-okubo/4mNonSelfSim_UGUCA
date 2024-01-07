@@ -40,11 +40,14 @@ LinearNormalCohesiveLaw::LinearNormalCohesiveLaw(BaseMesh & mesh,
 						 double sigma_c_default,
 						 const std::string & name) :
   InterfaceLaw(mesh,name),
-  G_c(mesh,name+"_G_c"),
-  sigma_c(mesh,name+"_sigma_c")
+  G_c(mesh),
+  sigma_c(mesh)
 {
   this->G_c.setAllValuesTo(Gc_default);
+  this->G_c.setName(name+"_G_c");
+  
   this->sigma_c.setAllValuesTo(sigma_c_default);
+  this->sigma_c.setName(name+"_sigma_c");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -58,19 +61,19 @@ void LinearNormalCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of normal cohesion
-  NodalField normal_trac_norm(this->mesh, "normal_trac_norm");
+  NodalField normal_trac_norm(this->mesh);
   cohesion.computeNorm(normal_trac_norm, 0);
 
   // find current gap
-  NodalField gap(this->mesh, "gap");
+  NodalField gap(this->mesh, cohesion.getComponents());
   this->interface->computeGap(gap, predicting);
 
   // compute norm of normal gap
-  NodalField normal_gap_norm(this->mesh, "normal_gap_norm");
+  NodalField normal_gap_norm(this->mesh);
   gap.computeNorm(normal_gap_norm, 0);
 
   // to be filled
-  NodalField alpha(this->mesh, "alpha");
+  NodalField alpha(this->mesh);
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure

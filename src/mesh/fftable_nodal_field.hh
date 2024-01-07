@@ -103,12 +103,12 @@ public:
   */
 
   // get one value of frequency domain in direction d
-  inline fftw_complex & fd_p(int f, int d);                       // < ----------- call it fd_p for now to find all the ones to switch d and f
+  inline fftw_complex & fd_p(int f, int d=0);                       // < ----------- call it fd_p for now to find all the ones to switch d and f
   //    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd(f);
   
   // get access directly to frequency domain
   // WARNING: convert it to double (assuming that fftw_complex is double[2])
-  inline fftw_complex * fd_data(int d);
+  inline fftw_complex * fd_data(int d=0);
     //    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd_storage();
   
   /* ------------------------------------------------------------------------ */

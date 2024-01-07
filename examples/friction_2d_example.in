@@ -32,5 +32,5 @@ tsf = 0.4 # time step factor
 dyn_velo_threshold = 1
 
 # dumping
-dump_fields = cohesion_0,top_disp_0,top_velo_0,mu_s
+dump_fields = cohesion,top_disp,top_velo,mu_s
 nb_dumps = 200

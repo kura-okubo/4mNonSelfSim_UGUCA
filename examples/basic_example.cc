@@ -53,17 +53,17 @@ int main() {
   LinearShearCohesiveLaw law(mesh, 10., 1e6);
 
   // weak interface - args: mesh, material, interface law
-  UnimatShearInterface interface(mesh, top_mat, law);
+  UnimatShearInterface interface(mesh, {_x,_y}, top_mat, law);
 
   // external loading
-  interface.getLoad().component(1).setAllValuesTo(-5e6);
+  interface.getLoad().setAllValuesTo(-5e6,1);
 
   // heterogeneity for nucleation
   double * X = mesh.getLocalCoords()[0];
-  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
+  NodalField & load = interface.getLoad();
   double Xnuc = length/2.;
   for (int i=0;i<mesh.getNbLocalNodes(); ++i)
-    ext_shear(i) = 1.1e6 - 0.7e6*std::tanh(80*std::abs(X[i] - Xnuc) - 2.);
+    load(i,0) = 1.1e6 - 0.7e6*std::tanh(80*std::abs(X[i] - Xnuc) - 2.);
 
   // time step
   double duration = 5e-4;

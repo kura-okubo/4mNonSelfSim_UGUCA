@@ -91,7 +91,7 @@ int main(){
   std::cout << "check computeCohesiveForces (steady state)" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh);
+  NodalField cohesion(mesh, {_x,_y});
   
   law.computeCohesiveForces(cohesion);
   if ((std::abs(cohesion(0,0) - tau) / tau > tol) || (cohesion(0,0) * tau < 0)) {

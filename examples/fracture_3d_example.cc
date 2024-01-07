@@ -84,10 +84,10 @@ int main(int argc, char *argv[]) {
   top_mat.readPrecomputedKernels();
 
   // interface
-  DefRigInterface interface(mesh, top_mat, law);
+  DefRigInterface interface(mesh, {_x,_y,_z}, top_mat, law);
 
   // external loading
-  interface.getLoad().component(1).setAllValuesTo(data.get<double>("normal_load"));
+  interface.getLoad().setAllValuesTo(data.get<double>("normal_load"),1);
 
   // time step
   double duration = data.get<double>("duration");
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
   // heterogeneity for nucleation: decreased strength
   double * X = mesh.getLocalCoords()[0];
   double * Z = mesh.getLocalCoords()[2];
-  NodalFieldComponent & tau_max = law.getTauMax();
+  NodalField & tau_max = law.getTauMax();
   double a0 = data.get<double>("a0");
   for (int i=0;i<mesh.getNbLocalNodes(); ++i)
     if ((std::abs(X[i] - x_length/2.) < a0/2.) &&
