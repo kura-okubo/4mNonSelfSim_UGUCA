@@ -193,7 +193,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     U.resize(this->mesh.getDim());
 
     for (int d = 0; d < this->mesh.getDim(); ++d) {
-      U[d] = {_disp.fd_p(j,d)[0], _disp.fd_p(j,d)[1]};
+      U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     }
 
     double H00_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H00,j);

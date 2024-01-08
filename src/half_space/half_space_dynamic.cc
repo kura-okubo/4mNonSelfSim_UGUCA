@@ -141,7 +141,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     
     for (int d = 0; d < this->mesh.getDim(); ++d) {
       
-      std::complex<double> Udj = {_disp.fd_p(j,d)[0], _disp.fd_p(j,d)[1]};
+      std::complex<double> Udj = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
       
       if (correcting) {
         this->U_history.get(d,j)->changeCurrentValue(Udj);
@@ -176,7 +176,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     std::vector<std::complex<double>> U;
     U.resize(this->mesh.getDim());
     for (int d=0; d<this->mesh.getDim(); ++d)
-      U[d] = {_disp.fd_p(j,d)[0], _disp.fd_p(j,d)[1]};
+      U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     
     // to be computed
     std::vector<std::complex<double>> F;
@@ -246,8 +246,8 @@ void HalfSpaceDynamic::setSteadyState(bool predicting) {
 
     for (int d = 0; d < this->mesh.getDim(); ++d) {
 
-      this->U_history.get(d,j)->setSteadyState({_disp.fd_p(j,d)[0],
-	                                        _disp.fd_p(j,d)[1]});
+      this->U_history.get(d,j)->setSteadyState({_disp.fd(j,d)[0],
+	                                        _disp.fd(j,d)[1]});
     }
   }
 }

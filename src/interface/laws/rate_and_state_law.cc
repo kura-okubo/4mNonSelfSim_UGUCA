@@ -91,11 +91,11 @@ RateAndStateLaw::RateAndStateLaw(
   this->Dc.setName(name+"_Dc");
 
   if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening) {
-    this->Vw.init(mesh, V.getComponents());
+    this->Vw.resize(mesh, V.getComponents());
     this->Vw.setName(name+"_vw");
   }
   if (predictor_corrector) {
-    this->theta_pc.init(mesh, theta.getComponents());
+    this->theta_pc.resize(mesh, theta.getComponents());
     this->theta_pc.setName(name+"_pctheta");
   }
 }

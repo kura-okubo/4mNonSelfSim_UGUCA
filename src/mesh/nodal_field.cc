@@ -57,11 +57,11 @@ NodalField::NodalField(BaseMesh & mesh,
   name(name),
   initialized(false) {
   // initialize
-  this->init(mesh, components);
+  this->resize(mesh, components);
 }
 
 /* -------------------------------------------------------------------------- */
-void NodalField::init(BaseMesh & mesh, SpatialDirectionSet components) {
+void NodalField::resize(BaseMesh & mesh, SpatialDirectionSet components) {
   // do not initialize twice
   if (this->initialized)
     throw std::runtime_error("NodalField: do not initialize twice\n");

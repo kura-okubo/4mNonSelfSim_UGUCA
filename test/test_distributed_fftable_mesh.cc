@@ -145,8 +145,8 @@ int main(){
   FFTableNodalField fnfc(mesh2d);
   if (prank==0) {
     for (int i=0; i<mesh2d.getNbGlobalFFT(); ++i) {
-      fnfc.fd_p(i)[0] = i;
-      fnfc.fd_p(i)[1] = 100+i;
+      fnfc.fd(i)[0] = i;
+      fnfc.fd(i)[1] = 100+i;
     }
   }
   fftw_complex * p_fnfc = fnfc.fd_data();
@@ -186,7 +186,7 @@ int main(){
   
   if (prank==0) {
     for (int i=0; i<mesh2d.getNbGlobalFFT(); ++i) {
-      if ((fnfc.fd_p(i)[0] != i) || (fnfc.fd_p(i)[1] != 100+i)) {
+      if ((fnfc.fd(i)[0] != i) || (fnfc.fd(i)[1] != 100+i)) {
 	std::cerr << "sort scatter gather sort failed" << std::endl;
 	return 1; // failure
       }

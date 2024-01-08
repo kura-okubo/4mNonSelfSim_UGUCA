@@ -77,8 +77,8 @@ HalfSpace * HalfSpace::newHalfSpace(Material & material,
 /* -------------------------------------------------------------------------- */
 void HalfSpace::initPredictorCorrector() {
   this->predictor_corrector = true;
-  this->disp_pc.init(this->mesh,this->disp.getComponents());
-  this->velo_pc.init(this->mesh,this->velo.getComponents());
+  this->disp_pc.resize(this->mesh,this->disp.getComponents());
+  this->velo_pc.resize(this->mesh,this->velo.getComponents());
 }
 
 /* -------------------------------------------------------------------------- */
@@ -207,14 +207,6 @@ void HalfSpace::computeVelocity(NodalField & _velo) {
 bool HalfSpace::registerDumpFieldToDumper(const std::string & field_name,
 					  const std::string & dump_name,
 					  Dumper * const dumper) {
-
-  /*
-  int d = std::atoi(&field_name[field_name.length() - 1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
-  */
   
   // disp
   if (field_name == "disp") {

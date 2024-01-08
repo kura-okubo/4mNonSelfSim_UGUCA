@@ -40,41 +40,15 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-/*FFTableNodalField::FFTableNodalField(FFTableMesh & mesh,
-				     SpatialDirectionSet components,
-				     const std::string & name) :
-  NodalField(mesh,components,name) {
-  this->init();
-}
-
-/* -------------------------------------------------------------------------- */
 FFTableNodalField::FFTableNodalField(FFTableMesh & mesh,
 				     SpatialDirectionSet components,
 				     const std::string & name) :
   NodalField(mesh,components,name) {
-  this->init();
+  this->resize();
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableNodalField::init() {
-  
-  /*
-  // do not initialize twice
-  if (this->initialized)
-    throw std::runtime_error("FFTableNodalField: do not initialize twice\n");
-
-  this->mesh = &mesh;
-
-  // if you want to use less components, simply use the NodalFieldComponent
-  this->field.resize(this->mesh->getDim());
-  for (int d=0; d<this->mesh->getDim(); ++d) {
-    this->field[d] = new FFTableNodalFieldComponent(mesh,d,
-						    this->name+"_"+std::to_string(d));
-  }
-
-  // done
-  this->initialized = true;
-  */
+void FFTableNodalField::resize() {
 
   // Loop over the components to define their start
   this->fd_start = {0};
@@ -108,10 +82,6 @@ void FFTableNodalField::init() {
 
 /* -------------------------------------------------------------------------- */
 void FFTableNodalField::forwardFFT() {
-  /*  for (int d=0; d<this->mesh->getDim(); ++d) {
-    ((FFTableNodalFieldComponent*)this->field[d])->forwardFFT();
-    }*/
-
   
   if ((typeid(*(this->mesh)) == typeid(SimpleMesh)) ||
       (typeid(*(this->mesh)) == typeid(DistributedFFTableMesh))) {
@@ -130,10 +100,6 @@ void FFTableNodalField::forwardFFT() {
 
 /* -------------------------------------------------------------------------- */
 void FFTableNodalField::backwardFFT() {
-  /*
-  for (int d=0; d<this->mesh->getDim(); ++d) {
-    ((FFTableNodalFieldComponent*)this->field[d])->backwardFFT();
-    }*/
   if ((typeid(*(this->mesh)) == typeid(SimpleMesh)) ||
       (typeid(*(this->mesh)) == typeid(DistributedFFTableMesh))) {
     ((DistributedFFTableMesh *)this->mesh)->backwardFFT(*this);

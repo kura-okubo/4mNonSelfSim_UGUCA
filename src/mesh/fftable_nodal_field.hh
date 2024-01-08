@@ -57,9 +57,7 @@ class FFTableNodalField : public NodalField {
   /* ------------------------------------------------------------------------ */
 public:
   FFTableNodalField(const std::string & name = "unnamed") : NodalField(name) {}
-  /*FFTableNodalField(FFTableMesh & mesh,
-		    SpatialDirectionSet components = {_x},
-		    const std::string & name = "unnamed");*/
+
   FFTableNodalField(FFTableMesh & mesh,
 		    SpatialDirectionSet components = {0},
 		    const std::string & name = "unnamed");
@@ -75,12 +73,12 @@ private:
   /* ------------------------------------------------------------------------ */
 public:
   // clears the NodalField and reinitializes it
-  virtual void init(BaseMesh & mesh, SpatialDirectionSet components) {
-    NodalField::init(mesh, components);
-    this->init();
+  virtual void resize(BaseMesh & mesh, SpatialDirectionSet components) {
+    NodalField::resize(mesh, components);
+    this->resize();
   }
 private:
-  virtual void init();
+  virtual void resize();
 
 public:
   void forwardFFT();
@@ -96,20 +94,12 @@ public:
   // get fftw plan id for component
   inline int getFFTWPlanId(int d) { return this->fftw_plan_ids[d]; }
 
-  /*
-  inline FFTableNodalFieldComponent & component(int i) {
-    return (FFTableNodalFieldComponent&)(*this->field[i]);
-  }
-  */
-
   // get one value of frequency domain in direction d
-  inline fftw_complex & fd_p(int f, int d=0);                       // < ----------- call it fd_p for now to find all the ones to switch d and f
-  //    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd(f);
+  inline fftw_complex & fd(int f, int d=0);
   
   // get access directly to frequency domain
   // WARNING: convert it to double (assuming that fftw_complex is double[2])
   inline fftw_complex * fd_data(int d=0);
-    //    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd_storage();
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -129,7 +119,7 @@ protected:
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline fftw_complex & FFTableNodalField::fd_p(int f, int d) {
+inline fftw_complex & FFTableNodalField::fd(int f, int d) {
   if (!this->components.count(d)) 
     throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
   return this->fd_storage[this->fd_start[d]+f];

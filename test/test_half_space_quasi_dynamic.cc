@@ -92,22 +92,22 @@ int main(){
     if (prank==0) { // real space computations are on 0 rank process
       if (false) {
 	std::cout<<"solution"<<std::endl
-		 << std::setprecision(12) << inter.fd_p(4,0)[0] << ", " << inter.fd_p(4,0)[1] << std::endl
-		 << inter.fd_p(2,1)[0] << ", " << inter.fd_p(2,1)[1] << std::endl;
+		 << std::setprecision(12) << inter.fd(4,0)[0] << ", " << inter.fd(4,0)[1] << std::endl
+		 << inter.fd(2,1)[0] << ", " << inter.fd(2,1)[1] << std::endl;
       }
       else {
-	if (std::abs(inter.fd_p(4,0)[0]- (-16538131902.7))>1e0 ||
-	    std::abs(inter.fd_p(4,0)[1]- (196679920694))>1e0) {
+	if (std::abs(inter.fd(4,0)[0]- (-16538131902.7))>1e0 ||
+	    std::abs(inter.fd(4,0)[1]- (196679920694))>1e0) {
 	  std::cout << "prank == " << prank << std::endl;
 	  std::cout << "failed 4" << std::endl
-		    << inter.fd_p(4,0)[0] << ", " << inter.fd_p(4,0)[1] << std::endl;
+		    << inter.fd(4,0)[0] << ", " << inter.fd(4,0)[1] << std::endl;
 	  return 1; // failure
 	}
-	if (std::abs(inter.fd_p(2,1)[0]- (-698803824158))>1e0 ||
-	    std::abs(inter.fd_p(2,1)[1]- (153102174931))>1e0) {
+	if (std::abs(inter.fd(2,1)[0]- (-698803824158))>1e0 ||
+	    std::abs(inter.fd(2,1)[1]- (153102174931))>1e0) {
 	  std::cout << "prank == " << prank << std::endl;
 	  std::cout << std::setprecision(12) << "failed 2" << std::endl
-		    << inter.fd_p(2,1)[0] << ", " << inter.fd_p(2,1)[1] << std::endl;
+		    << inter.fd(2,1)[0] << ", " << inter.fd(2,1)[1] << std::endl;
 	  return 1; // failure
 	}
       }

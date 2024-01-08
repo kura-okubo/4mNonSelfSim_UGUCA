@@ -75,7 +75,7 @@ private:
   /* ------------------------------------------------------------------------ */
 public:
   // clears the NodalField and reinitializes it
-  virtual void init(BaseMesh & mesh, SpatialDirectionSet components);
+  virtual void resize(BaseMesh & mesh, SpatialDirectionSet components);
   //virtual void free();
 
 public:
