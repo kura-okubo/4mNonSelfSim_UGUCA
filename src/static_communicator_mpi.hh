@@ -35,7 +35,6 @@
 #include "uca_common.hh"
 #include <cstddef>
 #include <cstdio>
-#include <array>
 
 #ifdef UCA_USE_MPI
 #define OMPI_SKIP_MPICXX 1 // avoid warnings related to 'cast between incompatible function types of ompi_mpi_cxx_op_intercept'

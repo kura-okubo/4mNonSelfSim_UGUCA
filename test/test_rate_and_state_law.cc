@@ -45,7 +45,6 @@ int main(){
 
   // information for checks
   SimpleMesh mesh(1., 2);
-  //SpatialDirectionSet in_plane = atialDirectionSet{_x,_y};
   double a = 0.008;
   double b = 0.012;
   double Dc = 0.02;

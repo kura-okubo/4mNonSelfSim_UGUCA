@@ -35,28 +35,11 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-/*NodalField::NodalField(BaseMesh & mesh,
-		       SpatialDirectionSet components,
-		       const std::string & name) :
-  name(name),
-  initialized(false) {
-
-  // convert components to set of int
-  std::set<int> int_components;
-  for (size_t i = 0; i < components.size(); ++i)
-    int_components.insert(static_cast<int>(i));
-
-  // initialize
-  this->init(mesh, int_components);
-}
-
-/* -------------------------------------------------------------------------- */
 NodalField::NodalField(BaseMesh & mesh,
 		       SpatialDirectionSet components,
 		       const std::string & name) :
   name(name),
   initialized(false) {
-  // initialize
   this->resize(mesh, components);
 }
 
@@ -94,19 +77,6 @@ void NodalField::resize(BaseMesh & mesh, SpatialDirectionSet components) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*
-void NodalField::free() {
-  if (this->initialized) {
-    for (int d=0; d<this->mesh->getDim(); ++d) {
-      delete this->field[d];
-    }
-  }
-  this->field.resize(0);
-  this->initialized = false;
-}
-*/
-
-/* -------------------------------------------------------------------------- */
 void NodalField::zeros() {
   this->setAllValuesTo(0.);
 }
@@ -142,24 +112,6 @@ void NodalField::computeNorm(NodalField & norm,
     }
     norm(n) = std::sqrt(norm(n));
   }
-
-  /*
-  double * norm_p = norm.data();
-
-  for (int d=0; d<this->getDim(); ++d) {
-    if (d == ignore_dir) continue;
-
-    const double * field_d_p = this->storage(d);
-
-    for (int n=0; n<this->getNbNodes(); ++n) {
-      norm_p[n] += field_d_p[n] * field_d_p[n];
-    }
-  }
-
-  for (int n=0; n<this->getNbNodes(); ++n) {
-    norm_p[n] = std::sqrt(norm_p[n]);
-  }
-  */
 }
 
 /* -------------------------------------------------------------------------- */
@@ -167,7 +119,8 @@ void NodalField::multiplyByScalarField(const NodalField & scalar, int d) {
 
   // check that this component exists
   if (!this->components.count(d)) 
-    throw std::runtime_error("NodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+    throw std::runtime_error("NodalField "+this->name
+			     +" has no component "+std::to_string(d)+"\n");
 
   // check that both have same length
   if (this->getNbNodes() != scalar.getNbNodes())
@@ -182,7 +135,6 @@ void NodalField::multiplyByScalarField(const NodalField & scalar, int d) {
 
 /* -------------------------------------------------------------------------- */
 void NodalField::multiplyByScalarField(const NodalField & scalar) {
-  //for (size_t i = 0; i < this->components.size(); ++i)
   for (const auto& d : this->components)
     this->multiplyByScalarField(scalar,d);
 }
@@ -196,6 +148,5 @@ void NodalField::copyDataFrom(const NodalField & other) {
   this->start = other.start;
   this->storage = other.storage;
 }
-
 
 __END_UGUCA__

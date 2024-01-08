@@ -31,15 +31,23 @@
 
 #include "uca_fftable_mesh.hh"
 #include "fftable_nodal_field.hh"
+#include "static_communicator_mpi.hh"
 
 #include <iostream>
 #include <cmath>
 
 using namespace uguca;
 
+/* This is serial
+ * however it can be executed in parallel and only the 0 rank would perform the operations
+ */
+
 int main() {
 
-  std::cout << "start test: fftable_nodal_field" << std::endl;
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  
+  if (prank==0)
+    std::cout << "start test: fftable_nodal_field" << std::endl;
 
   int nb_points_x = 64*2;
   int nb_points_z = 64;
@@ -48,9 +56,12 @@ int main() {
   double length_z = 1.0;
 
   FFTableMesh mesh(length_x,nb_points_x,
-		  length_z,nb_points_z);
+		   length_z,nb_points_z);
   
   FFTableNodalField ftf(mesh, {_x,_y,_z});
+  if (prank==0)
+    std::cout<<"fftable field contructed"<< std::endl;
+
   NodalField solution(mesh, {_x,_y,_z});
 
   double ** coords = mesh.getLocalCoords();
@@ -62,14 +73,16 @@ int main() {
 	int ij = i*mesh.getNbGlobalNodesZ()+j;
 	double x = coords[0][ij];
 	double z = coords[2][ij];
+	if (prank!=0) continue;
 	solution(ij,d) = 1.0+cos(x*4*M_PI)*sin(z*8*M_PI)+cos(x*2*M_PI);
 	ftf(ij,d) = solution(ij,d);
       }
     }
   }
 
-  std::cout << "fftable field initialized" << std::endl
-	    << "check forward and backward fft" << std::endl;
+  if (prank==0)
+    std::cout << "fftable field initialized" << std::endl
+	      << "check forward and backward fft" << std::endl;
 
   ftf.forwardFFT();
   ftf.setAllValuesTo(0.0);
@@ -80,6 +93,7 @@ int main() {
     for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
       for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
 	int ij = i*mesh.getNbGlobalNodesZ()+j;
+	if (prank!=0) continue;
 	if (fabs(solution(ij,d) - ftf(ij,d))>1e-12) {
 	  std::cout <<"("<<i<<","<<j<<") "
 		    << solution(ij,d) << " != " << ftf(ij,d) << " -> "
@@ -91,8 +105,10 @@ int main() {
     }
   }
 
+  if (prank==0)
   std::cout << "forward and backward FFT correct"<< std::endl
 	    << "all checks passed -> overall success" << std::endl;
 
+  StaticCommunicatorMPI::getInstance()->finalize();
   return 0; // success
 }

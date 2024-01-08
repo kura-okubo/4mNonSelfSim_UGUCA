@@ -30,7 +30,6 @@
  */
 #ifndef __UCA_COMMON_H__
 #define __UCA_COMMON_H__
-//#include <bitset>
 #include <set>
 #include "uca_config.hh"
 
@@ -47,7 +46,6 @@ namespace uguca {
   };
 
   enum SpatialDirection { _x = 0, _y = 1, _z = 2, _spatial_dir_count = 3 };
-  //using SpatialDirectionSet = std::bitset<_spatial_dir_count>;
   using SpatialDirectionSet = std::set<int>;
   
 } // namespace

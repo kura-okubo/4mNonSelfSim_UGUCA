@@ -29,7 +29,6 @@
 
 #include "uca_restart.hh"
 #include "uca_simple_mesh.hh"
-#include "nodal_field_component.hh"
 #include "material.hh"
 #include "linear_shear_cohesive_law.hh"
 #include "bimat_interface.hh"

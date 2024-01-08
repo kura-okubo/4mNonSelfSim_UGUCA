@@ -49,22 +49,12 @@ public:
   NodalField(const std::string & name = "unnamed") : name(name),
 						     initialized(false),
 						     mesh(NULL) {}
-  /*
-  NodalField(BaseMesh & mesh,
-	     SpatialDirectionSet components = {_x},
-	     const std::string & name = "unnamed");*/
+
   NodalField(BaseMesh & mesh,
 	     SpatialDirectionSet components = {_x},
 	     const std::string & name = "unnamed");
-
-  //NodalField(BaseMesh & mesh) : NodalField(mesh,SpatialDirectionSet{0},"unnamed") {}
-  //NodalField(BaseMesh & mesh,
-  //const std::string & name) : NodalField(mesh,SpatialDirectionSet{0},name) {}
-  //NodalField(BaseMesh & mesh,
-  //SpatialDirectionSet components) : NodalField(mesh,components,"unnamed") {}
   
   virtual ~NodalField() {}
-  //this->free(); }
 
 private:
   // private copy constructor: NodalField cannot be copied (for now to debug)
@@ -76,9 +66,8 @@ private:
 public:
   // clears the NodalField and reinitializes it
   virtual void resize(BaseMesh & mesh, SpatialDirectionSet components);
-  //virtual void free();
 
-public:
+  // set all entries to zero
   void zeros();
 
   // if d provided, only do it on that component
@@ -106,9 +95,6 @@ public:
   // set name of nodal field
   void setName(const std::string & name) { this->name = name; }
   
-  // get dimension
-  //int getDim() const { return this->mesh->getDim(); }
-  
   // get number of nodes
   int getNbNodes() const { return this->mesh->getNbLocalNodes(); }
 
@@ -122,13 +108,9 @@ public:
   inline double & operator()(int n, int d=0);
   inline const double & operator()(int n, int d=0) const;
   
-  //  inline NodalFieldComponent & component(int i) { return (*this->field[i]); }
-  
   // access to storage
   inline double * data(int i = 0);
   inline const double * data(int = 0) const;
-  //{ return this->field[i]->storage(); }
-  //inline const double * data(int i) const { return this->field[i]->storage(); }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -143,8 +125,6 @@ protected:
   // associated mesh
   BaseMesh * mesh;
 
-  // components: boolean indicating if component exists
-  //std::vector<bool> components;
   // components: integers indicating spatial directions
   SpatialDirectionSet components;
 

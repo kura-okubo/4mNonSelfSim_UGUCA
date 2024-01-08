@@ -114,22 +114,10 @@ void CustomMesh::forwardFFT(FFTableNodalField & nodal_field) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
 
   NodalField tmp;
-  //double * disp_tmp = NULL;
   // copy displacement for after gatherAndSort
   if (prank == this->root) {
     tmp.copyDataFrom(nodal_field);
   }
-    /*
-    disp_tmp = new double[this->nb_nodes_local];
-    double * p_nfc = nodal_field_comp.storage();
-    for (int n=0; n<nodal_field_comp.getNbNodes(); ++n)
-      disp_tmp[n] = p_nfc[n];
-  }
-  else {
-    disp_tmp = new double[1];
-    disp_tmp[0] = 0;
-  }
-    */
 
   // loop over all components of the nodal field
   for (const auto& d : nodal_field.getComponents()) {
@@ -140,14 +128,7 @@ void CustomMesh::forwardFFT(FFTableNodalField & nodal_field) {
   // restore the displacement
   if (prank == this->root) {
     nodal_field.copyDataFrom(tmp);
-    /*
-    double * p_nfc = nodal_field_comp.storage();
-    for (int n=0; n<nodal_field_comp.getNbNodes(); ++n)
-      p_nfc[n] = disp_tmp[n];
-    */
   }
-
-  //delete[] disp_tmp;
 }
 
 /* -------------------------------------------------------------------------- */
