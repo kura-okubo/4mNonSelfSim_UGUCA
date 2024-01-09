@@ -43,15 +43,15 @@ FFTableMesh::FFTableMesh(double Lx, int Nx) : //, bool initialize) :
   //  fs_allocated(false),
   //length_x(Lx),
   //length_z(0.),
-  lengths({Lx}),
-  nb_nodes_global({Nx}),
+  lengths({Lx,0,0}),
+  nb_nodes_global({Nx,1,1}),
   //nb_nodes_z_global(1),
   wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
   //if (initialize)
   //this->init();
-  this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1};
+  this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1,1,1};
   //this->nb_fft_z_global = 1;
 
   this->resize(this->getNbGlobalFFT());
