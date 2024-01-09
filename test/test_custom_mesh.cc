@@ -40,11 +40,11 @@
 
 using namespace uguca;
 
-void print(double ** fld, int size){
+void print(const TwoDVector & fld, int size){
   int dim = 3;//fld.size();
   for (int n=0; n<size;n++) {
     for (int d=0;d<dim;d++) {
-      std::cout<<fld[d][n]<<", ";
+      std::cout<<fld(n,d)<<", ";
     }
     std::cout<<std::endl;
   }
@@ -208,34 +208,25 @@ int main() {
 
  
   // for checking afterwards
-  double * coords_local[3];
+  TwoDVector coords_local(3,max_nb_nodes_pp);
   for (int d=0; d<mesh3dC.getDim();++d) {
-    int size = max_nb_nodes_pp;
-    coords_local[d] = new double [size];
     for (int n=mesh3dC.getNbLocalNodes(); n<max_nb_nodes_pp; ++n)
-      coords_local[d][n] = NAN;
+      coords_local(n,d) = NAN;
   }
   for (int n=0; n<mesh3dC.getNbLocalNodes(); ++n) {
-      coords_local[0][n] = x_coord_tmp[n];
-      coords_local[1][n] = 0.;
-      coords_local[2][n] = z_coord_tmp[n];
+    coords_local(n,0) = x_coord_tmp[n];
+    coords_local(n,1) = 0.;
+    coords_local(n,2) = z_coord_tmp[n];
   }
   
-  double ** coords3dC = mesh3dC.getLocalCoords();
+  const TwoDVector & coords3dC = mesh3dC.getLocalCoords();
   print(coords3dC, mesh3dC.getNbLocalNodes());
 
-  double * coords_global[3];
-  for (int d=0; d<mesh3dC.getDim();++d) {
-    int size = max_nb_nodes_pp*psize;
-    coords_global[d] = new double [size];
-    for (int n=0; n<size; ++n)
-      coords_global[d][n] = 0.;
-  }
-  
-  mesh3dC.gatherAndSortCustomNodes(coords_global[0],
-				   coords_local[0],root);
-  mesh3dC.gatherAndSortCustomNodes(coords_global[2],
-				   coords_local[2],root);
+  TwoDVector  coords_global(3,max_nb_nodes_pp*psize);
+  mesh3dC.gatherAndSortCustomNodes(coords_global.data(0).data(),
+				   coords_local.data(0).data(),root);
+  mesh3dC.gatherAndSortCustomNodes(coords_global.data(2).data(),
+				   coords_local.data(2).data(),root);
 
   std::cout<<std::flush;
   if (prank==root) {
@@ -249,8 +240,8 @@ int main() {
     for (int n=0; n<mesh3dC.getNbGlobalNodes();++n) {
       int idx=n/nb_nodes_z;
       int idz=n%nb_nodes_z;
-      if (coords_global[0][n] != length_x*idx/nb_nodes_x ||
-	  coords_global[2][n] != length_z*idz/nb_nodes_z )
+      if (coords_global(n,0) != length_x*idx/nb_nodes_x ||
+	  coords_global(n,2) != length_z*idz/nb_nodes_z )
 	test_pass=false;
     }
     if (test_pass)
@@ -259,18 +250,16 @@ int main() {
       return 1;
   }
 
-  double * coords_local_tmp[3];
+  TwoDVector coords_local_tmp(3,max_nb_nodes_pp);
   for (int d=0; d<mesh3dC.getDim();d++) {
-    int size = max_nb_nodes_pp;
-    coords_local_tmp[d] = new double[size];
-    for (int n=0; n<size; ++n)
-      coords_local_tmp[d][n] = 0.;
+    for (int n=0; n<max_nb_nodes_pp; ++n)
+      coords_local_tmp(n,d) = 0.;
   }
 
-  mesh3dC.sortAndScatterCustomNodes(coords_global[0],
-				    coords_local_tmp[0],root);
-  mesh3dC.sortAndScatterCustomNodes(coords_global[2],
-				    coords_local_tmp[2],root);
+  mesh3dC.sortAndScatterCustomNodes(coords_global.data(0).data(),
+				    coords_local_tmp.data(0).data(),root);
+  mesh3dC.sortAndScatterCustomNodes(coords_global.data(2).data(),
+				    coords_local_tmp.data(2).data(),root);
 
   //sleep(prank);
   printf("local coords scatter\n");
@@ -278,11 +267,11 @@ int main() {
   
   bool test_pass=true;
   for (int n=0; n<mesh3dC.getNbLocalNodes();++n) {
-    if (x_coord_tmp[n] != coords_local_tmp[0][n] ||
-	z_coord_tmp[n] != coords_local_tmp[2][n] ) {
+    if (x_coord_tmp[n] != coords_local_tmp(n,0) ||
+	z_coord_tmp[n] != coords_local_tmp(n,2) ) {
       printf("%g != %g or %g != %g \n",
-	     x_coord_tmp[n], coords_local_tmp[0][n],
-	     z_coord_tmp[n], coords_local_tmp[2][n]);
+	     x_coord_tmp[n], coords_local_tmp(n,0),
+	     z_coord_tmp[n], coords_local_tmp(n,2));
       test_pass=false;
     }
   }
@@ -291,11 +280,6 @@ int main() {
   else {
     std::cout<<"error"<<std::endl;
     return 1;
-  }
-
-  for (int d=0; d<mesh3dC.getDim();++d) {
-    delete[] coords_global[d];
-    delete[] coords_local_tmp[d];
   }
 
   std::cout<<"went til the end rank "<<prank<<"\n";

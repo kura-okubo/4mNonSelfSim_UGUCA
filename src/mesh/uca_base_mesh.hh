@@ -101,7 +101,10 @@ public:
 
   // resize coordinates
   virtual void resize(int nb_nodes, int alloc=-1);
-  
+
+protected:
+  double * getLocalCoordsData(int d) { return this->coords_local.data(d).data(); }
+
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

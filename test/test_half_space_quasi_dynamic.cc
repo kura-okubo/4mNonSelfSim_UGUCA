@@ -67,7 +67,7 @@ int main(){
       // std::cout << (*u0)(i)<<std::endl;
     }
 
-    double dx = msh.getDeltaX();
+    double dx = msh.getDelta(0);
     double cs = mat.getCs();
     double dt = dx/cs*0.1;
 
@@ -133,7 +133,7 @@ int main(){
 
     HalfSpaceQuasiDynamic hs3(mat,msh3,1,{_x,_y,_z});
 
-    double dx = msh3.getDeltaX();
+    double dx = msh3.getDelta(0);
     double cs = mat.getCs();
     double dt = dx/cs*0.1;
 

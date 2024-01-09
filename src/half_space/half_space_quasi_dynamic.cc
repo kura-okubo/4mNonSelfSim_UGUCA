@@ -177,7 +177,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
 
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
+  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
 
   // access to fourier coefficients of stresses
   fftw_complex * internal_fd[3];
@@ -203,7 +203,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     std::vector<std::complex<double>> F;
     F.resize(this->mesh.getDim());
     if (this->mesh.getDim() == 2) {
-      double q = wave_numbers[0][j];
+      double q = wave_numbers(j,0);
       this->computeF2D(F,q,
 		       U,
 		       H00_integrated*U[0],
@@ -215,8 +215,8 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
       double H22_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H22,j);
 
       // q = {k,m} wave number in x,y direction
-      double k = wave_numbers[0][j];
-      double m = wave_numbers[2][j];
+      double k = wave_numbers(j,0);
+      double m = wave_numbers(j,2);
       this->computeF3D(F,k,m,
 		       U,
 		       H00_integrated*U[0],

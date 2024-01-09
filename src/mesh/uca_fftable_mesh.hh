@@ -82,8 +82,7 @@ protected:
   /* ------------------------------------------------------------------------ */
 public:
   // access to the wave numbers
-  //TwoDVector & getLocalWaveNumbers()
-  //{ return this->wave_numbers_local; }
+  const TwoDVector & getLocalWaveNumbers() const { return this->wave_numbers_local; }
 
   // geometry of interface
   //double getLengthX() const { return this->length_x; }

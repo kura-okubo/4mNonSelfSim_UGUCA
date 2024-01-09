@@ -76,8 +76,8 @@ int main(){
     else
       std::cout << "check getStableTimeStep (prank>0)" << std::endl;
     
-    double delta_x = msh.getDeltaX();
-    double delta_z = msh.getDeltaZ();
+    double delta_x = msh.getDelta(0);
+    double delta_z = msh.getDelta(2);
 
     if (msh.getDim()==2)
       delta_z = 1e100;

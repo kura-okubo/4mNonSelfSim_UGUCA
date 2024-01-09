@@ -53,11 +53,11 @@ public:
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
-public:
-  //virtual void init();
+private:
+  void init();
   
 protected:
-  virtual void initSimpleCoords(TwoDVector & coords);
+  void initSimpleCoords(TwoDVector & coords);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */

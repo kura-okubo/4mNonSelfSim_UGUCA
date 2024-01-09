@@ -59,11 +59,11 @@ int main() {
   interface.getLoad().setAllValuesTo(-5e6,1);
 
   // heterogeneity for nucleation
-  double * X = mesh.getLocalCoords()[0];
+  const TwoDVector & coords = mesh.getLocalCoords();
   NodalField & load = interface.getLoad();
   double Xnuc = length/2.;
   for (int i=0;i<mesh.getNbLocalNodes(); ++i)
-    load(i,0) = 1.1e6 - 0.7e6*std::tanh(80*std::abs(X[i] - Xnuc) - 2.);
+    load(i,0) = 1.1e6 - 0.7e6*std::tanh(80*std::abs(coords(i,0) - Xnuc) - 2.);
 
   // time step
   double duration = 5e-4;

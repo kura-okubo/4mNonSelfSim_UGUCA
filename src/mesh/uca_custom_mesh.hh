@@ -53,10 +53,11 @@ public:
 
 protected:
   // protected constructor for inheritated construction without init
+  /*
   CustomMesh(double Lx, int Nx);
   CustomMesh(double Lx, int Nx,
 	     double Lz, int Nz);
-  
+  */
 public:
   virtual ~CustomMesh() {};
   /* ------------------------------------------------------------------------ */
@@ -74,7 +75,7 @@ protected:
 				std::vector<double> & z_coords);
 
   virtual void initSortCustomNodesMap();
-  virtual void checkCustomCoords(double ** coords_global);
+  virtual void checkCustomCoords(TwoDVector & coords_global);
 
   // comm for parallel
   template <typename T> void sortCustomNodes  (T * un_sorted, T * sorted,

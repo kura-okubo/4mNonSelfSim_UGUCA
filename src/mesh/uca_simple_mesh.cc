@@ -45,9 +45,7 @@ __BEGIN_UGUCA__
 SimpleMesh::SimpleMesh(double Lx, int Nx) : 
   DistributedFFTableMesh(Lx,Nx)
 {
-  // use const cast: not changing length, only content
-  this->initSimpleCoords(const_cast<TwoDVector&>(this->getLocalCoords()));
-  //this->init();
+  this->init();
 }
 
 /* --------------------------------------------------------------------------
@@ -62,18 +60,24 @@ SimpleMesh::SimpleMesh(double Lx, int Nx,
 		       double Lz, int Nz) :
   DistributedFFTableMesh(Lx,Nx,Lz,Nz)
 {
-  // use const cast: not changing length, only content
-  this->initSimpleCoords(const_cast<TwoDVector&>(this->getLocalCoords()));
-  //this->init();
+  this->init();
 }
 
 /* -------------------------------------------------------------------------- */
 SimpleMesh::~SimpleMesh() {}
 
 /* -------------------------------------------------------------------------- */
-/*void SimpleMesh::init() {
-  this->initSimpleCoords(this->coords_local);
-  DistributedFFTableMesh::init();
+void SimpleMesh::init() {
+  // coords only exist on root
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  
+  if (prank == this->root) {
+    // use const cast: not changing length, only content
+    this->initSimpleCoords(const_cast<TwoDVector&>(this->getLocalCoords()));
+  }
+  else { // prank != root
+    BaseMesh::resize(0);
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -89,30 +93,21 @@ SimpleMesh::~SimpleMesh() {}
  */
 void SimpleMesh::initSimpleCoords(TwoDVector & coords) {
 
-  // coords only exist on root
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  // determine element size
+  double dx = this->getDelta(0);
+  double dz = this->getDelta(2);
   
-  if (prank == this->root) {
-  
-    // determine element size
-    double dx = this->getDelta(0);
-    double dz = this->getDelta(2);
-    
-    // fill coords for this mesh
-    for (int i=0; i<this->nb_nodes_global[0]; ++i) {
-      for (int j=0; j<this->nb_nodes_global[2]; ++j) {
-	int ij = i*this->nb_nodes_global[2] +j;
+  // fill coords for this mesh
+  for (int i=0; i<this->nb_nodes_global[0]; ++i) {
+    for (int j=0; j<this->nb_nodes_global[2]; ++j) {
+      int ij = i*this->nb_nodes_global[2] +j;
+
+      coords(ij,0) = i*dx;
+      coords(ij,1) = 0.0; // we are on the xz plane
 	
-	coords(ij,0) = i*dx;
-	coords(ij,1) = 0.0; // we are on the xz plane
-	
-	if (this->dim==3)
-	  coords(ij,2) = j*dz;
-      }
+      if (this->dim==3)
+	coords(ij,2) = j*dz;
     }
-  }
-  else { // prank != root
-    BaseMesh::resize(0);
   }
 }
 

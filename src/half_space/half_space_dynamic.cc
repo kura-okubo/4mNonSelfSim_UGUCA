@@ -56,8 +56,8 @@ HalfSpaceDynamic::~HalfSpaceDynamic() {}
 
 /* -------------------------------------------------------------------------- */
 double HalfSpaceDynamic::getStableTimeStep() {
-  double delta_x = this->mesh.getDeltaX();
-  double delta_z = this->mesh.getDeltaZ();
+  double delta_x = this->mesh.getDelta(0);
+  double delta_z = this->mesh.getDelta(2);
 
   if (this->mesh.getDim()==2)
     delta_z = delta_x;
@@ -129,7 +129,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
 
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
+  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
 
   // --------------
   // UPDATE HISTORY
@@ -183,7 +183,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     F.resize(this->mesh.getDim());
     
     if (this->mesh.getDim() == 2) {
-      double q = wave_numbers[0][j];
+      double q = wave_numbers(j,0);
       this->computeF2D(F,
 		       q,
 		       U,
@@ -193,8 +193,8 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 		       conv[std::make_pair(Kernel::Krnl::H11,1)][j]); // H11-U1
     } else {
       // q = {k,m} wave number in x,y direction
-      double k = wave_numbers[0][j];
-      double m = wave_numbers[2][j];
+      double k = wave_numbers(j,0);
+      double m = wave_numbers(j,2);
 
       this->computeF3D(F,k,m,
 		       U,

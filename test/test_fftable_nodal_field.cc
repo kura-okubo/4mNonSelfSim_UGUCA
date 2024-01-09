@@ -64,15 +64,15 @@ int main() {
 
   NodalField solution(mesh, {_x,_y,_z});
 
-  double ** coords = mesh.getLocalCoords();
+  const TwoDVector & coords = mesh.getLocalCoords();
 
   // initiate field and ftf
   for (const auto& d : solution.getComponents()) {
-    for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
-      for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
-	int ij = i*mesh.getNbGlobalNodesZ()+j;
-	double x = coords[0][ij];
-	double z = coords[2][ij];
+    for (int i=0; i<mesh.getNbGlobalNodes(0); ++i) {
+      for (int j=0; j<mesh.getNbGlobalNodes(2); ++j) {
+	int ij = i*mesh.getNbGlobalNodes(2)+j;
+	double x = coords(ij,0);
+	double z = coords(ij,2);
 	if (prank!=0) continue;
 	solution(ij,d) = 1.0+cos(x*4*M_PI)*sin(z*8*M_PI)+cos(x*2*M_PI);
 	ftf(ij,d) = solution(ij,d);
@@ -90,9 +90,9 @@ int main() {
 
   // check
   for (const auto& d : solution.getComponents()) {
-    for (int i=0; i<mesh.getNbGlobalNodesX(); ++i) {
-      for (int j=0; j<mesh.getNbGlobalNodesZ(); ++j) {
-	int ij = i*mesh.getNbGlobalNodesZ()+j;
+    for (int i=0; i<mesh.getNbGlobalNodes(0); ++i) {
+      for (int j=0; j<mesh.getNbGlobalNodes(2); ++j) {
+	int ij = i*mesh.getNbGlobalNodes(2)+j;
 	if (prank!=0) continue;
 	if (fabs(solution(ij,d) - ftf(ij,d))>1e-12) {
 	  std::cout <<"("<<i<<","<<j<<") "

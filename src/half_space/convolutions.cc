@@ -53,7 +53,7 @@ void Convolutions::preintegrate(Material & material,
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
   pik_vector.resize(this->mesh.getNbLocalFFT());
 
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
+  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
@@ -62,7 +62,7 @@ void Convolutions::preintegrate(Material & material,
 
     double qq = 0.0;
     for (int d=0; d<this->mesh.getDim();d+=2)
-      qq +=(wave_numbers[d])[j]*(wave_numbers[d])[j];
+      qq += wave_numbers(j,d)*wave_numbers(j,d);
 
     double qj_cs = std::sqrt(qq) * scale_factor;
     
