@@ -166,7 +166,7 @@ void FFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
     
       double nb_nodes_global = this->getNbGlobalNodes();
       double * p_field = nodal_field.data(d);
-      for (int i=0; i<nodal_field.getNbNodes(); ++i) { // for fftw_mpi it includes padding
+      for (int i=0; i<this->getNbLocalNodesAlloc(); ++i) { // for fftw_mpi it includes padding
 	p_field[i] /= nb_nodes_global;
       }
     }

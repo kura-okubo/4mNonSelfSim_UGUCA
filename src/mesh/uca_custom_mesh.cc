@@ -106,6 +106,7 @@ void CustomMesh::forwardFFT(FFTableNodalField & nodal_field) {
 void CustomMesh::backwardFFT(FFTableNodalField & nodal_field) {
 
   SimpleMesh::backwardFFT(nodal_field);
+
   // loop over all components of the nodal field
   for (const auto& d : nodal_field.getComponents()) {
     this->sortAndScatterCustomNodes(nodal_field.data(d), this->root);
@@ -223,7 +224,7 @@ void CustomMesh::initSortCustomNodesMap() {
     // create sorting map
     for (int i=0; i<this->getNbGlobalNodes(); ++i)
       this->sort_custom_nodes_map[i] = sort_map_vec[i];
-    
+
     // verify coords
     this->checkCustomCoords(coords_global_tmp);
   }
@@ -296,9 +297,11 @@ void CustomMesh::checkCustomCoords(TwoDVector & coords_global) {
 template <typename T>
 void CustomMesh::sortCustomNodes(T* un_sorted, T * sorted, int root_rank) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  if (prank == root_rank)
-    for (int n=0; n<this->getNbGlobalNodes(); ++n)
+  if (prank == root_rank) {
+    for (int n=0; n<this->getNbGlobalNodes(); ++n) {
       sorted[n] = un_sorted[this->sort_custom_nodes_map[n]];
+    }
+  }
 }
 /* -------------------------------------------------------------------------- */
 template <typename T>

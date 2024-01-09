@@ -70,11 +70,6 @@ void HalfSpaceQuasiDynamic::initConvolutions() {
   if (this->mesh.getDim()==3)
     this->convolutions.preintegrate(this->material, Kernel::Krnl::H22,
 				    this->material.getCs(), this->time_step);
-  
-#ifdef UCA_VERBOSE
-  int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  printf("Rank %d has total work %d \n",world_rank,total_work);
-#endif /* UCA_VERBOSE */
 }
 
 /* -------------------------------------------------------------------------- */
