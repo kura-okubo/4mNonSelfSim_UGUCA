@@ -51,14 +51,6 @@ public:
 	     std::vector<double> & x_coords,
 	     std::vector<double> & z_coords);
 
-protected:
-  // protected constructor for inheritated construction without init
-  /*
-  CustomMesh(double Lx, int Nx);
-  CustomMesh(double Lx, int Nx,
-	     double Lz, int Nz);
-  */
-public:
   virtual ~CustomMesh() {};
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */

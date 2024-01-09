@@ -29,25 +29,19 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_base_mesh.hh"
-#include <stdexcept>
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 BaseMesh::BaseMesh(int dim, int N) :
   root(0),
-  //  rs_allocated(false),
   dim(dim),
   nb_nodes_local(N),
   nb_nodes_local_alloc(N),
-  coords_local(dim,N) {
-  //this->allocateRealSpace();
-}
+  coords_local(dim,N) {}
 
 /* -------------------------------------------------------------------------- */
-BaseMesh::~BaseMesh() {
-  //  this->freeRealSpace();
-}
+BaseMesh::~BaseMesh() {}
 
 /* -------------------------------------------------------------------------- */
 void BaseMesh::resize(int nb_nodes, int alloc) {
@@ -55,45 +49,5 @@ void BaseMesh::resize(int nb_nodes, int alloc) {
   this->nb_nodes_local_alloc = (alloc < nb_nodes ? nb_nodes : alloc);
   this->coords_local.resize(this->nb_nodes_local_alloc);
 }
-
-/* -------------------------------------------------------------------------- */
-/*
-void BaseMesh::allocateRealSpace() {
-
-  // do not allocate twice
-  if (this->rs_allocated)
-    throw std::runtime_error("BaseMesh: do not allocate twice\n");
-
-  this->allocateVector(this->coords_local, this->nb_nodes_local_alloc);
-  this->rs_allocated = true;
-}
-
-/* -------------------------------------------------------------------------- */
-/*void BaseMesh::freeRealSpace() {
-  /*
-  if (this->rs_allocated) {
-    this->freeVector(this->coords_local);
-  }
-  this->rs_allocated = false;
-  
-}
-
-/* -------------------------------------------------------------------------- */
-/*void BaseMesh::allocateVector(double ** vec, int size) {
-
-  for (int d=0; d<this->dim; ++d) {
-    vec[d] = new double [size];
-    for (int n=0; n<size; ++n) {
-      vec[d][n] = 0.; // initialize to zero
-    }
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/*void BaseMesh::freeVector(double ** vec) {
-  for (int d=0; d<this->dim; ++d) {
-    delete[] vec[d];
-  }
-  }*/
 
 __END_UGUCA__

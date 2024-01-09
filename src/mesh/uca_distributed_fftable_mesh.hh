@@ -108,10 +108,6 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // global wave numbers (only used temporarily)
-  //double * wave_numbers_global[3];  // local {k,-,m}
-  //TwoDVector wave_numbers_global;  // local {k,-,m}
-  
   // map for distribution of fft modes
   std::vector<int> sort_fft_modes_map;
 

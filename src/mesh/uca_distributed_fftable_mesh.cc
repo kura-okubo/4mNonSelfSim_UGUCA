@@ -46,7 +46,6 @@ __BEGIN_UGUCA__
 DistributedFFTableMesh::DistributedFFTableMesh(double Lx,
 					       int Nx) :
   FFTableMesh(Lx, Nx),
-  //wave_numbers_global(3,0),
   max_fft_pp(0) {
   this->init();
 }
@@ -55,15 +54,8 @@ DistributedFFTableMesh::DistributedFFTableMesh(double Lx,
 DistributedFFTableMesh::DistributedFFTableMesh(double Lx, int Nx,
 					       double Lz, int Nz) : 
   FFTableMesh(Lx, Nx, Lz, Nz),
-  //wave_numbers_global(3,0),
   max_fft_pp(0) {
   this->init();
-}
-
-/* -------------------------------------------------------------------------- */
-/*DistributedFFTableMesh::~DistributedFFTableMesh() {
-  delete[] this->fftw_complex_buffer;
-  delete[] this->sort_fft_modes_map;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -78,15 +70,8 @@ void DistributedFFTableMesh::init() {
 
     if (psize%2 != 0)
       throw std::runtime_error("ERROR: number of mpi process needs to be even\n");
-
-    //FFTableMesh::initSpectralSpace();
-
-    // will be corrected by assignFFTModes function
-    //this->mode_zero_rank = -1;
-    //this->mode_zero_index = -1;
     
     // global wave numbers
-    //this->allocateVector(this->wave_numbers_global, this->getNbGlobalFFT());
     TwoDVector wave_numbers_global(3,this->getNbGlobalFFT());  // local {k,-,m}
     this->initWaveNumbersGlobal(wave_numbers_global);
 
@@ -94,18 +79,12 @@ void DistributedFFTableMesh::init() {
     // fills the this->sort_fft_modes_map
     this->assignFFTModes(wave_numbers_global);
 
-    // allocate wave_numbers_local
-    //this->allocateSpectralSpace();
-    
     // actually sort modes and scatter them
     for (int d=0; d<this->dim; ++d){
       this->sortAndScatterFFTModes(wave_numbers_global.data(d).data(),
 				   this->getWaveNumbersLocalData(d),
 				   this->root);
     }
-
-    // wave_numbers_global are not needed anymore
-    //this->freeVector(this->wave_numbers_global);
 
     // for sorting (all ranks should be able to do it)
     //this->fftw_complex_buffer.resize(this->max_fft_pp*psize); // does not work because vector of array

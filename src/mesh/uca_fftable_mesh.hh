@@ -49,11 +49,9 @@ class FFTableMesh : public BaseMesh {
 public:
   
   FFTableMesh(double Lx, int Nx);
-  //	      bool initialize=true);
 
   FFTableMesh(double Lx, int Nx,
 	      double Lz, int Nz);
-  //	      bool initialize=true);
 
   virtual ~FFTableMesh();
 
@@ -61,7 +59,6 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  //virtual void init();
   void resize(int nb_fft, int alloc=-1);
   
   virtual void registerForFFT(FFTableNodalField & nodal_field);
@@ -72,10 +69,6 @@ public:
   
 protected:
   virtual void initWaveNumbersGlobal(TwoDVector & wave_numbers);
-
-  //virtual void initSpectralSpace();
-  //virtual void allocateSpectralSpace();
-  //virtual void freeSpectralSpace();
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -85,27 +78,19 @@ public:
   const TwoDVector & getLocalWaveNumbers() const { return this->wave_numbers_local; }
 
   // geometry of interface
-  //double getLengthX() const { return this->length_x; }
-  //double getLengthZ() const { return this->length_z; }
   double getLength(int d) const { return this->lengths.at(d); }
   
   // element sizes
-  //double getDeltaX() { return this->length_x / this->nb_nodes_x_global; }
-  //double getDeltaZ() { return this->length_z / this->nb_nodes_z_global; }
   double getDelta(int d) const { return this->lengths.at(d) / this->nb_nodes_global.at(d); }
   
   // global nodes that may not be all here
   virtual int getNbGlobalNodes() const {
     int nb = 1; for (const auto & n : this->nb_nodes_global) nb*=n; return nb; }
-  //int getNbGlobalNodesX() const { return this->nb_nodes_x_global; }
-  //int getNbGlobalNodesZ() const { return this->nb_nodes_z_global; }
   int getNbGlobalNodes(int d) const { return this->nb_nodes_global.at(d); }
 
   // global nodes in fourier space
   int getNbGlobalFFT() const {
     int nb = 1; for (const auto& e : this->nb_fft_global) nb*=e; return nb; }
-  //int getNbGlobalFFTX() const { return this->nb_fft_x_global; }
-  //int getNbGlobalFFTZ() const { return this->nb_fft_z_global; }
   int getNbGlobalFFT(int d) const { return this->nb_fft_global.at(d); }
   
   int getNbLocalFFT() { return this->nb_fft_local; }
@@ -121,29 +106,19 @@ protected:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // fourier space allocated
-  //bool fs_allocated;
-  
   // length of domain / replication length
-  //double length_x;
-  //double length_z;
   std::vector<double> lengths;
   
   // number of nodes
-  //int nb_nodes_x_global; // global
-  //int nb_nodes_z_global; // global
   std::vector<int> nb_nodes_global;
   
   // Fourier modes
-  //int nb_fft_x_global; // global
-  //int nb_fft_z_global; // global
   std::vector<int> nb_fft_global;
   
 private:
   // wave numbers in fourier space: local
   int nb_fft_local;
   int nb_fft_local_alloc;
-  //double * wave_numbers_local[3];  // local {k,-,m}
   TwoDVector wave_numbers_local;   // local {k,-,m}
 
 protected:

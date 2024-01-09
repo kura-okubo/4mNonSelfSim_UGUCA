@@ -51,11 +51,6 @@ CustomMesh::CustomMesh(double Lx, int Nx,
   std::vector<double> empty(0);
   this->init(x_coords, empty);
 }
-/*
-CustomMesh::CustomMesh(double Lx, int Nx) :
-  SimpleMesh(Lx,Nx),
-  max_nodes_pp(-1)
-{}
 
 /* --------------------------------------------------------------------------
  * 3D
@@ -69,24 +64,10 @@ CustomMesh::CustomMesh(double Lx, int Nx,
 {
   this->init(x_coords, z_coords);
 }
-/*
-CustomMesh::CustomMesh(double Lx, int Nx,
-		       double Lz, int Nz) :
-  SimpleMesh(Lx,Nx,Lz,Nz),
-  max_nodes_pp(-1)
-{}
-
-/* -------------------------------------------------------------------------- */
-/*CustomMesh::~CustomMesh() {
-  delete[] this->double_buffer;
-  delete[] this->sort_custom_nodes_map;
-}
 
 /* -------------------------------------------------------------------------- */
 void CustomMesh::init(std::vector<double> & x_coords,
 		      std::vector<double> & z_coords) {
-
-  //DistributedFFTableMesh::init();
     
   int psize = StaticCommunicatorMPI::getInstance()->getNbProc();
 
@@ -94,8 +75,6 @@ void CustomMesh::init(std::vector<double> & x_coords,
 
   // all procs could gather and scatter as root
   this->double_buffer.resize(this->max_nodes_pp*psize);
-  //for (int i=0; i<this->max_nodes_pp*psize; ++i)
-  //this->double_buffer[i] = 0.;
   
   this->initSortCustomNodesMap();
 }
@@ -162,10 +141,6 @@ void CustomMesh::initCustomCoords(std::vector<double> & x_coords,
   BaseMesh::resize(nb_nodes_local, nb_nodes_local_alloc);
   // use const cast: not changing length, only content
   TwoDVector & coords_local = const_cast<TwoDVector&>(this->getLocalCoords());
-  
-  // correct size of local coords array
-  //this->freeRealSpace();
-  //this->allocateRealSpace();
   
   // copy coordinates
   for (int n=0; n<nb_nodes_local; ++n){

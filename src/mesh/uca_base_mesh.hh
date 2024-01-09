@@ -69,14 +69,8 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  //virtual void init() = 0;
-  
-protected:
-  //virtual void allocateRealSpace();
-  //virtual void freeRealSpace();
-
-  //virtual void allocateVector(double ** vec, int size);
-  //virtual void freeVector(double ** vec);
+  // resize coordinates
+  virtual void resize(int nb_nodes, int alloc=-1);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -88,19 +82,17 @@ public:
   // spatial dimension of mesh
   int getDim() const { return this->dim; }
 
-  // nodes and coordinates
+  // number of nodes
   virtual int getNbLocalNodes() const { return this->nb_nodes_local; }
+
+  // access to coordinates
   const TwoDVector & getLocalCoords() const { return this->coords_local; }
-  //double ** getLocalCoords() { return this->coords_local; }
   
   // inheritate mesh needs to know if it is parallel or not
   virtual int getNbGlobalNodes() const { return this->getNbLocalNodes(); };
 
   // allocation length
   int getNbLocalNodesAlloc() const { return this->nb_nodes_local_alloc; }
-
-  // resize coordinates
-  virtual void resize(int nb_nodes, int alloc=-1);
 
 protected:
   double * getLocalCoordsData(int d) { return this->coords_local.data(d).data(); }
@@ -112,9 +104,6 @@ protected:
   // root rank for parallel
   int root;
   
-  // allocated
-  //bool rs_allocated;
-  
   // spatial dimension: either 2 or 3
   int dim;
 
@@ -122,7 +111,8 @@ private:
   // discretization: local
   int nb_nodes_local;
   int nb_nodes_local_alloc;
-  //double * coords_local[3]; // cannot use NodalField because it uses mesh
+
+  // coordinates of local nodes
   TwoDVector coords_local;
 };
 

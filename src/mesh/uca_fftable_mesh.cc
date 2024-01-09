@@ -38,21 +38,15 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-FFTableMesh::FFTableMesh(double Lx, int Nx) : //, bool initialize) :
+FFTableMesh::FFTableMesh(double Lx, int Nx) :
   BaseMesh(2, Nx),
-  //  fs_allocated(false),
-  //length_x(Lx),
-  //length_z(0.),
   lengths({Lx,0,0}),
   nb_nodes_global({Nx,1,1}),
-  //nb_nodes_z_global(1),
   wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
-  //if (initialize)
-  //this->init();
+
   this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1,1,1};
-  //this->nb_fft_z_global = 1;
 
   this->resize(this->getNbGlobalFFT());
   this->initWaveNumbersGlobal(this->wave_numbers_local);
@@ -67,13 +61,8 @@ FFTableMesh::FFTableMesh(double Lx, int Nx,
   wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
-  //if (initialize)
-  //  this->init();
-  this->nb_fft_global = {
-    this->nb_nodes_global[0],
-    1,
-    this->nb_nodes_global[2] / 2 + 1
-  };
+
+  this->nb_fft_global = {this->nb_nodes_global[0], 1, this->nb_nodes_global[2] / 2 + 1};
 
   this->resize(this->getNbGlobalFFT());
   this->initWaveNumbersGlobal(this->wave_numbers_local);
@@ -81,7 +70,6 @@ FFTableMesh::FFTableMesh(double Lx, int Nx,
 
 /* -------------------------------------------------------------------------- */
 FFTableMesh::~FFTableMesh() {
-  //this->freeSpectralSpace();
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
@@ -92,8 +80,6 @@ FFTableMesh::~FFTableMesh() {
       // do not call fftw_cleanup() because we don't know if all plans are destroyed
     }
   }
-  //this->forward_plans.resize(0);
-  //this->backward_plans.resize(0);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -101,49 +87,6 @@ void FFTableMesh::resize(int nb_fft, int alloc) {
   this->nb_fft_local = nb_fft;
   this->nb_fft_local_alloc = (alloc < nb_fft ? nb_fft : alloc);
   this->wave_numbers_local.resize(this->nb_fft_local_alloc);
-}
-
-/* -------------------------------------------------------------------------- */
-/*void FFTableMesh::init() {
-  this->initSpectralSpace();
-  this->allocateSpectralSpace();
-  this->initWaveNumbersGlobal(this->wave_numbers_local);
-}
-
-/* -------------------------------------------------------------------------- */
-/*void FFTableMesh::initSpectralSpace() {
-
-  if (this->dim==2) {
-    this->nb_fft_x_global = this->nb_nodes_x_global / 2 + 1;
-    this->nb_fft_z_global = 1;
-  }
-  else if (this->dim==3) {
-    this->nb_fft_x_global = this->nb_nodes_x_global;
-    this->nb_fft_z_global = this->nb_nodes_z_global / 2 + 1;
-  }
-
-  this->nb_fft_local = this->getNbGlobalFFT();
-  this->nb_fft_local_alloc = this->nb_fft_local;
-}
-
-/* -------------------------------------------------------------------------- */
-/*void FFTableMesh::allocateSpectralSpace() {
-
-  // do not initialize twice
-  if (this->fs_allocated)
-    throw std::runtime_error("FFTableMesh: do not allocate twice\n");
-
-  this->allocateVector(this->wave_numbers_local, this->nb_fft_local_alloc);
-  this->fs_allocated = true;
-}
-
-/* -------------------------------------------------------------------------- */
-/*void FFTableMesh::freeSpectralSpace() {
-
-  if (this->fs_allocated) {
-    this->freeVector(this->wave_numbers_local);
-  }
-  this->fs_allocated = false;
 }
 
 /* -------------------------------------------------------------------------- */
