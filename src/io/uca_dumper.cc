@@ -229,14 +229,14 @@ void Dumper::registerIO(const std::string & field_name,
 void Dumper::setCoords(std::ofstream * cfile) {
 
   if (!this->initiated) return;
-  double ** coords = this->mesh.getLocalCoords();
+  const TwoDVector & coords = this->mesh.getLocalCoords();
 
   for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
     for (int d=0; d<this->mesh.getDim(); ++d) {
       if (d != 0) {
 	(*cfile) << this->separator;
       }
-      (*cfile) << coords[d][n];
+      (*cfile) << coords(n,d);
     }
     (*cfile) << std::endl;
   }

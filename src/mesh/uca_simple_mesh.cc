@@ -42,11 +42,12 @@ __BEGIN_UGUCA__
  * local==global for spatial domain
  * operations in fourier domain can be performed in parallel by default
  */
-SimpleMesh::SimpleMesh(double Lx, int Nx, bool initialize) :
-  DistributedFFTableMesh(Lx,Nx,false)
+SimpleMesh::SimpleMesh(double Lx, int Nx) : 
+  DistributedFFTableMesh(Lx,Nx)
 {
-  if (initialize)
-    this->init();
+  // use const cast: not changing length, only content
+  this->initSimpleCoords(const_cast<TwoDVector&>(this->getLocalCoords()));
+  //this->init();
 }
 
 /* --------------------------------------------------------------------------
@@ -58,20 +59,19 @@ SimpleMesh::SimpleMesh(double Lx, int Nx, bool initialize) :
  *
  */
 SimpleMesh::SimpleMesh(double Lx, int Nx,
-		       double Lz, int Nz,
-		       bool initialize) :
-  DistributedFFTableMesh(Lx,Nx,Lz,Nz,false)
+		       double Lz, int Nz) :
+  DistributedFFTableMesh(Lx,Nx,Lz,Nz)
 {
-  if (initialize)
-    this->init();
+  // use const cast: not changing length, only content
+  this->initSimpleCoords(const_cast<TwoDVector&>(this->getLocalCoords()));
+  //this->init();
 }
 
 /* -------------------------------------------------------------------------- */
-SimpleMesh::~SimpleMesh() {
-}
+SimpleMesh::~SimpleMesh() {}
 
 /* -------------------------------------------------------------------------- */
-void SimpleMesh::init() {
+/*void SimpleMesh::init() {
   this->initSimpleCoords(this->coords_local);
   DistributedFFTableMesh::init();
 }
@@ -87,7 +87,7 @@ void SimpleMesh::init() {
  * stored as    N0 x N1            2 x N0 x (N1/2+1)
  *
  */
-void SimpleMesh::initSimpleCoords(double ** coords) {
+void SimpleMesh::initSimpleCoords(TwoDVector & coords) {
 
   // coords only exist on root
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -95,25 +95,24 @@ void SimpleMesh::initSimpleCoords(double ** coords) {
   if (prank == this->root) {
   
     // determine element size
-    double dx = this->getDeltaX();
-    double dz = this->getDeltaZ();
+    double dx = this->getDelta(0);
+    double dz = this->getDelta(2);
     
     // fill coords for this mesh
-    for (int i=0; i<this->nb_nodes_x_global; ++i) {
-      for (int j=0; j<this->nb_nodes_z_global; ++j) {
-	int ij = i*this->nb_nodes_z_global +j;
+    for (int i=0; i<this->nb_nodes_global[0]; ++i) {
+      for (int j=0; j<this->nb_nodes_global[2]; ++j) {
+	int ij = i*this->nb_nodes_global[2] +j;
 	
-	coords[0][ij] = i*dx;
-	coords[1][ij] = 0.0; // we are on the xz plane
+	coords(ij,0) = i*dx;
+	coords(ij,1) = 0.0; // we are on the xz plane
 	
 	if (this->dim==3)
-	  coords[2][ij] = j*dz;
+	  coords(ij,2) = j*dz;
       }
     }
   }
   else { // prank != root
-    this->nb_nodes_local = 0;
-    this->nb_nodes_local_alloc = 1;
+    BaseMesh::resize(0);
   }
 }
 

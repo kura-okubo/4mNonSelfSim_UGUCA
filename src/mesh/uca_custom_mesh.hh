@@ -58,7 +58,7 @@ protected:
 	     double Lz, int Nz);
   
 public:
-  virtual ~CustomMesh();
+  virtual ~CustomMesh() {};
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
@@ -114,13 +114,13 @@ public:
 protected:
 
   // for sorting nodes to processes
-  int * sort_custom_nodes_map;
+  std::vector<int> sort_custom_nodes_map;
 
   // maximum of local nodes per proc
   int max_nodes_pp;
   
   // for sorting nodes
-  double * double_buffer;
+  std::vector<double> double_buffer;
 };
 
 __END_UGUCA__

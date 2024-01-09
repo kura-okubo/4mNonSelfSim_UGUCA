@@ -38,38 +38,50 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-FFTableMesh::FFTableMesh(double Lx, int Nx, bool initialize) :
+FFTableMesh::FFTableMesh(double Lx, int Nx) : //, bool initialize) :
   BaseMesh(2, Nx),
-  fs_allocated(false),
-  length_x(Lx),
-  length_z(0.),
-  nb_nodes_x_global(Nx),
-  nb_nodes_z_global(1),
+  //  fs_allocated(false),
+  //length_x(Lx),
+  //length_z(0.),
+  lengths({Lx}),
+  nb_nodes_global({Nx}),
+  //nb_nodes_z_global(1),
+  wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
-  if (initialize)
-    this->init();
+  //if (initialize)
+  //this->init();
+  this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1};
+  //this->nb_fft_z_global = 1;
+
+  this->resize(this->getNbGlobalFFT());
+  this->initWaveNumbersGlobal(this->wave_numbers_local);
 }
 
 /* -------------------------------------------------------------------------- */
 FFTableMesh::FFTableMesh(double Lx, int Nx,
-			 double Lz, int Nz,
-			 bool initialize) :
+			 double Lz, int Nz) :
   BaseMesh(3, Nx*Nz),
-  fs_allocated(false),
-  length_x(Lx),
-  length_z(Lz),
-  nb_nodes_x_global(Nx),
-  nb_nodes_z_global(Nz),
+  lengths({Lx,0,Lz}),
+  nb_nodes_global({Nx,1,Nz}),
+  wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
-  if (initialize)
-    this->init();
+  //if (initialize)
+  //  this->init();
+  this->nb_fft_global = {
+    this->nb_nodes_global[0],
+    1,
+    this->nb_nodes_global[2] / 2 + 1
+  };
+
+  this->resize(this->getNbGlobalFFT());
+  this->initWaveNumbersGlobal(this->wave_numbers_local);
 }
 
 /* -------------------------------------------------------------------------- */
 FFTableMesh::~FFTableMesh() {
-  this->freeSpectralSpace();
+  //this->freeSpectralSpace();
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
@@ -85,14 +97,21 @@ FFTableMesh::~FFTableMesh() {
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::init() {
+void FFTableMesh::resize(int nb_fft, int alloc) {
+  this->nb_fft_local = nb_fft;
+  this->nb_fft_local_alloc = (alloc < nb_fft ? nb_fft : alloc);
+  this->wave_numbers_local.resize(this->nb_fft_local_alloc);
+}
+
+/* -------------------------------------------------------------------------- */
+/*void FFTableMesh::init() {
   this->initSpectralSpace();
   this->allocateSpectralSpace();
   this->initWaveNumbersGlobal(this->wave_numbers_local);
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::initSpectralSpace() {
+/*void FFTableMesh::initSpectralSpace() {
 
   if (this->dim==2) {
     this->nb_fft_x_global = this->nb_nodes_x_global / 2 + 1;
@@ -108,7 +127,7 @@ void FFTableMesh::initSpectralSpace() {
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::allocateSpectralSpace() {
+/*void FFTableMesh::allocateSpectralSpace() {
 
   // do not initialize twice
   if (this->fs_allocated)
@@ -119,7 +138,7 @@ void FFTableMesh::allocateSpectralSpace() {
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::freeSpectralSpace() {
+/*void FFTableMesh::freeSpectralSpace() {
 
   if (this->fs_allocated) {
     this->freeVector(this->wave_numbers_local);
@@ -146,17 +165,17 @@ void FFTableMesh::registerForFFT(FFTableNodalField & nodal_field) {
 
       // create fftw plans for relevant dimension
       if (this->dim==2) {
-	forward_plan = fftw_plan_dft_r2c_1d(this->nb_nodes_x_global,
+	forward_plan = fftw_plan_dft_r2c_1d(this->nb_nodes_global[0],
 					    nfc, fd_nfc, FFTW_MEASURE);
-	backward_plan = fftw_plan_dft_c2r_1d(this->nb_nodes_x_global,
+	backward_plan = fftw_plan_dft_c2r_1d(this->nb_nodes_global[0],
 					     fd_nfc, nfc, FFTW_MEASURE);
       }
       else if (this->dim==3) {
-	forward_plan = fftw_plan_dft_r2c_2d(this->nb_nodes_x_global,
-					    this->nb_nodes_z_global,
+	forward_plan = fftw_plan_dft_r2c_2d(this->nb_nodes_global[0],
+					    this->nb_nodes_global[2],
 					    nfc, fd_nfc, FFTW_MEASURE);
-	backward_plan = fftw_plan_dft_c2r_2d(this->nb_nodes_x_global,
-					     this->nb_nodes_z_global,
+	backward_plan = fftw_plan_dft_c2r_2d(this->nb_nodes_global[0],
+					     this->nb_nodes_global[2],
 					     fd_nfc, nfc, FFTW_MEASURE);
       }
       this->forward_plans.push_back(forward_plan);
@@ -204,7 +223,7 @@ void FFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
     
       double nb_nodes_global = this->getNbGlobalNodes();
       double * p_field = nodal_field.data(d);
-      for (int i=0; i<this->nb_nodes_local_alloc; ++i) { // for fftw_mpi it includes padding
+      for (int i=0; i<nodal_field.getNbNodes(); ++i) { // for fftw_mpi it includes padding
 	p_field[i] /= nb_nodes_global;
       }
     }
@@ -218,35 +237,35 @@ void FFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
  * computeStressFourierCoeff()
  *
  */
-void FFTableMesh::initWaveNumbersGlobal(double ** wave_numbers) {
+void FFTableMesh::initWaveNumbersGlobal(TwoDVector & wave_numbers) {
 
   // fundamental mode
-  double k1 = 2*M_PI / this->length_x;
+  double k1 = 2*M_PI / this->lengths[0];
   double m1 = 0.0;
   if (this->dim == 3)
-    m1 = 2*M_PI / this->length_z;
+    m1 = 2*M_PI / this->lengths[2];
 
   // compute nyquest frequency
-  int f_ny_x = this->nb_fft_x_global; // 2D
+  int f_ny_x = this->nb_fft_global[0]; // 2D
   if (this->dim == 3)
-    f_ny_x = this->nb_fft_x_global/2+1;
+    f_ny_x = this->nb_fft_global[0]/2+1;
 
   // init wave numbers global
-  for (int i=0; i<this->nb_fft_x_global; ++i) {
-    for (int j=0; j<this->nb_fft_z_global; ++j) {
-      int ij =  i*this->nb_fft_z_global + j;
+  for (int i=0; i<this->nb_fft_global[0]; ++i) {
+    for (int j=0; j<this->nb_fft_global[2]; ++j) {
+      int ij =  i*this->nb_fft_global[2] + j;
       
       if (this-> dim == 2) {
-	wave_numbers[0][ij] = k1 * i;
+	wave_numbers(ij,0) = k1 * i;
       }
       else {
 	// after nyquest frequncy modes are negative
 	// e.g. 0, 1, 2, ... ny, -ny, -ny+1, ... -2, -1
-	wave_numbers[0][ij] = k1 * (i - (i/f_ny_x)*this->nb_fft_x_global);
-	wave_numbers[2][ij] = m1 * j;
+	wave_numbers(ij,0) = k1 * (i - (i/f_ny_x)*this->nb_fft_global[0]);
+	wave_numbers(ij,2) = m1 * j;
       }
 
-      wave_numbers[1][ij] = 0.0; // we re on the xz plane
+      wave_numbers(ij,1) = 0.0; // we re on the xz plane
     }
   }
 }

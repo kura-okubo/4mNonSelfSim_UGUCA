@@ -45,20 +45,16 @@ __BEGIN_UGUCA__
  */
 CustomMesh::CustomMesh(double Lx, int Nx,
 		       std::vector<double> & x_coords) :
-  SimpleMesh(Lx,Nx,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
+  SimpleMesh(Lx,Nx),
+  max_nodes_pp(-1)
 {
   std::vector<double> empty(0);
   this->init(x_coords, empty);
 }
 
 CustomMesh::CustomMesh(double Lx, int Nx) :
-  SimpleMesh(Lx,Nx,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
+  SimpleMesh(Lx,Nx),
+  max_nodes_pp(-1)
 {}
 
 /* --------------------------------------------------------------------------
@@ -68,24 +64,20 @@ CustomMesh::CustomMesh(double Lx, int Nx,
 		       double Lz, int Nz,
 		       std::vector<double> & x_coords,
 		       std::vector<double> & z_coords) :
-  SimpleMesh(Lx,Nx,Lz,Nz,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
+  SimpleMesh(Lx,Nx,Lz,Nz),
+  max_nodes_pp(-1)
 {
   this->init(x_coords, z_coords);
 }
 
 CustomMesh::CustomMesh(double Lx, int Nx,
 		       double Lz, int Nz) :
-  SimpleMesh(Lx,Nx,Lz,Nz,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
+  SimpleMesh(Lx,Nx,Lz,Nz),
+  max_nodes_pp(-1)
 {}
 
 /* -------------------------------------------------------------------------- */
-CustomMesh::~CustomMesh() {
+/*CustomMesh::~CustomMesh() {
   delete[] this->double_buffer;
   delete[] this->sort_custom_nodes_map;
 }
@@ -94,14 +86,14 @@ CustomMesh::~CustomMesh() {
 void CustomMesh::init(std::vector<double> & x_coords,
 		      std::vector<double> & z_coords) {
 
-  DistributedFFTableMesh::init();
+  //DistributedFFTableMesh::init();
     
   int psize = StaticCommunicatorMPI::getInstance()->getNbProc();
 
   this->initCustomCoords(x_coords, z_coords);
 
   // all procs could gather and scatter as root
-  this->double_buffer = new double[this->max_nodes_pp*psize];
+  this->double_buffer.resize(this->max_nodes_pp*psize);
     for (int i=0; i<this->max_nodes_pp*psize; ++i)
       this->double_buffer[i] = 0.;
   
@@ -166,8 +158,8 @@ void CustomMesh::initCustomCoords(std::vector<double> & x_coords,
     this->nb_nodes_local_alloc = this->max_nodes_pp;
   
   // correct size of local coords array
-  this->freeRealSpace();
-  this->allocateRealSpace();
+  //this->freeRealSpace();
+  //this->allocateRealSpace();
 
   // copy coordinates
   for (int n=0; n<this->nb_nodes_local; ++n){

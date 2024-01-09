@@ -44,26 +44,24 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 DistributedFFTableMesh::DistributedFFTableMesh(double Lx,
-					       int Nx,
-					       bool initialize) :
-  FFTableMesh(Lx, Nx, false),
+					       int Nx) :
+  FFTableMesh(Lx, Nx),
+  //wave_numbers_global(3,0),
   max_fft_pp(0) {
-  if (initialize)
-    this->init();
+  this->init();
 }
 
 /* -------------------------------------------------------------------------- */
 DistributedFFTableMesh::DistributedFFTableMesh(double Lx, int Nx,
-					       double Lz, int Nz,
-					       bool initialize) :
-  FFTableMesh(Lx, Nx, Lz, Nz, false),
+					       double Lz, int Nz) : 
+  FFTableMesh(Lx, Nx, Lz, Nz),
+  //wave_numbers_global(3,0),
   max_fft_pp(0) {
-  if (initialize)
-    this->init();
+  this->init();
 }
 
 /* -------------------------------------------------------------------------- */
-DistributedFFTableMesh::~DistributedFFTableMesh() {
+/*DistributedFFTableMesh::~DistributedFFTableMesh() {
   delete[] this->fftw_complex_buffer;
   delete[] this->sort_fft_modes_map;
 }
@@ -72,52 +70,48 @@ DistributedFFTableMesh::~DistributedFFTableMesh() {
 void DistributedFFTableMesh::init() {
 
   int psize = StaticCommunicatorMPI::getInstance()->getNbProc();
-
+  
   // if serial: just use FFTableMesh, hence local = global
-  if (psize == 1) { // serial
-
-    FFTableMesh::init();
-    
-    // just to avoid segmentation fault by deleteing an non new pointer
-    this->sort_fft_modes_map = new int [1];
-    this->fftw_complex_buffer = new fftw_complex [1];
-  } // end serial
+  if (psize == 1) {} // serial
   
   else { // parallel
 
     if (psize%2 != 0)
-      throw std::runtime_error("ERROR: number of mpi process needs to be even number\n");
-    
-    FFTableMesh::initSpectralSpace();
+      throw std::runtime_error("ERROR: number of mpi process needs to be even\n");
+
+    //FFTableMesh::initSpectralSpace();
 
     // will be corrected by assignFFTModes function
-    this->mode_zero_rank = -1;
-    this->mode_zero_index = -1;
+    //this->mode_zero_rank = -1;
+    //this->mode_zero_index = -1;
     
     // global wave numbers
-    this->allocateVector(this->wave_numbers_global, this->getNbGlobalFFT());
-    this->initWaveNumbersGlobal(this->wave_numbers_global);
+    //this->allocateVector(this->wave_numbers_global, this->getNbGlobalFFT());
+    TwoDVector wave_numbers_global(3,this->getNbGlobalFFT());  // local {k,-,m}
+    this->initWaveNumbersGlobal(wave_numbers_global);
 
     // assign the modes to procs
     // fills the this->sort_fft_modes_map
-    this->assignFFTModes(this->wave_numbers_global);
+    this->assignFFTModes(wave_numbers_global);
 
     // allocate wave_numbers_local
-    this->allocateSpectralSpace();
+    //this->allocateSpectralSpace();
     
     // actually sort modes and scatter them
     for (int d=0; d<this->dim; ++d){
-      this->sortAndScatterFFTModes(this->wave_numbers_global[d],
-				   this->wave_numbers_local[d],
+      this->sortAndScatterFFTModes(wave_numbers_global.data(d).data(),
+				   this->getWaveNumbersLocalData(d),
 				   this->root);
     }
 
     // wave_numbers_global are not needed anymore
-    this->freeVector(this->wave_numbers_global);
+    //this->freeVector(this->wave_numbers_global);
 
     // for sorting (all ranks should be able to do it)
-    this->fftw_complex_buffer = new fftw_complex[this->max_fft_pp*psize];
-  } // end parallel
+    //this->fftw_complex_buffer.resize(this->max_fft_pp*psize); // does not work because vector of array
+    std::vector<fftw_complex> tmp(this->max_fft_pp*psize);
+    this->fftw_complex_buffer.swap(tmp);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -145,7 +139,7 @@ void DistributedFFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
  * for small mesh sizes or very big world_size not optimal
  * because 1st mode is very big
  */
-void DistributedFFTableMesh::assignFFTModes(double ** wave_numbers_global) {
+void DistributedFFTableMesh::assignFFTModes(TwoDVector & wave_numbers_global) {
 
   int psize = StaticCommunicatorMPI::getInstance()->getNbProc();
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -193,11 +187,27 @@ void DistributedFFTableMesh::assignFFTModes(double ** wave_numbers_global) {
 					 nb_modes_p_rank.end());
   } // prank == root
   
-  // done by everybody
-  StaticCommunicatorMPI::getInstance()->broadcast(&this->max_fft_pp,1);
+  // scatter individual nb_fft_local to each process
+  int nb_fft_local = -1;
   StaticCommunicatorMPI::getInstance()->scatter(nb_modes_p_rank.data(),
-						&this->nb_fft_local,1);
+						&nb_fft_local,1);
+  // broadcast the max of nb_fft_local
+  StaticCommunicatorMPI::getInstance()->broadcast(&this->max_fft_pp,1);
 
+  // define how much fft needs to be allocated
+  int nb_fft_local_alloc = -1;
+  if (prank == this->root)
+    nb_fft_local_alloc = this->max_fft_pp*psize;
+  else
+    nb_fft_local_alloc = this->max_fft_pp;
+
+  // resize the local wave numbers
+  FFTableMesh::resize(nb_fft_local, nb_fft_local_alloc);
+
+  // resize the fft modes map
+  this->sort_fft_modes_map.resize(nb_fft_global);
+
+  
 #ifdef UCA_VERBOSE
   if (prank == this->root) {
     std::cout<<"mode assigned [mode -> rank]:"<<std::endl;
@@ -207,14 +217,6 @@ void DistributedFFTableMesh::assignFFTModes(double ** wave_numbers_global) {
   }
 #endif
 
-  
-  // for gather to root, it needs full length of alloc
-  if (prank == this->root)
-    this->nb_fft_local_alloc = this->max_fft_pp*psize;
-  else
-    this->nb_fft_local_alloc = this->max_fft_pp;
-
-  this->sort_fft_modes_map = new int [nb_fft_global];
   
   // build sorting array from mode_assigned
   // allocate memory now that we know the size
@@ -243,7 +245,7 @@ void DistributedFFTableMesh::assignFFTModes(double ** wave_numbers_global) {
   StaticCommunicatorMPI::getInstance()->broadcast(&this->mode_zero_rank,1);
   StaticCommunicatorMPI::getInstance()->broadcast(&this->mode_zero_index,1);
 
-  StaticCommunicatorMPI::getInstance()->broadcast(this->sort_fft_modes_map,
+  StaticCommunicatorMPI::getInstance()->broadcast(this->sort_fft_modes_map.data(),
 						  nb_fft_global); 
 
 #ifdef UCA_VERBOSE
@@ -259,8 +261,8 @@ void DistributedFFTableMesh::assignFFTModes(double ** wave_numbers_global) {
 
 /* -------------------------------------------------------------------------- */
 void DistributedFFTableMesh::computeWorkPerMode(
-			     double** wave_numbers_global,
-			     std::vector<double> & work_per_mode) {
+						TwoDVector & wave_numbers_global,
+						std::vector<double> & work_per_mode) {
 
   int nb_fft_global = this->getNbGlobalFFT();
   
@@ -269,10 +271,10 @@ void DistributedFFTableMesh::computeWorkPerMode(
   work_per_mode[0] = 0.0; // no convolution for 0 mode
   for (int i=1; i<nb_fft_global; ++i) {
 
-    double k = wave_numbers_global[0][i];
+    double k = wave_numbers_global(i,0);
     double m = 0.0;
     if (this->dim==3)
-      m = wave_numbers_global[2][i];
+      m = wave_numbers_global(i,2);
 
     double q = std::sqrt(k*k + m*m);
     work_per_mode[i] = 1.0 / q;
@@ -485,7 +487,7 @@ void DistributedFFTableMesh::sortAndScatterFFTModes(double * Uglobal,
   double * buffer = NULL;
 
   if (prank==root_rank)
-    buffer = new double[this->nb_fft_local_alloc]();
+    buffer = new double[this->getNbLocalFFTAlloc()]();
 
   this->sortAndScatterFFTModes(Uglobal, Ulocal, buffer,
 			       this->max_fft_pp, root_rank);
@@ -499,7 +501,7 @@ void DistributedFFTableMesh::sortAndScatterFFTModes(fftw_complex * Uglobal,
   // 2* accounts for real and imag parts -> fftw_complex aka double[2]
   this->sortAndScatterFFTModes(Uglobal,
 			       Ulocal,
-			       this->fftw_complex_buffer,
+			       this->fftw_complex_buffer.data(),
 			       (this->max_fft_pp)*2,
 			       root_rank);
 }
@@ -513,7 +515,7 @@ void DistributedFFTableMesh::gatherAndSortFFTModes(fftw_complex * Uglobal,
   // 2* accounts for real and imag parts -> fftw_complex aka double[2]
   this->gatherAndSortFFTModes(Uglobal,
 			      Ulocal,
-			      this->fftw_complex_buffer,
+			      this->fftw_complex_buffer.data(),
 			      (this->max_fft_pp)*2,
 			      root_rank);
 }

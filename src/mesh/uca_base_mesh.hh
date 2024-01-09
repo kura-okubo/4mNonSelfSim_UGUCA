@@ -38,6 +38,25 @@
 
 __BEGIN_UGUCA__
 
+class TwoDVector {
+public:
+  TwoDVector(int dim, int N) : storage(dim,std::vector<double>(N)) {}
+
+  void resize(int N) {
+    for (auto& vec : this->storage)
+      vec.resize(N);
+  }
+  
+  inline double & operator()(int n, int d) { return this->storage[d][n]; }
+  inline double operator()(int n, int d) const { return this->storage[d][n]; }
+  inline std::vector<double> & data(int d) { return this->storage[d]; }
+private:
+  std::vector<std::vector<double>> storage;
+private:
+  // private copy constructor: avoid copying when forgetting &
+  TwoDVector(TwoDVector & to_copy);
+};
+
 class BaseMesh {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -50,14 +69,14 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init() = 0;
+  //virtual void init() = 0;
   
 protected:
-  virtual void allocateRealSpace();
-  virtual void freeRealSpace();
+  //virtual void allocateRealSpace();
+  //virtual void freeRealSpace();
 
-  virtual void allocateVector(double ** vec, int size);
-  virtual void freeVector(double ** vec);
+  //virtual void allocateVector(double ** vec, int size);
+  //virtual void freeVector(double ** vec);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -71,13 +90,17 @@ public:
 
   // nodes and coordinates
   virtual int getNbLocalNodes() const { return this->nb_nodes_local; }
-  double ** getLocalCoords() { return this->coords_local; }
+  const TwoDVector & getLocalCoords() const { return this->coords_local; }
+  //double ** getLocalCoords() { return this->coords_local; }
   
   // inheritate mesh needs to know if it is parallel or not
-  virtual int getNbGlobalNodes() const = 0;
+  virtual int getNbGlobalNodes() const { return this->getNbLocalNodes(); };
 
   // allocation length
   int getNbLocalNodesAlloc() const { return this->nb_nodes_local_alloc; }
+
+  // resize coordinates
+  virtual void resize(int nb_nodes, int alloc=-1);
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -87,15 +110,17 @@ protected:
   int root;
   
   // allocated
-  bool rs_allocated;
+  //bool rs_allocated;
   
   // spatial dimension: either 2 or 3
   int dim;
 
+private:
   // discretization: local
   int nb_nodes_local;
   int nb_nodes_local_alloc;
-  double * coords_local[3]; // cannot use NodalField because it uses mesh
+  //double * coords_local[3]; // cannot use NodalField because it uses mesh
+  TwoDVector coords_local;
 };
 
 __END_UGUCA__

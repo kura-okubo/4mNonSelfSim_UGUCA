@@ -44,11 +44,9 @@ class SimpleMesh : public DistributedFFTableMesh {
   /* ------------------------------------------------------------------------ */
 public:
 
+  SimpleMesh(double Lx, int Nx);
   SimpleMesh(double Lx, int Nx,
-	     bool initialize = true);
-  SimpleMesh(double Lx, int Nx,
-	     double Lz, int Nz,
-	     bool initialize = true);
+	     double Lz, int Nz);
 
   virtual ~SimpleMesh();
 
@@ -56,10 +54,10 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init();
+  //virtual void init();
   
 protected:
-  virtual void initSimpleCoords(double ** coords);
+  virtual void initSimpleCoords(TwoDVector & coords);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */

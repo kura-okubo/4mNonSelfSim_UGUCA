@@ -36,19 +36,28 @@ __BEGIN_UGUCA__
 /* -------------------------------------------------------------------------- */
 BaseMesh::BaseMesh(int dim, int N) :
   root(0),
-  rs_allocated(false),
+  //  rs_allocated(false),
   dim(dim),
   nb_nodes_local(N),
-  nb_nodes_local_alloc(N) {
-  this->allocateRealSpace();
+  nb_nodes_local_alloc(N),
+  coords_local(dim,N) {
+  //this->allocateRealSpace();
 }
 
 /* -------------------------------------------------------------------------- */
 BaseMesh::~BaseMesh() {
-  this->freeRealSpace();
+  //  this->freeRealSpace();
 }
 
 /* -------------------------------------------------------------------------- */
+void BaseMesh::resize(int nb_nodes, int alloc) {
+  this->nb_nodes_local = nb_nodes;
+  this->nb_nodes_local_alloc = (alloc < nb_nodes ? nb_nodes : alloc);
+  this->coords_local.resize(this->nb_nodes_local_alloc);
+}
+
+/* -------------------------------------------------------------------------- */
+/*
 void BaseMesh::allocateRealSpace() {
 
   // do not allocate twice
@@ -60,15 +69,17 @@ void BaseMesh::allocateRealSpace() {
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseMesh::freeRealSpace() {
+/*void BaseMesh::freeRealSpace() {
+  /*
   if (this->rs_allocated) {
     this->freeVector(this->coords_local);
   }
   this->rs_allocated = false;
+  
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseMesh::allocateVector(double ** vec, int size) {
+/*void BaseMesh::allocateVector(double ** vec, int size) {
 
   for (int d=0; d<this->dim; ++d) {
     vec[d] = new double [size];
@@ -79,10 +90,10 @@ void BaseMesh::allocateVector(double ** vec, int size) {
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseMesh::freeVector(double ** vec) {
+/*void BaseMesh::freeVector(double ** vec) {
   for (int d=0; d<this->dim; ++d) {
     delete[] vec[d];
   }
-}
+  }*/
 
 __END_UGUCA__
