@@ -160,13 +160,6 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   // --------------
   // COMPUTE F
   // --------------
-
-  // access to fourier coefficients of stresses
-  fftw_complex * internal_fd[3];
-  for (int d = 0; d < this->mesh.getDim(); ++d)
-    internal_fd[d] = this->internal.fd_data(d);
- 
-  
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
     
     // ignore mode 0
@@ -215,16 +208,16 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     
     // set values to internal force
     for (int d = 0; d < this->mesh.getDim(); ++d) {
-      internal_fd[d][j][0] = std::real(F[d]);  // real part
-      internal_fd[d][j][1] = std::imag(F[d]);  // imag part
+      this->internal.fd(j,d)[0] = std::real(F[d]);  // real part
+      this->internal.fd(j,d)[1] = std::imag(F[d]);  // imag part
     }
   }
   
   // correct mode 0
   if (prank == m0_rank) {
     for (int d = 0; d < this->mesh.getDim(); ++d) {
-      internal_fd[d][m0_index][0] = 0.;  // real part
-      internal_fd[d][m0_index][1] = 0.;  // imag part
+      this->internal.fd(m0_index,d)[0] = 0.;  // real part
+      this->internal.fd(m0_index,d)[1] = 0.;  // imag part
     }
   }
 }
