@@ -174,23 +174,28 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     
     // current U
     std::vector<std::complex<double>> U;
-    U.resize(this->mesh.getDim());
+    U.resize(3); //this->mesh.getDim());  // <-------------------------------- fix
+    for (int d=0; d<3; ++d) U[d] = {0,0}; // <-------------------------------- fix
     for (int d=0; d<this->mesh.getDim(); ++d)
       U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     
     // to be computed
     std::vector<std::complex<double>> F;
-    F.resize(this->mesh.getDim());
+    F.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
     
     if (this->mesh.getDim() == 2) {
       double q = wave_numbers(j,0);
-      this->computeF2D(F,
-		       q,
+      this->computeF3D(F,q,0,
 		       U,
 		       conv[std::make_pair(Kernel::Krnl::H00,0)][j],  // H00-U0
+		       {0,0}, // H00-U2
 		       conv[std::make_pair(Kernel::Krnl::H01,0)][j],  // H01-U0
+		       {0,0}, // H01-U2
 		       conv[std::make_pair(Kernel::Krnl::H01,1)][j],  // H01-U1
-		       conv[std::make_pair(Kernel::Krnl::H11,1)][j]); // H11-U1
+		       conv[std::make_pair(Kernel::Krnl::H11,1)][j],  // H11-U1
+		       {0,0}, // H22-U0
+		       {0,0}  // H22-U2
+		       ); 
     } else {
       // q = {k,m} wave number in x,y direction
       double k = wave_numbers(j,0);

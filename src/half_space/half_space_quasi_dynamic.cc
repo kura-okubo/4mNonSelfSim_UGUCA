@@ -185,8 +185,8 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     if ((prank == m0_rank) && (j == m0_index)) continue;
     
     std::vector<std::complex<double>> U;
-    U.resize(this->mesh.getDim());
-
+    U.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
+    for (int d=0; d<3; ++d) U[d] = {0,0}; // <-------------------------------- fix
     for (int d = 0; d < this->mesh.getDim(); ++d) {
       U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     }
@@ -196,15 +196,21 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     double H11_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H11,j);
     
     std::vector<std::complex<double>> F;
-    F.resize(this->mesh.getDim());
+    F.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
+
     if (this->mesh.getDim() == 2) {
       double q = wave_numbers(j,0);
-      this->computeF2D(F,q,
+      this->computeF3D(F,q,0,
 		       U,
-		       H00_integrated*U[0],
-		       H01_integrated*U[0],
-		       H01_integrated*U[1],
-		       H11_integrated*U[1]);
+		       H00_integrated*U[0], // H00-U0
+		       {0,0}, // H00-U2
+		       H01_integrated*U[0], // H01-U0
+		       {0,0}, // H01-U2
+		       H01_integrated*U[1], // H01-U1
+		       H11_integrated*U[1],  // H11-U1
+		       {0,0}, // H22-U0
+		       {0,0} // H22-U2
+		       );
     } else {
       
       double H22_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H22,j);
