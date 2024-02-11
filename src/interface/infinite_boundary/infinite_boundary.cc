@@ -99,8 +99,8 @@ void InfiniteBoundary::computeExternal() {
   std::vector<double> eta = {1.0, Cp / Cs, 1.0};
 
   int sf = this->hs->getSideFactor();
-  
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+
+  for (const auto& d : this->external.getComponents()) {
     double *int_p =  this->hs->getInternal().data(d);
     double *ext_p =  this->external.data(d);
     double *velo_p = this->hs->getVelo().data(d);
@@ -130,12 +130,6 @@ void InfiniteBoundary::advanceTimeStepNeumann() {
 
 /* -------------------------------------------------------------------------- */
 void InfiniteBoundary::registerDumpField(const std::string &field_name) {
-
-  int d = std::atoi(&field_name[field_name.length() - 1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
 
   bool registered = false;
 

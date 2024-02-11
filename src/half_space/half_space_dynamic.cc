@@ -138,8 +138,8 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 
     // ignore mode 0
     if ((prank == m0_rank) && (j == m0_index)) continue;
-    
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+
+    for (const auto& d : _disp.getComponents()) {
       
       std::complex<double> Udj = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
       
@@ -169,7 +169,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     std::vector<std::complex<double>> U;
     U.resize(3); //this->mesh.getDim());  // <-------------------------------- fix
     for (int d=0; d<3; ++d) U[d] = {0,0}; // <-------------------------------- fix
-    for (int d=0; d<this->mesh.getDim(); ++d)
+    for (const auto& d : _disp.getComponents())
       U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     
     // to be computed
@@ -207,7 +207,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     }
     
     // set values to internal force
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+    for (const auto& d : this->internal.getComponents()) {
       this->internal.fd(j,d)[0] = std::real(F[d]);  // real part
       this->internal.fd(j,d)[1] = std::imag(F[d]);  // imag part
     }
@@ -215,7 +215,7 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   
   // correct mode 0
   if (prank == m0_rank) {
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+    for (const auto& d : this->internal.getComponents()) {
       this->internal.fd(m0_index,d)[0] = 0.;  // real part
       this->internal.fd(m0_index,d)[1] = 0.;  // imag part
     }
@@ -242,7 +242,7 @@ void HalfSpaceDynamic::setSteadyState(bool predicting) {
     // ignore mode 0
     if ((prank == m0_rank) && (j == m0_index)) continue;
 
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+    for (const auto& d : _disp.getComponents()) {
 
       this->U_history.get(d,j)->setSteadyState({_disp.fd(j,d)[0],
 	                                        _disp.fd(j,d)[1]});

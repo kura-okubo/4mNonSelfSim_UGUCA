@@ -182,7 +182,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     std::vector<std::complex<double>> U;
     U.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
     for (int d=0; d<3; ++d) U[d] = {0,0}; // <-------------------------------- fix
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+    for (const auto& d : _disp.getComponents()) {
       U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     }
 
@@ -226,7 +226,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     }
     
     // set values to internal force
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+    for (const auto& d : this->internal.getComponents()) {
       this->internal.fd(j,d)[0] = std::real(F[d]);  // real part
       this->internal.fd(j,d)[1] = std::imag(F[d]);  // imag part
     }
@@ -234,7 +234,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
 
   // correct mode 0
   if (prank == m0_rank) {
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
+    for (const auto& d : this->internal.getComponents()) {
       this->internal.fd(m0_index,d)[0] = 0.;  // real part
       this->internal.fd(m0_index,d)[1] = 0.;  // imag part
     }

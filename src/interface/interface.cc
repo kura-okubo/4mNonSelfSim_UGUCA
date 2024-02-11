@@ -192,8 +192,8 @@ void Interface::computeCohesion(bool predicting) {
 
 /* -------------------------------------------------------------------------- */
 void Interface::combineLoadAndCohesion(NodalField & load_and_cohesion) {
-  
-  for (int d=0; d<this->mesh.getDim(); ++d) {
+
+  for (const auto& d : load_and_cohesion.getComponents()) {
 
     // tau_0 - tau_coh
     double * load_and_cohesion_p = load_and_cohesion.data(d);
