@@ -101,7 +101,7 @@ ConvMap::iterator it;
 
      // modal U
      unsigned int U_dim = it->first.second;
-     std::shared_ptr<ModalLimitedHistory> U_j = this->field->get(U_dim,j);
+     ModalLimitedHistory & U_j = this->field->hist(U_dim,j);
      
      // std::vector<std::complex<double>> & res = it->second;
      it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j.get());

@@ -34,10 +34,10 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 LimitedHistory::LimitedHistory(FFTableMesh & mesh) :
-  dimension(mesh.getDim()), nbfft(mesh.getNbLocalFFT()) {
+  nbfft(mesh.getNbLocalFFT()) {
 
-  this->history.resize(this->dimension*this->nbfft);
-  for (unsigned int i=0; i<this->dimension*this->nbfft; ++i) {
+  this->history.resize(mesh.getDim()*this->nbfft);
+  for (unsigned int i=0; i<mesh.getDim()*this->nbfft; ++i) {
     this->history[i] = std::make_shared<ModalLimitedHistory>();
   }
 }

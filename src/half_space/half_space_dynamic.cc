@@ -40,7 +40,7 @@ HalfSpaceDynamic::HalfSpaceDynamic(Material & material,
 				   SpatialDirectionSet components,
 				   const std::string & name) :
   HalfSpaceQuasiDynamic(material, mesh, side_factor, components, name),
-  U_history(mesh),
+  //U_history(mesh),
   previously_dynamic(true) {
   
 #ifdef UCA_VERBOSE
@@ -78,7 +78,7 @@ void HalfSpaceDynamic::initConvolutions() {
 
   HalfSpaceQuasiDynamic::initConvolutions();
 
-  this->convolutions.registerHistory(this->U_history);
+  this->convolutions.registerHistory(this->disp);
   
   this->convolutions.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
   this->convolutions.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
@@ -123,8 +123,6 @@ void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 							bool correcting) {
 
-  FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
-
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
@@ -134,21 +132,14 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   // --------------
   // UPDATE HISTORY
   // --------------
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
-
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    for (const auto& d : _disp.getComponents()) {
-      
-      std::complex<double> Udj = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
-      
-      if (correcting) {
-        this->U_history.get(d,j)->changeCurrentValue(Udj);
-      } else {
-        this->U_history.get(d,j)->addCurrentValue(Udj);
-      }
-    }
+  if (predicting) {
+    this->disp.addCurrentValueToHistory(this->disp_pc);
+  }
+  else {
+    this->disp.addCurrentValueToHistory();
+  }
+  if (correcting) {
+    this->disp.changeCurrentValueOfHistory();
   }
   
   // --------------
@@ -160,6 +151,8 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   // --------------
   // COMPUTE F
   // --------------
+  FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
+
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
     
     // ignore mode 0

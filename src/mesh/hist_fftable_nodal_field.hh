@@ -1,12 +1,14 @@
 /**
- * @file   convolutions.hh
+ * @file   hist_fftable_nodal_field.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
+ * @author Gabriele Albertini <ga288@cornell.edu>
+ * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Thu Jul 14 2022
- * @date last modification: Thu Jul 14 2022
+ * @date creation: Fri Feb 5 2021
+ * @date last modification: Fri Feb 5 2021
  *
- * @brief  Contains PreintKernels for each type of kernel and each mode
+ * @brief  TODO
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -26,100 +28,91 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __CONVOLUTIONS_H__
-#define __CONVOLUTIONS_H__
 /* -------------------------------------------------------------------------- */
-#include "uca_common.hh"
-#include "material.hh"
-#include "uca_fftable_mesh.hh"
-#include "preint_kernel.hh"
+#ifndef __HIST_FFTABLE_NODAL_FIELD_H__
+#define __HIST_FFTABLE_NODAL_FIELD_H__
+/* -------------------------------------------------------------------------- */
+#include "fftable_nodal_field.hh"
 
-#include <map>
+#include "modal_limited_history.hh"
+#include "convolutions.hh"
+
 #include <memory>
 
+/* -------------------------------------------------------------------------- */
+
 __BEGIN_UGUCA__
-
-//class LimitedHistory;
-class HistFFTableNodalField;
-
-class Convolutions {
+class HistFFTableNodalField : public FFTableNodalField {
 
   /* ------------------------------------------------------------------------ */
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
-public:
-  typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
 protected:
-  typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
-  typedef std::pair<Kernel::Krnl,unsigned int> ConvPair;
-  typedef std::vector<std::complex<double>> VecComplex;
-  typedef std::map<ConvPair,VecComplex> ConvMap;
-  
-  
+  typedef std::vector<ModalLimitedHistory> LHVector;
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  Convolutions(FFTableMesh & mesh);
+  HistFFTableNodalField(const std::string & name = "unnamed") : FFTableNodalField(name) {}
 
-  virtual ~Convolutions();
+  HistFFTableNodalField(FFTableMesh & mesh,
+			SpatialDirectionSet components = {0},
+			const std::string & name = "unnamed");
+
+  virtual ~HistFFTableNodalField() {}
+
+private:
+  // private copy constructor: NodalField cannot be copied (for now to debug)
+  HistFFTableNodalField(HistFFTableNodalField & to_copy);
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  
-  // preintegrate kernels
-  void preintegrate(Material & material, Kernel::Krnl kernel,
-		    double scale_factor, double time_step);
+  // adds current value to history (for all modes and dimensions)
+  void addCurrentValueToHistory();
 
-  void registerHistory(HistFFTableNodalField & limited_history) {
-    this->field = &(limited_history);
-  }
-  
-  // initialize a convolution computation
-  void init(ConvPair conv);
+  // add current value of a different vector to history
+  // (needed when predicting)
+  void addCurrentValueToHistory(FFTableNodalField & other);
 
-  // get convolution results
-  void convolve();
-  
+  // change current value to history (for all modes and dimensions)
+  void changeCurrentValueOfHistory();
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // get ModalLimitedHistory of frequency domain in direction d
+  inline ModalLimitedHistory & hist(int f, int d=0);
 
-  // simple full integral of kernel
-  double getKernelIntegral(Kernel::Krnl kernel, int wave_number) {
-    return this->pi_kernels[kernel][wave_number]->getIntegral();
-  }
-  
-  const ConvMap & getResults() { return this->results; }
-  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-private:
+protected:
 
-  // reference to mesh
-  FFTableMesh & mesh;
-
-  // pointer to limited history to convolve kernels with
-  HistFFTableNodalField * field;
+  // start indices for each component
+  std::vector<int> hist_start;
   
-  // preintegrated kernels [kernel][mode]
-  // e.g., pi_kernels[Kernel::Krnl::H00][1]
-  PIKernelMap pi_kernels;
-
-  /// convolution results
-  ConvMap results;
+  // past values of field in frequency domain
+  // each LimitedHistory is for a given dimension d and wave number q
+  LHVector hist_storage;
 };
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
+inline ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) {
+  if (!this->components.count(d)) 
+    throw std::runtime_error("HistFFTableNodalField "
+			     +this->name
+			     +" has no component "
+			     +std::to_string(d)+"\n");
+  // needs to be structured as fd_storage
+  return this->hist_storage[this->hist_start[d]+f]; 
+}
 
 __END_UGUCA__
 
-//#include "convolutions_impl.cc"
-
-#endif /* __CONVOLUTIONS_H__ */
+#endif /* __HIST_FFTABLE_NODAL_FIELD_H__ */

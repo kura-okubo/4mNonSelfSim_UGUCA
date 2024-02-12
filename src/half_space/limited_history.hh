@@ -78,9 +78,6 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // copy of spatial dimension for fast use in get accessor
-  unsigned int dimension;
-
   // copy of nbfft for fast useful
   unsigned int nbfft;
   

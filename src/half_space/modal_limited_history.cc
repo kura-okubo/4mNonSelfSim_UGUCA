@@ -48,7 +48,7 @@ void ModalLimitedHistory::registerKernel(std::shared_ptr<PreintKernel> pi_kernel
 
 /* -------------------------------------------------------------------------- */
 void ModalLimitedHistory::resize() {
-  this->resize(this->values_real, false);
+  this->resize(this->values_real, false); // don't update index, otherwise can't resize values_imag correctly
   this->resize(this->values_imag, true);
 }
 

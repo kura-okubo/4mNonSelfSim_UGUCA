@@ -51,6 +51,7 @@ set(UGUCA_HEADER
   # nodal fields
   mesh/nodal_field.hh
   mesh/fftable_nodal_field.hh
+  mesh/hist_fftable_nodal_field.hh
   
   # kernels and material
   half_space/kernel.hh
@@ -107,6 +108,7 @@ set(UGUCA_SRC
   # nodal fields
   mesh/nodal_field.cc
   mesh/fftable_nodal_field.cc
+  mesh/hist_fftable_nodal_field.cc
 
   # kernels and material
   half_space/kernel.cc

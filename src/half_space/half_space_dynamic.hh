@@ -81,7 +81,7 @@ public:
   virtual double getStableTimeStep();
 
   // get limited history
-  LimitedHistory & getLimitedHistory() { return U_history; }
+  //LimitedHistory & getLimitedHistory() { return U_history; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -90,7 +90,7 @@ protected:
 
   // past values of displacement in frequency domain
   // each LimitedHistory is for a given wave number q
-  LimitedHistory U_history;
+  //LimitedHistory U_history;
   
   // keeps information if previous step was dynamic
   bool previously_dynamic;
