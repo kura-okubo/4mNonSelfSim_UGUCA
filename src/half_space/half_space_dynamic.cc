@@ -91,12 +91,22 @@ void HalfSpaceDynamic::initConvolutions() {
     this->convolutions.init(std::make_pair(Kernel::Krnl::H01,2)); // H01-U2
     this->convolutions.init(std::make_pair(Kernel::Krnl::H22,2)); // H22-U2
   }    
+
+  // history of mode 0 needs to be of length zero
+  // otherwise convolution fails
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  int m0_rank = this->mesh.getMode0Rank();
+  int m0_index = this->mesh.getMode0Index();
+  if (prank == m0_rank) {
+    for (const auto& d : this->disp.getComponents())
+      this->disp.hist(m0_index,d).resize(0);
+  }
   
 #ifdef UCA_VERBOSE
   int total_work=0;
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
     for (int d=0; d<this->mesh.getDim(); ++d)
-      total_work += this->U_history.get(d,j)->getSize();
+      total_work += this->disp.hist(j,d).getSize();
   }
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
   printf("Rank %d has total work %d \n",world_rank,total_work);

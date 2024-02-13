@@ -159,14 +159,14 @@ int main(int argc, char *argv[]) {
   interface.getCohesion().setAllValuesTo(nf4v);
   HalfSpaceDynamic & top = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
   HistFFTableNodalField & top_disp = dynamic_cast<HistFFTableNodalField&>(top.getDisp());
-  double * Ur00 = const_cast<double*>(top_disp.hist(0,1).real());
-  int Ur00_size = top_disp.hist(0,1).getSize();
+  double * Ur00 = const_cast<double*>(top_disp.hist(1,0).real());
+  int Ur00_size = top_disp.hist(1,0).getSize();
   std::fill_n(Ur00,Ur00_size,nf4v);
-  double * Ui00 = const_cast<double*>(top_disp.hist(0,1).imag());
-  int Ui00_size = top_disp.hist(0,1).getSize();
+  double * Ui00 = const_cast<double*>(top_disp.hist(1,0).imag());
+  int Ui00_size = top_disp.hist(1,0).getSize();
   std::fill_n(Ui00,Ui00_size,nf4v2);
-  unsigned int nb_history_correct = top_disp.hist(0,1).getNbHistoryPoints();
-  unsigned int index_now_correct = top_disp.hist(0,1).getIndexNow();
+  unsigned int nb_history_correct = top_disp.hist(1,0).getNbHistoryPoints();
+  unsigned int index_now_correct = top_disp.hist(1,0).getIndexNow();
 
   // dump the solution
   interface.registerToRestart(restart_dump);
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 
   // fill with other information
   fftw_complex fortyfour = {44., 0};
-  const_cast<ModalLimitedHistory&>(top_disp.hist(0,1)).addCurrentValue(fortyfour);
+  const_cast<ModalLimitedHistory&>(top_disp.hist(1,0)).addCurrentValue(fortyfour);
   interface.getCohesion().setAllValuesTo(nf4v*2);
   std::fill_n(Ur00,Ur00_size,2*nf4v);
   std::fill_n(Ui00,Ui00_size,2*nf4v2);
@@ -185,15 +185,15 @@ int main(int argc, char *argv[]) {
   restart_load.load(rs_number);
 
   // check ACII
-  if (nb_history_correct != top_disp.hist(0,1).getNbHistoryPoints()) {
+  if (nb_history_correct != top_disp.hist(1,0).getNbHistoryPoints()) {
     std::cerr << "should be " << nb_history_correct
-	      << ": " << top_disp.hist(0,1).getNbHistoryPoints()
+	      << ": " << top_disp.hist(1,0).getNbHistoryPoints()
 	      << std::endl;
     return 1; // failure
   }
-  if (index_now_correct != top_disp.hist(0,1).getIndexNow()) {
+  if (index_now_correct != top_disp.hist(1,0).getIndexNow()) {
     std::cerr << "should be " << index_now_correct
-	      << ": " << top_disp.hist(0,1).getIndexNow()
+	      << ": " << top_disp.hist(1,0).getIndexNow()
 	      << std::endl;
     return 1; // failure
   }
@@ -210,10 +210,10 @@ int main(int argc, char *argv[]) {
 
   HalfSpaceDynamic & top_to_check = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
   HistFFTableNodalField & top_disp_to_check = dynamic_cast<HistFFTableNodalField&>(top_to_check.getDisp());
-  Ur00 = const_cast<double*>(top_disp_to_check.hist(0,1).real());
-  Ur00_size = top_disp_to_check.hist(0,1).getSize();
-  Ui00 = const_cast<double*>(top_disp_to_check.hist(0,1).imag());
-  Ui00_size = top_disp_to_check.hist(0,1).getSize();
+  Ur00 = const_cast<double*>(top_disp_to_check.hist(1,0).real());
+  Ur00_size = top_disp_to_check.hist(1,0).getSize();
+  Ui00 = const_cast<double*>(top_disp_to_check.hist(1,0).imag());
+  Ui00_size = top_disp_to_check.hist(1,0).getSize();
   
   for (int i=0; i<Ur00_size; ++i) {
     if (std::abs((Ur00[i] - nf4v) / nf4v) > 1e-6) {
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
   }
 
   // fill with other information
-  const_cast<ModalLimitedHistory&>(top_disp.hist(0,1)).addCurrentValue(fortyfour);
+  const_cast<ModalLimitedHistory&>(top_disp.hist(1,0)).addCurrentValue(fortyfour);
   interface.getCohesion().setAllValuesTo(nf4v*2);
   std::fill_n(Ur00,Ur00_size,2*nf4v);
   std::fill_n(Ui00,Ui00_size,2*nf4v2);
@@ -240,15 +240,15 @@ int main(int argc, char *argv[]) {
   restart_load_binary.load(rs_number);
 
   // check binary
-  if (nb_history_correct != top_disp.hist(0,1).getNbHistoryPoints()) {
+  if (nb_history_correct != top_disp.hist(1,0).getNbHistoryPoints()) {
     std::cerr << "nb_history_points should be " << nb_history_correct
-	      << ": " << top_disp.hist(0,1).getNbHistoryPoints()
+	      << ": " << top_disp.hist(1,0).getNbHistoryPoints()
 	      << std::endl;
     return 1; // failure
   }
-  if (index_now_correct != top_disp.hist(0,1).getIndexNow()) {
+  if (index_now_correct != top_disp.hist(1,0).getIndexNow()) {
     std::cerr << "index_now should be " << index_now_correct
-	      << ": " << top_disp.hist(0,1).getIndexNow()
+	      << ": " << top_disp.hist(1,0).getIndexNow()
 	      << std::endl;
     return 1; // failure
   }
@@ -262,10 +262,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  Ur00 = const_cast<double*>(top_disp_to_check.hist(0,1).real());
-  Ur00_size = top_disp_to_check.hist(0,1).getSize();
-  Ui00 = const_cast<double*>(top_disp_to_check.hist(0,1).imag());
-  Ui00_size = top_disp_to_check.hist(0,1).getSize();
+  Ur00 = const_cast<double*>(top_disp_to_check.hist(1,0).real());
+  Ur00_size = top_disp_to_check.hist(1,0).getSize();
+  Ui00 = const_cast<double*>(top_disp_to_check.hist(1,0).imag());
+  Ui00_size = top_disp_to_check.hist(1,0).getSize();
   
   for (int i=0; i<Ur00_size; ++i) {
     if (std::abs((Ur00[i] - nf4v) / nf4v) > 1e-6) {

@@ -124,6 +124,10 @@ protected:
 /* -------------------------------------------------------------------------- */
 inline void ModalLimitedHistory::addCurrentValue(fftw_complex value) {
 
+  // no history is kept
+  if (this->getSize() == 0)
+    return;
+  
   if (this->index_now == 0)
     this->index_now = this->values_real.size();
 
@@ -139,6 +143,10 @@ inline void ModalLimitedHistory::addCurrentValue(fftw_complex value) {
 
 /* -------------------------------------------------------------------------- */
 inline void ModalLimitedHistory::changeCurrentValue(fftw_complex value) {
+  // no history is kept
+  if (this->getSize() == 0)
+    return;
+
   this->values_real[this->index_now] = value[0];
   this->values_imag[this->index_now] = value[1];
 }

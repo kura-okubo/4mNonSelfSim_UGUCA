@@ -27,7 +27,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "convolutions.hh"
-#include "limited_history.hh"
+//#include "limited_history.hh"
 
 #ifdef UCA_USE_OPENMP
 #include <omp.h>
@@ -105,7 +105,7 @@ ConvMap::iterator it;
 
      // modal U
      unsigned int U_dim = it->first.second;
-     const ModalLimitedHistory & U_j = this->field->hist(U_dim,j);
+     const ModalLimitedHistory & U_j = this->field->hist(j,U_dim);
      
      // std::vector<std::complex<double>> & res = it->second;
      it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);

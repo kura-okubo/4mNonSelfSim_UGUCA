@@ -98,8 +98,9 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   // get ModalLimitedHistory of frequency domain in direction d
-  inline const ModalLimitedHistory & hist(int f, int d=0);
-
+  inline const ModalLimitedHistory & hist(int f, int d=0) const;
+  inline ModalLimitedHistory & hist(int f, int d=0);
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
@@ -115,7 +116,11 @@ protected:
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline const ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) {
+inline const ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) const {
+  return this->hist(f,d);
+}
+
+inline ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) {
   if (!this->components.count(d)) 
     throw std::runtime_error("HistFFTableNodalField "
 			     +this->name
