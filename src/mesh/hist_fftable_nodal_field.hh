@@ -35,7 +35,7 @@
 #include "fftable_nodal_field.hh"
 
 #include "modal_limited_history.hh"
-#include "convolutions.hh"
+//#include "convolutions.hh"
 
 #include <memory>
 
@@ -80,6 +80,9 @@ public:
   // change current value to history (for all modes and dimensions)
   void changeCurrentValueOfHistory();
 
+  // extend the history to at least this size
+  void extendHistory(unsigned int size);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

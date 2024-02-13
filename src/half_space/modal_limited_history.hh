@@ -33,16 +33,17 @@
 #define __MODAL_LIMITED_HISTORY_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "uca_fftable_mesh.hh"
 
-#include <iostream>
-#include <fstream>
+//#include <iostream>
+//#include <fstream>
 #include <vector>
 #include <memory>
-#include <complex>
+//#include <complex>
 
 __BEGIN_UGUCA__
 
-class PreintKernel;
+//class PreintKernel;
 
 class ModalLimitedHistory {
 
@@ -60,22 +61,31 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   // at the current value of the history
-  inline void addCurrentValue(std::complex<double> value);
-  inline void changeCurrentValue(std::complex<double> value);
+  inline void addCurrentValue(fftw_complex value);
 
-  inline void setSteadyState(std::complex<double> value);
+  // change the current value in the history
+  inline void changeCurrentValue(fftw_complex value);
+
+  // set to steady state, ie. all past values to this
+  inline void setSteadyState(fftw_complex value);
+
+  // increase size to this (keep same if this is smaller than actual size)
+  void extend(unsigned int new_size);
   
   // get history value at index with index=0 : now
-  inline std::complex<double> at(unsigned int index) const;
+  //inline std::complex<double> at(unsigned int index) const;
 
-  // update to take account for newly added preint kernels
-  void resize();
+  // resize both internal vectors to new size
+  void resize(unsigned int new_size);
   
   // register preintegrated kernel
-  void registerKernel(std::shared_ptr<PreintKernel> pi_kernel);
+  //void registerKernel(std::shared_ptr<PreintKernel> pi_kernel);
 
 private:
-  void resize(std::vector<double> & vec, bool update_index);
+  // needed because two internal vectors and index can't be updated both times
+  void resize(std::vector<double> & vec,
+	      unsigned int new_size,
+	      bool update_index);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
@@ -103,22 +113,22 @@ protected:
   std::vector<double> values_imag;
 
   // preintegrated kernels that use this limited history
-  std::vector<std::shared_ptr<PreintKernel>> pi_kernels;
+  //std::vector<std::shared_ptr<PreintKernel>> pi_kernels;
 };
 
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::addCurrentValue(std::complex<double> value) {
+inline void ModalLimitedHistory::addCurrentValue(fftw_complex value) {
 
   if (this->index_now == 0)
     this->index_now = this->values_real.size();
 
   this->index_now -= 1;
 
-  this->values_real[this->index_now] = std::real(value);
-  this->values_imag[this->index_now] = std::imag(value);
+  this->values_real[this->index_now] = value[0];
+  this->values_imag[this->index_now] = value[1];
   
   // increase the counter of history points
   this->nb_history_points = std::min(this->nb_history_points + 1,
@@ -126,20 +136,20 @@ inline void ModalLimitedHistory::addCurrentValue(std::complex<double> value) {
 }
 
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::changeCurrentValue(std::complex<double> value) {
-  this->values_real[this->index_now] = std::real(value);
-  this->values_imag[this->index_now] = std::imag(value);
+inline void ModalLimitedHistory::changeCurrentValue(fftw_complex value) {
+  this->values_real[this->index_now] = value[0];
+  this->values_imag[this->index_now] = value[1];
 }
 
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::setSteadyState(std::complex<double> value) {
+inline void ModalLimitedHistory::setSteadyState(fftw_complex value) {
   this->nb_history_points = this->values_real.size();
-  std::fill(this->values_real.begin(), this->values_real.end(), std::real(value));
-  std::fill(this->values_imag.begin(), this->values_imag.end(), std::imag(value));
+  std::fill(this->values_real.begin(), this->values_real.end(), value[0]);
+  std::fill(this->values_imag.begin(), this->values_imag.end(), value[1]);
 }
 
 /* -------------------------------------------------------------------------- */
-inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
+/*inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
   if (index >= this->values_real.size()) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
@@ -148,7 +158,7 @@ inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
   unsigned int i = (this->index_now + index) % this->values_real.size();
   return {this->values_real[i], this->values_imag[i]};
 }
-
+*/
 __END_UGUCA__
 
 #endif /* __MODAL_LIMITED_HISTORY_H__ */

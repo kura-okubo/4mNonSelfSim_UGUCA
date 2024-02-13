@@ -73,8 +73,9 @@ void Convolutions::preintegrate(Material & material,
 /* -------------------------------------------------------------------------- */
 void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int> ConvPair;
   
-  // make sure that the fields have the correct length
-  this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
+  // make sure that the history of the field has the necessary length
+  //this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
+  this->field->extendHistory(this->pi_kernels[conv.first].getSize());
   
   // prepare results
   this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(this->mesh.getNbLocalFFT())));

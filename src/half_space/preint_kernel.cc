@@ -30,6 +30,8 @@
  */
 #include "preint_kernel.hh"
 
+#include <iostream>
+
 __BEGIN_UGUCA__
 
 // BLAS INTERFACE

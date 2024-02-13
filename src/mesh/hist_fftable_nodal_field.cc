@@ -51,8 +51,7 @@ void HistFFTableNodalField::addCurrentValueToHistory() {
 
   // hist_storage and fd_storage have same size (by construction)
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
-    this->hist_storage[i].addCurrentValue({this->fd_storage[i][0],
-	                                   this->fd_storage[i][1]});
+    this->hist_storage[i].addCurrentValue(this->fd_storage[i]);
   }
 }
 
@@ -65,8 +64,7 @@ void HistFFTableNodalField::addCurrentValueToHistory(FFTableNodalField & other) 
       
   // hist_storage and fd_storage have same size (by construction)
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
-    this->hist_storage[i].addCurrentValue({other.fd_data(0)[i][0],
-	                                   other.fd_data(0)[i][1]});
+    this->hist_storage[i].addCurrentValue(other.fd_data(0)[i]);
   }
 }
 
@@ -75,10 +73,15 @@ void HistFFTableNodalField::changeCurrentValueOfHistory() {
 
   // hist_storage and fd_storage have same size (by construction)
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
-    this->hist_storage[i].changeCurrentValue({this->fd_storage[i][0],
-	                                      this->fd_storage[i][1]});
+    this->hist_storage[i].changeCurrentValue(this->fd_storage[i]);
   }
 }
- 
-  
+
+/* -------------------------------------------------------------------------- */
+void HistFFTableNodalField::extendHistory(unsigned int size) {
+  for (size_t i=0; i<this->hist_storage.size(); ++i) {
+    this->hist_storage[i].extend(size);
+  }
+}
+
 __END_UGUCA__

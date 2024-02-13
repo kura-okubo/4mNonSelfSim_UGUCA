@@ -32,6 +32,7 @@
 #include "uca_common.hh"
 #include "material.hh"
 #include "uca_fftable_mesh.hh"
+#include "hist_fftable_nodal_field.hh"
 #include "preint_kernel.hh"
 
 #include <map>
@@ -40,7 +41,7 @@
 __BEGIN_UGUCA__
 
 //class LimitedHistory;
-class HistFFTableNodalField;
+//class HistFFTableNodalField;
 
 class Convolutions {
 

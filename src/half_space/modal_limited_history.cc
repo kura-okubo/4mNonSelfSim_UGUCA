@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "modal_limited_history.hh"
-#include "preint_kernel.hh"
+//#include "preint_kernel.hh"
 #include <iterator>
 
 __BEGIN_UGUCA__
@@ -41,24 +41,34 @@ ModalLimitedHistory::ModalLimitedHistory() :
   values_real(0), values_imag(0) {}
 
 /* -------------------------------------------------------------------------- */
-void ModalLimitedHistory::registerKernel(std::shared_ptr<PreintKernel> pi_kernel) {
+/*void ModalLimitedHistory::registerKernel(std::shared_ptr<PreintKernel> pi_kernel) {
   this->pi_kernels.push_back(pi_kernel);
   this->resize();
 }
+*/
 
 /* -------------------------------------------------------------------------- */
-void ModalLimitedHistory::resize() {
-  this->resize(this->values_real, false); // don't update index, otherwise can't resize values_imag correctly
-  this->resize(this->values_imag, true);
+void ModalLimitedHistory::extend(unsigned int new_size) {
+  if (new_size > this->getSize())
+    this->resize(new_size);
+}
+
+/* -------------------------------------------------------------------------- */
+void ModalLimitedHistory::resize(unsigned int new_size) {
+  this->resize(this->values_real, new_size, false); // don't update index, otherwise can't resize values_imag correctly
+  this->resize(this->values_imag, new_size, true);
 }
 
 /* -------------------------------------------------------------------------- */
 void ModalLimitedHistory::resize(std::vector<double> & vec,
+				 unsigned int new_size,
 				 bool update_index) {
+  /*
   unsigned int new_size = 0;
   for(auto const& pik: this->pi_kernels) {
     new_size = std::max(new_size, pik->getSize());
   }
+  */
 
   // haven't stored any history yet
   if (this->nb_history_points == 0) {
