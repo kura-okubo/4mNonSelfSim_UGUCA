@@ -105,16 +105,16 @@ int main(){
   std::cout << "check convolve" << std::endl;
   // test case where (lt.getSize()- lt.getIndexNow()>=lt.getNbHistoryPoints())
   ModalLimitedHistory lt;
-  lt.registerKernel(pik);
-  lt.resize();
+  lt.resize(pik->getSize());
   for (double val=0.25; val<2.0;val+=0.25){
-    lt.addCurrentValue(val);
+    fftw_complex cval = {val,0};
+    lt.addCurrentValue(cval);
   }
   expected = 0.0;
   for (unsigned int n=0; n<lt.getNbHistoryPoints();n++){
     expected+=pik->getValues()[n]*lt.real()[lt.getIndexNow()+n];
   }
-  found = (pik->convolve(&lt)).real();
+  found = (pik->convolve(lt)).real();
   rel_error = std::abs(found - expected) / expected;
   if (rel_error > 1e-12) {
     std::cout << "failed" << std::endl;
@@ -125,7 +125,8 @@ int main(){
   // test case where (lt.getSize()- lt.getIndexNow()<lt.getNbHistoryPoints())
   for (unsigned int n=0; n<lt.getSize();n++){
     for (double val=0.25; val<.0;val+=0.25){
-      lt.addCurrentValue(val);
+      fftw_complex cval = {val,0};
+      lt.addCurrentValue(cval);
     }
   }
   expected = 0.0;
@@ -135,7 +136,7 @@ int main(){
   for (unsigned int n=lt.getSize()-lt.getIndexNow(); n<lt.getSize(); n++){
     expected+=pik->getValues()[n]*lt.real()[n-(lt.getSize()-lt.getIndexNow())];
   }
-  found = (pik->convolve(&lt)).real();
+  found = (pik->convolve(lt)).real();
   rel_error = std::abs(found - expected) / expected;
   if (rel_error > 1e-12) {
     std::cout << "failed" << std::endl;

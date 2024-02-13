@@ -44,6 +44,8 @@
 __BEGIN_UGUCA__
 class HistFFTableNodalField : public FFTableNodalField {
 
+  friend class BaseIO;
+
   /* ------------------------------------------------------------------------ */
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
@@ -54,7 +56,8 @@ protected:
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HistFFTableNodalField(const std::string & name = "unnamed") : FFTableNodalField(name) {}
+  HistFFTableNodalField(const std::string & name = "unnamed")
+    : FFTableNodalField(name) {}
 
   HistFFTableNodalField(FFTableMesh & mesh,
 			SpatialDirectionSet components = {0},
@@ -80,6 +83,13 @@ public:
   // change current value to history (for all modes and dimensions)
   void changeCurrentValueOfHistory();
 
+  // fills history with current value (for all modes and dimensions)
+  void fillHistoryWithCurrentValue();
+
+  // fills history with current value of different vector
+  // (needed when predicting)
+  void fillHistoryWithCurrentValue(FFTableNodalField & other);
+  
   // extend the history to at least this size
   void extendHistory(unsigned int size);
   
@@ -88,13 +98,12 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   // get ModalLimitedHistory of frequency domain in direction d
-  inline ModalLimitedHistory & hist(int f, int d=0);
+  inline const ModalLimitedHistory & hist(int f, int d=0);
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-
   // start indices for each component
   std::vector<int> hist_start;
   
@@ -106,7 +115,7 @@ protected:
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) {
+inline const ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) {
   if (!this->components.count(d)) 
     throw std::runtime_error("HistFFTableNodalField "
 			     +this->name

@@ -35,11 +35,11 @@
 #include "uca_common.hh"
 #include "uca_fftable_mesh.hh"
 
-//#include <iostream>
-//#include <fstream>
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include <memory>
-//#include <complex>
+#include <complex>
 
 __BEGIN_UGUCA__
 
@@ -66,14 +66,14 @@ public:
   // change the current value in the history
   inline void changeCurrentValue(fftw_complex value);
 
-  // set to steady state, ie. all past values to this
-  inline void setSteadyState(fftw_complex value);
+  // fill entire History up to full length with this value
+  inline void fillHistory(fftw_complex value);
 
   // increase size to this (keep same if this is smaller than actual size)
   void extend(unsigned int new_size);
   
   // get history value at index with index=0 : now
-  //inline std::complex<double> at(unsigned int index) const;
+  inline std::complex<double> at(unsigned int index) const;
 
   // resize both internal vectors to new size
   void resize(unsigned int new_size);
@@ -92,8 +92,10 @@ private:
   /* ------------------------------------------------------------------------ */
 public:
   unsigned int getSize() const { return this->values_real.size(); };
-  unsigned int getNbHistoryPoints() const { return std::min(this->nb_history_points,
-							    this->values_real.size()); };
+  unsigned int getNbHistoryPoints() const {
+    return std::min(this->nb_history_points,
+		    this->values_real.size());
+  };
   unsigned int getIndexNow() const {return this->index_now; }
   const double * real() const { return this->values_real.data(); }
   const double * imag() const { return this->values_imag.data(); }
@@ -142,14 +144,14 @@ inline void ModalLimitedHistory::changeCurrentValue(fftw_complex value) {
 }
 
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::setSteadyState(fftw_complex value) {
+inline void ModalLimitedHistory::fillHistory(fftw_complex value) {
   this->nb_history_points = this->values_real.size();
   std::fill(this->values_real.begin(), this->values_real.end(), value[0]);
   std::fill(this->values_imag.begin(), this->values_imag.end(), value[1]);
 }
 
 /* -------------------------------------------------------------------------- */
-/*inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
+inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
   if (index >= this->values_real.size()) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
@@ -158,7 +160,7 @@ inline void ModalLimitedHistory::setSteadyState(fftw_complex value) {
   unsigned int i = (this->index_now + index) % this->values_real.size();
   return {this->values_real[i], this->values_imag[i]};
 }
-*/
+
 __END_UGUCA__
 
 #endif /* __MODAL_LIMITED_HISTORY_H__ */

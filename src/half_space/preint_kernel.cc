@@ -98,22 +98,22 @@ void PreintKernel::multiplyBy(double factor) {
 }
 
 /* -------------------------------------------------------------------------- */
-std::complex<double> PreintKernel::convolve(const ModalLimitedHistory * __restrict__ U) {
+std::complex<double> PreintKernel::convolve(const ModalLimitedHistory & __restrict__ U) {
 
-  unsigned int nb_U = U->getNbHistoryPoints();
+  unsigned int nb_U = U.getNbHistoryPoints();
 
   double real = 0.;
   double imag = 0.;
 
-  unsigned int index_now = U->getIndexNow();
-  unsigned int size = U->getSize();
+  unsigned int index_now = U.getIndexNow();
+  unsigned int size = U.getSize();
   if (nb_U > size) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw nb_U;
   }
 
-  const double * __restrict__ Ur_p = U->real();
-  const double * __restrict__ Ui_p = U->imag();
+  const double * __restrict__ Ur_p = U.real();
+  const double * __restrict__ Ui_p = U.imag();
 
 
 #ifdef UCA_USE_BLAS

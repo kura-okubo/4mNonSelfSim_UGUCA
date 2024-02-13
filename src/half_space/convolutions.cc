@@ -75,7 +75,10 @@ void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int
   
   // make sure that the history of the field has the necessary length
   //this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
-  this->field->extendHistory(this->pi_kernels[conv.first].getSize());
+  unsigned int max_kernel_size = 0;
+  for (const auto& pik : this->pi_kernels[conv.first])
+    max_kernel_size = std::max(max_kernel_size, pik->getSize());
+  this->field->extendHistory(max_kernel_size);
   
   // prepare results
   this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(this->mesh.getNbLocalFFT())));
@@ -102,10 +105,10 @@ ConvMap::iterator it;
 
      // modal U
      unsigned int U_dim = it->first.second;
-     ModalLimitedHistory & U_j = this->field->hist(U_dim,j);
+     const ModalLimitedHistory & U_j = this->field->hist(U_dim,j);
      
      // std::vector<std::complex<double>> & res = it->second;
-     it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j.get());
+     it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);
    }
  }
 }

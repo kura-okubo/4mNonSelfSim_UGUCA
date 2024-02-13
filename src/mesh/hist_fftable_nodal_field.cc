@@ -78,6 +78,26 @@ void HistFFTableNodalField::changeCurrentValueOfHistory() {
 }
 
 /* -------------------------------------------------------------------------- */
+void HistFFTableNodalField::fillHistoryWithCurrentValue() {
+  // hist_storage and fd_storage have same size (by construction)
+  for (size_t i=0; i<this->hist_storage.size(); ++i) {
+    this->hist_storage[i].fillHistory(this->fd_storage[i]);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+void HistFFTableNodalField::fillHistoryWithCurrentValue(FFTableNodalField & other) {
+  if ((this->getNbFFT() != other.getNbFFT())
+      || (this->getNbComponents() != other.getNbComponents()))
+    throw std::runtime_error("HistFFTableNodalField don't match!");
+      
+  // hist_storage and fd_storage have same size (by construction)
+  for (size_t i=0; i<this->hist_storage.size(); ++i) {
+    this->hist_storage[i].fillHistory(other.fd_data(0)[i]);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 void HistFFTableNodalField::extendHistory(unsigned int size) {
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
     this->hist_storage[i].extend(size);

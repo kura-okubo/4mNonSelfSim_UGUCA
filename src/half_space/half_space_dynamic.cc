@@ -217,18 +217,25 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
-  restart.registerIO(this->name+"_U",this->U_history);
+  restart.registerIO(this->name+"_U",this->disp);
   HalfSpace::registerToRestart(restart);
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::setSteadyState(bool predicting) {
 
+  if (predicting)
+    this->disp.fillHistoryWithCurrentValue(this->disp_pc);
+  else
+    this->disp.fillHistoryWithCurrentValue();
+  
+  /*
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
+
 
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
     
@@ -241,6 +248,7 @@ void HalfSpaceDynamic::setSteadyState(bool predicting) {
 	                                        _disp.fd(j,d)[1]});
     }
   }
+  */
 }
 
 __END_UGUCA__
