@@ -40,7 +40,6 @@ HalfSpaceDynamic::HalfSpaceDynamic(Material & material,
 				   SpatialDirectionSet components,
 				   const std::string & name) :
   HalfSpaceQuasiDynamic(material, mesh, side_factor, components, name),
-  //U_history(mesh),
   previously_dynamic(true) {
   
 #ifdef UCA_VERBOSE
@@ -133,12 +132,6 @@ void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 							bool correcting) {
 
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-
-  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
-
   // --------------
   // UPDATE HISTORY
   // --------------
@@ -163,65 +156,31 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   // --------------
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
 
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
+  if (this->mesh.getDim() == 2) {
+    int size = conv[std::make_pair(Kernel::Krnl::H00,0)].size();
+    Convolutions::VecComplex zeros(size);
     
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-    
-    // current U
-    std::vector<std::complex<double>> U;
-    U.resize(3); //this->mesh.getDim());  // <-------------------------------- fix
-    for (int d=0; d<3; ++d) U[d] = {0,0}; // <-------------------------------- fix
-    for (const auto& d : _disp.getComponents())
-      U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
-    
-    // to be computed
-    std::vector<std::complex<double>> F;
-    F.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
-    
-    if (this->mesh.getDim() == 2) {
-      double q = wave_numbers(j,0);
-      this->computeF3D(F,q,0,
-		       U,
-		       conv[std::make_pair(Kernel::Krnl::H00,0)][j],  // H00-U0
-		       {0,0}, // H00-U2
-		       conv[std::make_pair(Kernel::Krnl::H01,0)][j],  // H01-U0
-		       {0,0}, // H01-U2
-		       conv[std::make_pair(Kernel::Krnl::H01,1)][j],  // H01-U1
-		       conv[std::make_pair(Kernel::Krnl::H11,1)][j],  // H11-U1
-		       {0,0}, // H22-U0
-		       {0,0}  // H22-U2
-		       ); 
-    } else {
-      // q = {k,m} wave number in x,y direction
-      double k = wave_numbers(j,0);
-      double m = wave_numbers(j,2);
-
-      this->computeF3D(F,k,m,
-		       U,
-		       conv[std::make_pair(Kernel::Krnl::H00,0)][j],  // H00-U0
-		       conv[std::make_pair(Kernel::Krnl::H00,2)][j],  // H00-U2
-		       conv[std::make_pair(Kernel::Krnl::H01,0)][j],  // H01-U0
-		       conv[std::make_pair(Kernel::Krnl::H01,2)][j],  // H01-U2
-		       conv[std::make_pair(Kernel::Krnl::H01,1)][j],  // H01-U1
-		       conv[std::make_pair(Kernel::Krnl::H11,1)][j],  // H11-U1
-		       conv[std::make_pair(Kernel::Krnl::H22,0)][j],  // H22-U0
-		       conv[std::make_pair(Kernel::Krnl::H22,2)][j]); // H22-U2
-    }
-    
-    // set values to internal force
-    for (const auto& d : this->internal.getComponents()) {
-      this->internal.fd(j,d)[0] = std::real(F[d]);  // real part
-      this->internal.fd(j,d)[1] = std::imag(F[d]);  // imag part
-    }
+    this->computeF(this->internal,_disp,
+		   conv[std::make_pair(Kernel::Krnl::H00,0)],  // H00-U0
+		   zeros, // H00-U2
+		   conv[std::make_pair(Kernel::Krnl::H01,0)],  // H01-U0
+		   zeros, // H01-U2
+		   conv[std::make_pair(Kernel::Krnl::H01,1)],  // H01-U1
+		   conv[std::make_pair(Kernel::Krnl::H11,1)],  // H11-U1
+		   zeros, // H22-U0
+		   zeros  // H22-U2
+		   ); 
   }
-  
-  // correct mode 0
-  if (prank == m0_rank) {
-    for (const auto& d : this->internal.getComponents()) {
-      this->internal.fd(m0_index,d)[0] = 0.;  // real part
-      this->internal.fd(m0_index,d)[1] = 0.;  // imag part
-    }
+  else {
+    this->computeF(this->internal,_disp,
+		   conv[std::make_pair(Kernel::Krnl::H00,0)],  // H00-U0
+		   conv[std::make_pair(Kernel::Krnl::H00,2)],  // H00-U2
+		   conv[std::make_pair(Kernel::Krnl::H01,0)],  // H01-U0
+		   conv[std::make_pair(Kernel::Krnl::H01,2)],  // H01-U2
+		   conv[std::make_pair(Kernel::Krnl::H01,1)],  // H01-U1
+		   conv[std::make_pair(Kernel::Krnl::H11,1)],  // H11-U1
+		   conv[std::make_pair(Kernel::Krnl::H22,0)],  // H22-U0
+		   conv[std::make_pair(Kernel::Krnl::H22,2)]); // H22-U2
   }
 }
 

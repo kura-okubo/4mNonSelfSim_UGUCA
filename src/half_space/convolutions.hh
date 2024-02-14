@@ -50,7 +50,7 @@ class Convolutions {
   /* ------------------------------------------------------------------------ */
 public:
   typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
-protected:
+  //protected:
   typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
   typedef std::pair<Kernel::Krnl,unsigned int> ConvPair;
   typedef std::vector<std::complex<double>> VecComplex;

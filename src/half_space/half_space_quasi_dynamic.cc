@@ -30,6 +30,7 @@
  */
 #include "half_space_quasi_dynamic.hh"
 #include "static_communicator_mpi.hh"
+#include "convolutions.hh"
 
 #ifdef UCA_USE_OPENMP
 #include <omp.h>
@@ -85,7 +86,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeff(bool predicting,
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpaceQuasiDynamic::computeF2D(std::vector<std::complex<double>> & F,
+/*void HalfSpaceQuasiDynamic::computeF2D(std::vector<std::complex<double>> & F,
 				       double q,
 				       std::vector<std::complex<double>> & U,
 				       std::complex<double> conv_H00_U0_j,
@@ -117,6 +118,7 @@ void HalfSpaceQuasiDynamic::computeF2D(std::vector<std::complex<double>> & F,
   // - i * mu * q * int(H01, U0)
   F[1] -= mu * q * imag * conv_H01_U0_j;
 }
+*/
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
@@ -160,6 +162,95 @@ void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
   F[2] -= this->side_factor * mu *
     ((conv_H00_U0_j * ((k * m) / q) + conv_H00_U2_j * ((m * m) / q)) +
      (-conv_H22_U0_j * ((k * m) / q) + conv_H22_U2_j * ((k * k) / q)));
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpaceQuasiDynamic::computeF(FFTableNodalField & F,
+				     const FFTableNodalField & U,
+				     const Convolutions::VecComplex & c_H00_U0,
+				     const Convolutions::VecComplex & c_H00_U2,
+				     const Convolutions::VecComplex & c_H01_U0,
+				     const Convolutions::VecComplex & c_H01_U2,
+				     const Convolutions::VecComplex & c_H01_U1,
+				     const Convolutions::VecComplex & c_H11_U1,
+				     const Convolutions::VecComplex & c_H22_U0,
+				     const Convolutions::VecComplex & c_H22_U2) {
+
+  // parallel information
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  int m0_rank = this->mesh.getMode0Rank();
+  int m0_index = this->mesh.getMode0Index();
+
+  // material properties
+  double mu = this->material.getShearModulus();
+  double eta = this->material.getCp() / this->material.getCs();
+
+  // wave numbers 
+  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
+  std::vector<double> wn(_spatial_dir_count,0); // to set those zero that do not exist
+  
+  // imaginary number i
+  std::complex<double> imag = {0., 1.};
+
+  // parallel loop over km modes
+  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { 
+
+    // ignore mode 0
+    if ((prank == m0_rank) && (j == m0_index)) continue;
+
+    // get wave numbers
+    for (const auto& d : F.getComponents())
+       wn[d] = wave_numbers(j,d);
+    double k = wn[0]; double m = wn[2]; // for readibility below
+    double q = std::sqrt(k * k + m * m);
+
+    // loop over components
+    for (const auto& d : F.getComponents()) {
+
+      std::complex<double> F_tmp = {0,0};
+      
+      // X component
+      if (d == 0) {
+	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
+	F_tmp += imag * mu * k * c_H01_U1[j];
+	F_tmp -= this->side_factor * mu *
+	  ((c_H00_U0[j] * ((k * k) / q) + c_H00_U2[j] * ((k * m) / q)) +
+	   (c_H22_U0[j] * ((m * m) / q) - c_H22_U2[j] * ((k * m) / q)));
+      }
+      
+      // Y component
+      else if (d == 1) {
+	F_tmp = -imag * mu * (2-eta) * (k * U.fd_or_zero(j,0) + m * U.fd_or_zero(j,2));
+	F_tmp -= mu * imag * (c_H01_U0[j] * k + c_H01_U2[j] * m);
+	F_tmp -= this->side_factor * mu * q * c_H11_U1[j];
+      }
+      
+      // Z component
+      else if (d == 2) {
+	F_tmp = imag * mu * (2-eta) * m * U.fd_or_zero(j,1);
+	F_tmp += imag * mu * m * c_H01_U1[j];
+	F_tmp -= this->side_factor * mu *
+	  ((c_H00_U0[j] * ((k * m) / q) + c_H00_U2[j] * ((m * m) / q)) +
+	   (-c_H22_U0[j] * ((k * m) / q) + c_H22_U2[j] * ((k * k) / q)));
+      }
+      
+      else {
+	throw std::runtime_error("computeF got component (not implemented)");
+      }
+
+      // std::complex<double> -> fftw_complex
+      F.fd(j,d)[0] = std::real(F_tmp);
+      F.fd(j,d)[1] = std::imag(F_tmp);
+    }
+  }
+
+  // correct mode 0
+  if (prank == m0_rank) {
+    for (const auto& d : F.getComponents()) {
+      F.fd(m0_index,d)[0] = 0.;
+      F.fd(m0_index,d)[1] = 0.;
+    }
+  }
 }
 
 /* -------------------------------------------------------------------------- */
