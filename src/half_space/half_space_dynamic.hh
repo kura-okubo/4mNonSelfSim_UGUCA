@@ -32,7 +32,6 @@
 #define __HALF_SPACE_DYNAMIC_H__
 /* -------------------------------------------------------------------------- */
 #include "half_space_quasi_dynamic.hh"
-#include "limited_history.hh"
 
 __BEGIN_UGUCA__
 
@@ -79,19 +78,12 @@ public:
 
   // get stable time step
   virtual double getStableTimeStep();
-
-  // get limited history
-  //LimitedHistory & getLimitedHistory() { return U_history; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
 
-  // past values of displacement in frequency domain
-  // each LimitedHistory is for a given wave number q
-  //LimitedHistory U_history;
-  
   // keeps information if previous step was dynamic
   bool previously_dynamic;
 };
