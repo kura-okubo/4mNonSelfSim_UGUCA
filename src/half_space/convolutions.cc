@@ -36,14 +36,14 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Convolutions::Convolutions(HistFFTableNodalField & field) :
-  field(field) {
+  field(field), double_zeros(field.getNbFFT(),0) {
 
   // zeros vector
   VecComplex tmp(this->field.getNbFFT());
   for (auto& element : tmp) {
     element = {0.,0.};
   }
-  this->zeros.swap(tmp);
+  this->complex_zeros.swap(tmp);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -55,11 +55,15 @@ void Convolutions::preintegrate(Material & material,
 				double scale_factor,
 				double time_step) {
 
-  // create vector and resize it
+  // preintegrated kernels: create vector and resize it
   this->pi_kernels.insert(std::pair<Kernel::Krnl,PIKernelVector>(kernel, PIKernelVector()));
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
   pik_vector.resize(this->field.getNbFFT());
 
+  // integrals of kernels: create vector and resize it
+  this->kernel_integrals.insert(std::pair<Kernel::Krnl,std::vector<double>>(kernel, std::vector<double>(this->field.getNbFFT())));
+  std::vector<double> & int_vector = this->kernel_integrals[kernel];
+  
   const TwoDVector & wave_numbers = this->field.getMesh().getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
@@ -74,6 +78,9 @@ void Convolutions::preintegrate(Material & material,
     double qj_cs = std::sqrt(qq) * scale_factor;
     
     pik_vector[j]->preintegrate(qj_cs, time_step);
+
+    // full integral of kernel
+    int_vector[j] = pik_vector[j]->getIntegral();
   }
 }
 
@@ -130,7 +137,20 @@ const Convolutions::VecComplex & Convolutions::getResult(ConvPair pair) {
     return it->second; // found result, return it
   }
   else {
-    return this->zeros; // not found, return vector full of zeros
+    return this->complex_zeros; // not found, return vector full of complex zeros
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+const std::vector<double> & Convolutions::getKernelIntegrals(Kernel::Krnl kernel) {
+
+  auto it = this->kernel_integrals.find(kernel); // attempt to find the integral
+
+  if (it != this->kernel_integrals.end()) {
+    return it->second; // found integral, return it
+  }
+  else {
+    return this->double_zeros; // not found, return vector full of zeros
   }
 }
 

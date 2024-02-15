@@ -81,10 +81,8 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
 
-  // simple full integral of kernel
-  double getKernelIntegral(Kernel::Krnl kernel, int wave_number) {
-    return this->pi_kernels[kernel][wave_number]->getIntegral();
-  }
+  // simple full integral of kernel if it exists, otherwise vector of zeros
+  const std::vector<double> & getKernelIntegrals(Kernel::Krnl kernel);
 
   /// returns the convolution result if it exists, otherwise vector of zeros
   const VecComplex & getResult(ConvPair pair);
@@ -101,11 +99,15 @@ private:
   // e.g., pi_kernels[Kernel::Krnl::H00][1]
   PIKernelMap pi_kernels;
 
+  // integrals of kernels [kernel][mode]
+  std::map<Kernel::Krnl,std::vector<double>> kernel_integrals;
+  
   /// convolution results
   ConvMap results;
 
   /// result for when there is no result for a given convolution pair
-  VecComplex zeros;
+  VecComplex complex_zeros;
+  std::vector<double> double_zeros;
 };
 
 /* -------------------------------------------------------------------------- */
