@@ -195,9 +195,6 @@ void HalfSpaceQuasiDynamic::computeF(FFTableNodalField & F,
   // parallel loop over km modes
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { 
 
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
     // get wave numbers
     for (const auto& d : F.getComponents())
        wn[d] = wave_numbers(j,d);
@@ -208,9 +205,14 @@ void HalfSpaceQuasiDynamic::computeF(FFTableNodalField & F,
     for (const auto& d : F.getComponents()) {
 
       std::complex<double> F_tmp = {0,0};
-      
+
+      // mode 0
+      if ((prank == m0_rank) && (j == m0_index)) {
+	// do nothing: mode 0 should have F = (0,0)
+      }
+
       // X component
-      if (d == 0) {
+      else if (d == 0) {
 	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
 	F_tmp += imag * mu * k * c_H01_U1[j];
 	F_tmp -= this->side_factor * mu *
@@ -241,14 +243,6 @@ void HalfSpaceQuasiDynamic::computeF(FFTableNodalField & F,
       // std::complex<double> -> fftw_complex
       F.fd(j,d)[0] = std::real(F_tmp);
       F.fd(j,d)[1] = std::imag(F_tmp);
-    }
-  }
-
-  // correct mode 0
-  if (prank == m0_rank) {
-    for (const auto& d : F.getComponents()) {
-      F.fd(m0_index,d)[0] = 0.;
-      F.fd(m0_index,d)[1] = 0.;
     }
   }
 }
