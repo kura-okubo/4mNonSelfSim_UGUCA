@@ -30,6 +30,8 @@
  */
 #include "half_space.hh"
 #include "half_space_dynamic.hh"
+#include "half_space_quasi_dynamic.hh"
+#include "half_space_adaptive.hh"
 
 #include <limits>
 
@@ -67,6 +69,12 @@ HalfSpace * HalfSpace::newHalfSpace(Material & material,
   HalfSpace * hs = NULL;
   if (method == _dynamic) {
     hs = new HalfSpaceDynamic(material, mesh, side_factor, components, name);
+  }
+  else if (method == _quasi_dynamic) {
+    hs = new HalfSpaceQuasiDynamic(material, mesh, side_factor, components, name);
+  }
+  else if (method == _adaptive) {
+    hs = new HalfSpaceAdaptive(material, mesh, side_factor, components, name);
   }
   else {
     throw std::runtime_error("HalfSpace: solver method not implemented");

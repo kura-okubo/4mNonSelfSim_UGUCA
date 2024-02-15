@@ -35,11 +35,11 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-Convolutions::Convolutions(FFTableMesh & mesh) :
-  mesh(mesh) {
+Convolutions::Convolutions(HistFFTableNodalField & field) :
+  field(field) {
 
   // zeros vector
-  VecComplex tmp(this->mesh.getNbLocalFFT());
+  VecComplex tmp(this->field.getNbFFT());
   for (auto& element : tmp) {
     element = {0.,0.};
   }
@@ -58,17 +58,17 @@ void Convolutions::preintegrate(Material & material,
   // create vector and resize it
   this->pi_kernels.insert(std::pair<Kernel::Krnl,PIKernelVector>(kernel, PIKernelVector()));
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
-  pik_vector.resize(this->mesh.getNbLocalFFT());
+  pik_vector.resize(this->field.getNbFFT());
 
-  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
+  const TwoDVector & wave_numbers = this->field.getMesh().getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
+  for (int j=0; j<this->field.getNbFFT(); ++j) { //parallel loop
 
     pik_vector[j] = std::make_shared<PreintKernel>(material.getKernel(kernel));
 
     double qq = 0.0;
-    for (int d=0; d<this->mesh.getDim();d+=2)
+    for (const auto& d : this->field.getComponents())
       qq += wave_numbers(j,d)*wave_numbers(j,d);
 
     double qj_cs = std::sqrt(qq) * scale_factor;
@@ -81,14 +81,14 @@ void Convolutions::preintegrate(Material & material,
 void Convolutions::init(ConvPair conv) {
   
   // make sure that the history of the field has the necessary length
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-    for (const auto& d : this->field->getComponents()) {
-      this->field->hist(j,d).extend(this->pi_kernels[conv.first][j]->getSize());
+  for (int j=0; j<this->field.getNbFFT(); ++j) {
+    for (const auto& d : this->field.getComponents()) {
+      this->field.hist(j,d).extend(this->pi_kernels[conv.first][j]->getSize());
     }
   }
   
   // prepare results
-  int vec_size = this->mesh.getNbLocalFFT();
+  int vec_size = this->field.getNbFFT();
   this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(vec_size)));
 }
 
@@ -106,14 +106,14 @@ ConvMap::iterator it;
 #pragma omp task firstprivate(datIt)
 #endif
    // history for q1 is longest q = j*q1
-   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
+   for (int j=0; j<this->field.getNbFFT(); ++j) { //parallel loop
 
      // kernel 
      Kernel::Krnl kernel = it->first.first;
 
      // modal U
      unsigned int U_dim = it->first.second;
-     const ModalLimitedHistory & U_j = this->field->hist(j,U_dim);
+     const ModalLimitedHistory & U_j = this->field.hist(j,U_dim);
      
      // std::vector<std::complex<double>> & res = it->second;
      it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);

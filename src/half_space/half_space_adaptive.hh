@@ -1,5 +1,5 @@
 /**
- * @file   half_space_quasidynamic.hh
+ * @file   half_space_adaptive.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,24 +28,24 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef __HALF_SPACE_QUASIDYNAMIC_H__
-#define __HALF_SPACE_QUASIDYNAMIC_H__
+#ifndef __HALF_SPACE_ADAPTIVE_H__
+#define __HALF_SPACE_ADAPTIVE_H__
 /* -------------------------------------------------------------------------- */
-#include "half_space_dynamic.hh"
+#include "half_space_quasi_dynamic.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class HalfSpaceQuasiDynamic : public HalfSpaceDynamic {
+class HalfSpaceAdaptive : public HalfSpaceQuasiDynamic {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  HalfSpaceQuasiDynamic(Material & material, FFTableMesh & mesh, int side_factor,
+  HalfSpaceAdaptive(Material & material, FFTableMesh & mesh, int side_factor,
 			SpatialDirectionSet components,
 			const std::string & name = "half_space");
 
-  virtual ~HalfSpaceQuasiDynamic();
+  virtual ~HalfSpaceAdaptive();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -65,23 +65,6 @@ protected:
 					 bool correcting = false,
 					 bool dynamic = false);
 
-  void computeStressFourierCoeffQuasiDynamic(bool predicting,
-					     bool correcting);
-
-  // To be deleted
-  void computeF3D(std::vector<std::complex<double>> & F,
-		  double k,
-		  double m,
-		  std::vector<std::complex<double>> & U,
-		  std::complex<double> conv_H00_U0_j,
-		  std::complex<double> conv_H00_U2_j,
-		  std::complex<double> conv_H01_U0_j,
-		  std::complex<double> conv_H01_U2_j,
-		  std::complex<double> conv_H01_U1_j,
-		  std::complex<double> conv_H11_U1_j,
-		  std::complex<double> conv_H22_U0_j,
-		  std::complex<double> conv_H22_U2_j);				   
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -97,11 +80,13 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  
+
+  // keeps information if previous step was dynamic
+  bool previously_dynamic;
 };
 
 __END_UGUCA__
 
-//#include "half_space_quasidynamic_impl.cc"
+//#include "half_space_adaptive_impl.cc"
 
-#endif /* __HALF_SPACE_QUASIDYNAMIC_H__ */
+#endif /* __HALF_SPACE_ADAPTIVE_H__ */

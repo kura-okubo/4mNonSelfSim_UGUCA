@@ -42,7 +42,7 @@ namespace uguca {
     _static = 0,
     _quasi_dynamic = 1,
     _dynamic = 2,
-    _hybrid = 3
+    _adaptive = 3
   };
 
   enum SpatialDirection { _x = 0, _y = 1, _z = 2, _spatial_dir_count = 3 };

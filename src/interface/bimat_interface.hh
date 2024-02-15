@@ -49,7 +49,7 @@ public:
 		 Material & top_material,
 		 Material & bot_material,
 		 InterfaceLaw & law,
-		 const SolverMethod & method = _dynamic);
+		 const SolverMethod & method = _adaptive);
 
   virtual ~BimatInterface();
 

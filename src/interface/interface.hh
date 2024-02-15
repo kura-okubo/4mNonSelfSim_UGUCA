@@ -129,8 +129,6 @@ public:
   virtual void setTimeStep(double time_step);
   double getTimeStep() const { return this->time_step; }
 
-  void setDynamic(bool fully_dynamic);
-
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */

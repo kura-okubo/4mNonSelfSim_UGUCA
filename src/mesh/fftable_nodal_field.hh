@@ -89,6 +89,9 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // get mesh of nodal field
+  const FFTableMesh & getMesh() const { return *((FFTableMesh *)this->mesh); }
+  
   // get number of nodes
   int getNbFFT() const { return ((FFTableMesh *)this->mesh)->getNbLocalFFT(); }
 

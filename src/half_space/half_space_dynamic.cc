@@ -31,6 +31,10 @@
 #include "half_space_dynamic.hh"
 #include "static_communicator_mpi.hh"
 
+#ifdef UCA_USE_OPENMP
+#include <omp.h>
+#endif /* UCA_USE_OPENMP */
+
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
@@ -39,8 +43,8 @@ HalfSpaceDynamic::HalfSpaceDynamic(Material & material,
 				   int side_factor,
 				   SpatialDirectionSet components,
 				   const std::string & name) :
-  HalfSpaceQuasiDynamic(material, mesh, side_factor, components, name),
-  previously_dynamic(true) {
+  HalfSpace(material, mesh, side_factor, components, name),
+  convols(this->disp) {
   
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -69,16 +73,29 @@ void HalfSpaceDynamic::setTimeStep(double time_step) {
       ((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2)))
     throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
   
-  HalfSpaceQuasiDynamic::setTimeStep(time_step);
+  HalfSpace::setTimeStep(time_step);
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::preintegrateKernels() {
+
+  this->convols.preintegrate(this->material, Kernel::Krnl::H00,
+			     this->material.getCs(), this->time_step);
+  this->convols.preintegrate(this->material, Kernel::Krnl::H01,
+			     this->material.getCs(), this->time_step);
+  this->convols.preintegrate(this->material, Kernel::Krnl::H11,
+			     this->material.getCs(), this->time_step);
+
+  if (this->mesh.getDim()==3)
+    this->convols.preintegrate(this->material, Kernel::Krnl::H22,
+			       this->material.getCs(), this->time_step);
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::initConvolutions() {
 
-  HalfSpaceQuasiDynamic::initConvolutions();
+  this->preintegrateKernels();
 
-  this->convols.registerHistory(this->disp);
-  
   this->convols.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
   this->convols.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
   this->convols.init(std::make_pair(Kernel::Krnl::H11,1)); // H11-U1
@@ -116,16 +133,10 @@ void HalfSpaceDynamic::initConvolutions() {
 void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 						 bool correcting,
 						 bool dynamic) {
-  if (!dynamic) {
-    this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
-    this->previously_dynamic = false;
-  }
-  else {
-    if (!this->previously_dynamic)
-      this->setSteadyState(predicting);
+  if (dynamic)
     this->computeStressFourierCoeffDynamic(predicting, correcting);
-    this->previously_dynamic = true;
-  }
+  else
+    throw std::runtime_error("HalfSpaceDynamic cannot compute stress for quasi dynamic problem!");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -163,6 +174,89 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 		 this->convols.getResult(std::make_pair(Kernel::Krnl::H11,1)),  // H11-U1
 		 this->convols.getResult(std::make_pair(Kernel::Krnl::H22,0)),  // H22-U0
 		 this->convols.getResult(std::make_pair(Kernel::Krnl::H22,2))); // H22-U2
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::computeF(FFTableNodalField & F,
+				const FFTableNodalField & U,
+				const Convolutions::VecComplex & c_H00_U0,
+				const Convolutions::VecComplex & c_H00_U2,
+				const Convolutions::VecComplex & c_H01_U0,
+				const Convolutions::VecComplex & c_H01_U2,
+				const Convolutions::VecComplex & c_H01_U1,
+				const Convolutions::VecComplex & c_H11_U1,
+				const Convolutions::VecComplex & c_H22_U0,
+				const Convolutions::VecComplex & c_H22_U2) {
+
+  // parallel information
+  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  int m0_rank = this->mesh.getMode0Rank();
+  int m0_index = this->mesh.getMode0Index();
+
+  // material properties
+  double mu = this->material.getShearModulus();
+  double eta = this->material.getCp() / this->material.getCs();
+
+  // wave numbers 
+  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
+  std::vector<double> wn(_spatial_dir_count,0); // to set those zero that do not exist
+  
+  // imaginary number i
+  std::complex<double> imag = {0., 1.};
+
+  // parallel loop over km modes
+  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { 
+
+    // get wave numbers
+    for (const auto& d : F.getComponents())
+       wn[d] = wave_numbers(j,d);
+    double k = wn[0]; double m = wn[2]; // for readibility below
+    double q = std::sqrt(k * k + m * m);
+
+    // loop over components
+    for (const auto& d : F.getComponents()) {
+
+      std::complex<double> F_tmp = {0,0};
+
+      // mode 0
+      if ((prank == m0_rank) && (j == m0_index)) {
+	// do nothing: mode 0 should have F = (0,0)
+      }
+
+      // X component
+      else if (d == 0) {
+	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
+	F_tmp += imag * mu * k * c_H01_U1[j];
+	F_tmp -= this->side_factor * mu *
+	  ((c_H00_U0[j] * ((k * k) / q) + c_H00_U2[j] * ((k * m) / q)) +
+	   (c_H22_U0[j] * ((m * m) / q) - c_H22_U2[j] * ((k * m) / q)));
+      }
+      
+      // Y component
+      else if (d == 1) {
+	F_tmp = -imag * mu * (2-eta) * (k * U.fd_or_zero(j,0) + m * U.fd_or_zero(j,2));
+	F_tmp -= mu * imag * (c_H01_U0[j] * k + c_H01_U2[j] * m);
+	F_tmp -= this->side_factor * mu * q * c_H11_U1[j];
+      }
+      
+      // Z component
+      else if (d == 2) {
+	F_tmp = imag * mu * (2-eta) * m * U.fd_or_zero(j,1);
+	F_tmp += imag * mu * m * c_H01_U1[j];
+	F_tmp -= this->side_factor * mu *
+	  ((c_H00_U0[j] * ((k * m) / q) + c_H00_U2[j] * ((m * m) / q)) +
+	   (-c_H22_U0[j] * ((k * m) / q) + c_H22_U2[j] * ((k * k) / q)));
+      }
+      
+      else {
+	throw std::runtime_error("computeF got component (not implemented)");
+      }
+
+      // std::complex<double> -> fftw_complex
+      F.fd(j,d)[0] = std::real(F_tmp);
+      F.fd(j,d)[1] = std::imag(F_tmp);
+    }
+  }
 }
 
 /* -------------------------------------------------------------------------- */
