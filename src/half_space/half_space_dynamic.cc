@@ -77,18 +77,18 @@ void HalfSpaceDynamic::initConvolutions() {
 
   HalfSpaceQuasiDynamic::initConvolutions();
 
-  this->convolutions.registerHistory(this->disp);
+  this->convols.registerHistory(this->disp);
   
-  this->convolutions.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
-  this->convolutions.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
-  this->convolutions.init(std::make_pair(Kernel::Krnl::H11,1)); // H11-U1
-  this->convolutions.init(std::make_pair(Kernel::Krnl::H01,1)); // H01-U1
+  this->convols.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
+  this->convols.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
+  this->convols.init(std::make_pair(Kernel::Krnl::H11,1)); // H11-U1
+  this->convols.init(std::make_pair(Kernel::Krnl::H01,1)); // H01-U1
 
   if (this->mesh.getDim()==3) {
-    this->convolutions.init(std::make_pair(Kernel::Krnl::H22,0)); // H22-U0
-    this->convolutions.init(std::make_pair(Kernel::Krnl::H00,2)); // H00-U2
-    this->convolutions.init(std::make_pair(Kernel::Krnl::H01,2)); // H01-U2
-    this->convolutions.init(std::make_pair(Kernel::Krnl::H22,2)); // H22-U2
+    this->convols.init(std::make_pair(Kernel::Krnl::H22,0)); // H22-U0
+    this->convols.init(std::make_pair(Kernel::Krnl::H00,2)); // H00-U2
+    this->convols.init(std::make_pair(Kernel::Krnl::H01,2)); // H01-U2
+    this->convols.init(std::make_pair(Kernel::Krnl::H22,2)); // H22-U2
   }    
 
   // history of mode 0 needs to be of length zero
@@ -148,40 +148,21 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
   // --------------
   // CONVOLUTION
   // --------------
-  this->convolutions.convolve();
-  auto conv = this->convolutions.getResults();
+  this->convols.convolve();
     
   // --------------
   // COMPUTE F
   // --------------
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
-
-  if (this->mesh.getDim() == 2) {
-    int size = conv[std::make_pair(Kernel::Krnl::H00,0)].size();
-    Convolutions::VecComplex zeros(size);
-    
-    this->computeF(this->internal,_disp,
-		   conv[std::make_pair(Kernel::Krnl::H00,0)],  // H00-U0
-		   zeros, // H00-U2
-		   conv[std::make_pair(Kernel::Krnl::H01,0)],  // H01-U0
-		   zeros, // H01-U2
-		   conv[std::make_pair(Kernel::Krnl::H01,1)],  // H01-U1
-		   conv[std::make_pair(Kernel::Krnl::H11,1)],  // H11-U1
-		   zeros, // H22-U0
-		   zeros  // H22-U2
-		   ); 
-  }
-  else {
-    this->computeF(this->internal,_disp,
-		   conv[std::make_pair(Kernel::Krnl::H00,0)],  // H00-U0
-		   conv[std::make_pair(Kernel::Krnl::H00,2)],  // H00-U2
-		   conv[std::make_pair(Kernel::Krnl::H01,0)],  // H01-U0
-		   conv[std::make_pair(Kernel::Krnl::H01,2)],  // H01-U2
-		   conv[std::make_pair(Kernel::Krnl::H01,1)],  // H01-U1
-		   conv[std::make_pair(Kernel::Krnl::H11,1)],  // H11-U1
-		   conv[std::make_pair(Kernel::Krnl::H22,0)],  // H22-U0
-		   conv[std::make_pair(Kernel::Krnl::H22,2)]); // H22-U2
-  }
+  this->computeF(this->internal,_disp,
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H00,0)),  // H00-U0
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H00,2)),  // H00-U2
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H01,0)),  // H01-U0
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H01,2)),  // H01-U2
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H01,1)),  // H01-U1
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H11,1)),  // H11-U1
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H22,0)),  // H22-U0
+		 this->convols.getResult(std::make_pair(Kernel::Krnl::H22,2))); // H22-U2
 }
 
 /* -------------------------------------------------------------------------- */
@@ -197,27 +178,6 @@ void HalfSpaceDynamic::setSteadyState(bool predicting) {
     this->disp.fillHistoryWithCurrentValue(this->disp_pc);
   else
     this->disp.fillHistoryWithCurrentValue();
-  
-  /*
-  FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-
-
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
-    
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    for (const auto& d : _disp.getComponents()) {
-
-      this->U_history.get(d,j)->setSteadyState({_disp.fd(j,d)[0],
-	                                        _disp.fd(j,d)[1]});
-    }
-  }
-  */
 }
 
 __END_UGUCA__

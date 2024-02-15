@@ -107,8 +107,7 @@ public:
 protected:
   
   // convolution kernels
-  Convolutions convolutions; 
-
+  Convolutions convols;
 };
 
 __END_UGUCA__

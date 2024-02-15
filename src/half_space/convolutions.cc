@@ -27,7 +27,6 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "convolutions.hh"
-//#include "limited_history.hh"
 
 #ifdef UCA_USE_OPENMP
 #include <omp.h>
@@ -37,7 +36,15 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Convolutions::Convolutions(FFTableMesh & mesh) :
-  mesh(mesh) {}
+  mesh(mesh) {
+
+  // zeros vector
+  VecComplex tmp(this->mesh.getNbLocalFFT());
+  for (auto& element : tmp) {
+    element = {0.,0.};
+  }
+  this->zeros.swap(tmp);
+}
 
 /* -------------------------------------------------------------------------- */
 Convolutions::~Convolutions() {}
@@ -71,10 +78,9 @@ void Convolutions::preintegrate(Material & material,
 }
 
 /* -------------------------------------------------------------------------- */
-void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int> ConvPair;
+void Convolutions::init(ConvPair conv) {
   
   // make sure that the history of the field has the necessary length
-  //this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
     for (const auto& d : this->field->getComponents()) {
       this->field->hist(j,d).extend(this->pi_kernels[conv.first][j]->getSize());
@@ -82,7 +88,8 @@ void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int
   }
   
   // prepare results
-  this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(this->mesh.getNbLocalFFT())));
+  int vec_size = this->mesh.getNbLocalFFT();
+  this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(vec_size)));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -112,6 +119,19 @@ ConvMap::iterator it;
      it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);
    }
  }
+}
+
+/* -------------------------------------------------------------------------- */
+const Convolutions::VecComplex & Convolutions::getResult(ConvPair pair) {
+
+  auto it = this->results.find(pair); // attempt to find the result
+
+  if (it != this->results.end()) {
+    return it->second; // found result, return it
+  }
+  else {
+    return this->zeros; // not found, return vector full of zeros
+  }
 }
 
 __END_UGUCA__

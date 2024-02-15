@@ -45,7 +45,7 @@ HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(Material & material,
 					     SpatialDirectionSet components,
 					     const std::string & name) :
   HalfSpace(material, mesh, side_factor, components, name),
-  convolutions(mesh) {
+  convols(mesh) {
 
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -61,15 +61,15 @@ HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {}
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::initConvolutions() {
 
-  this->convolutions.preintegrate(this->material, Kernel::Krnl::H00,
+  this->convols.preintegrate(this->material, Kernel::Krnl::H00,
 				  this->material.getCs(), this->time_step);
-  this->convolutions.preintegrate(this->material, Kernel::Krnl::H01,
+  this->convols.preintegrate(this->material, Kernel::Krnl::H01,
 				  this->material.getCs(), this->time_step);
-  this->convolutions.preintegrate(this->material, Kernel::Krnl::H11,
+  this->convols.preintegrate(this->material, Kernel::Krnl::H11,
 				  this->material.getCs(), this->time_step);
 
   if (this->mesh.getDim()==3)
-    this->convolutions.preintegrate(this->material, Kernel::Krnl::H22,
+    this->convols.preintegrate(this->material, Kernel::Krnl::H22,
 				    this->material.getCs(), this->time_step);
 }
 
@@ -271,9 +271,9 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
       U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     }
 
-    double H00_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H00,j);
-    double H01_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H01,j);
-    double H11_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H11,j);
+    double H00_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H00,j);
+    double H01_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H01,j);
+    double H11_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H11,j);
     
     std::vector<std::complex<double>> F;
     F.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
@@ -293,7 +293,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
 		       );
     } else {
       
-      double H22_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H22,j);
+      double H22_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H22,j);
 
       // q = {k,m} wave number in x,y direction
       double k = wave_numbers(j,0);
