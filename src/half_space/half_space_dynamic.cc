@@ -79,16 +79,22 @@ void HalfSpaceDynamic::setTimeStep(double time_step) {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::preintegrateKernels() {
 
-  this->convols.preintegrate(this->material, Krnl::H00,
-			     this->material.getCs(), this->time_step);
-  this->convols.preintegrate(this->material, Krnl::H01,
-			     this->material.getCs(), this->time_step);
-  this->convols.preintegrate(this->material, Krnl::H11,
-			     this->material.getCs(), this->time_step);
+  // for x and y components
+  if (this->disp.getComponents().count(_x) &&
+      this->disp.getComponents().count(_y)) {
+    this->convols.preintegrate(this->material, Krnl::H00,
+			       this->material.getCs(), this->time_step);
+    this->convols.preintegrate(this->material, Krnl::H01,
+			       this->material.getCs(), this->time_step);
+    this->convols.preintegrate(this->material, Krnl::H11,
+			       this->material.getCs(), this->time_step);
+  }
 
-  if (this->mesh.getDim()==3)
+  // for z components
+  if (this->disp.getComponents().count(_z)) {
     this->convols.preintegrate(this->material, Krnl::H22,
 			       this->material.getCs(), this->time_step);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -96,16 +102,27 @@ void HalfSpaceDynamic::initConvolutions() {
 
   this->preintegrateKernels();
 
-  this->convols.init(std::make_pair(Krnl::H00,0)); // H00-U0
-  this->convols.init(std::make_pair(Krnl::H01,0)); // H01-U0
-  this->convols.init(std::make_pair(Krnl::H11,1)); // H11-U1
-  this->convols.init(std::make_pair(Krnl::H01,1)); // H01-U1
+  // in-plane problem
+  if (this->disp.getComponents().count(_x) &&
+      this->disp.getComponents().count(_y)) {
+    this->convols.init(std::make_pair(Krnl::H00,0)); // H00-U0
+    this->convols.init(std::make_pair(Krnl::H01,0)); // H01-U0
+    this->convols.init(std::make_pair(Krnl::H11,1)); // H11-U1
+    this->convols.init(std::make_pair(Krnl::H01,1)); // H01-U1
+  }
 
-  if (this->mesh.getDim()==3) {
+  // out-of-plane problem
+  if (this->disp.getComponents().count(_z)) {
+    this->convols.init(std::make_pair(Krnl::H22,2)); // H22-U2
+  }
+
+  // 3D problem
+  if (this->disp.getComponents().count(_x) &&
+      this->disp.getComponents().count(_y) &&
+      this->disp.getComponents().count(_z)) {
     this->convols.init(std::make_pair(Krnl::H22,0)); // H22-U0
     this->convols.init(std::make_pair(Krnl::H00,2)); // H00-U2
     this->convols.init(std::make_pair(Krnl::H01,2)); // H01-U2
-    this->convols.init(std::make_pair(Krnl::H22,2)); // H22-U2
   }    
 
   // history of mode 0 needs to be of length zero
@@ -120,8 +137,8 @@ void HalfSpaceDynamic::initConvolutions() {
   
 #ifdef UCA_VERBOSE
   int total_work=0;
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-    for (int d=0; d<this->mesh.getDim(); ++d)
+  for (int j=0; j<this->disp.getNbFFT(); ++j) { //parallel loop
+    for (const auto& d : this->disp.getComponents())
       total_work += this->disp.hist(j,d).getSize();
   }
   int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -184,7 +201,7 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
   std::complex<double> imag = {0., 1.};
 
   // parallel loop over km modes
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { 
+  for (int j=0; j<F.getNbFFT(); ++j) { 
 
     // get wave numbers
     for (const auto& d : F.getComponents())
