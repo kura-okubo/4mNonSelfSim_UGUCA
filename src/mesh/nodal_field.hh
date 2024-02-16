@@ -33,7 +33,6 @@
 #define __NODAL_FIELD_H__
 /* -------------------------------------------------------------------------- */
 #include <stdexcept>
-#include <vector>
 #include <set>
 #include "uca_common.hh"
 #include "uca_base_mesh.hh"

@@ -64,7 +64,7 @@ void HalfSpaceQuasiDynamic::setTimeStep(double time_step) {
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::initConvolutions() {
-  HalfSpaceDynamic::preintegrateKernels();
+  HalfSpaceDynamic::initConvolutions();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -78,127 +78,15 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeff(bool predicting,
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpaceQuasiDynamic::computeF3D(std::vector<std::complex<double>> & F,
-				       double k,
-				       double m,
-				       std::vector<std::complex<double>> & U,
-				       std::complex<double> conv_H00_U0_j,
-				       std::complex<double> conv_H00_U2_j,
-				       std::complex<double> conv_H01_U0_j,
-				       std::complex<double> conv_H01_U2_j,
-				       std::complex<double> conv_H01_U1_j,
-				       std::complex<double> conv_H11_U1_j,
-				       std::complex<double> conv_H22_U0_j,
-				       std::complex<double> conv_H22_U2_j) {
-  double mu = this->material.getShearModulus();
-  double eta = this->material.getCp() / this->material.getCs();
-
-  // imaginary number i
-  std::complex<double> imag = {0., 1.};
-
-  double q = std::sqrt(k * k + m * m);
-
-  F[0] = imag * mu * (2 - eta) * k * U[1];
-
-  F[0] += imag * mu * k * conv_H01_U1_j;
-
-  F[0] -= this->side_factor * mu *
-    ((conv_H00_U0_j * ((k * k) / q) + conv_H00_U2_j * ((k * m) / q)) +
-     (conv_H22_U0_j * ((m * m) / q) - conv_H22_U2_j * ((k * m) / q)));
-
-  F[1] = -imag * mu * (2 - eta) * (k * U[0] + m * U[2]);
-
-  F[1] -= mu * imag * (conv_H01_U0_j * k + conv_H01_U2_j * m);
-
-  F[1] -= this->side_factor * mu * q * conv_H11_U1_j;
-
-  F[2] = imag * mu * (2 - eta) * m * U[1];
-
-  F[2] += imag * mu * m * conv_H01_U1_j;
-
-  F[2] -= this->side_factor * mu *
-    ((conv_H00_U0_j * ((k * m) / q) + conv_H00_U2_j * ((m * m) / q)) +
-     (-conv_H22_U0_j * ((k * m) / q) + conv_H22_U2_j * ((k * k) / q)));
-}
-
-
-/* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predicting,
 								  bool /*correcting*/) {
 
+  // compute convolutions (with current U instead of history of U)
+  this->convols.convolveSteadyState();
+
+  // compute F
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-
-  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
-
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
-
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-    
-    std::vector<std::complex<double>> U;
-    U.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
-    for (int d=0; d<3; ++d) U[d] = {0,0}; // <-------------------------------- fix
-    for (const auto& d : _disp.getComponents()) {
-      U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
-    }
-
-    double H00_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H00,j);
-    double H01_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H01,j);
-    double H11_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H11,j);
-    
-    std::vector<std::complex<double>> F;
-    F.resize(3); //this->mesh.getDim()); // <-------------------------------- fix
-
-    if (this->mesh.getDim() == 2) {
-      double q = wave_numbers(j,0);
-      this->computeF3D(F,q,0,
-		       U,
-		       H00_integrated*U[0], // H00-U0
-		       {0,0}, // H00-U2
-		       H01_integrated*U[0], // H01-U0
-		       {0,0}, // H01-U2
-		       H01_integrated*U[1], // H01-U1
-		       H11_integrated*U[1],  // H11-U1
-		       {0,0}, // H22-U0
-		       {0,0} // H22-U2
-		       );
-    } else {
-      
-      double H22_integrated = this->convols.getKernelIntegral(Kernel::Krnl::H22,j);
-
-      // q = {k,m} wave number in x,y direction
-      double k = wave_numbers(j,0);
-      double m = wave_numbers(j,2);
-      this->computeF3D(F,k,m,
-		       U,
-		       H00_integrated*U[0],
-		       H00_integrated*U[2],
-		       H01_integrated*U[0],
-		       H01_integrated*U[2],
-		       H01_integrated*U[1],
-		       H11_integrated*U[1],
-		       H22_integrated*U[0],
-		       H22_integrated*U[2]);
-    }
-    
-    // set values to internal force
-    for (const auto& d : this->internal.getComponents()) {
-      this->internal.fd(j,d)[0] = std::real(F[d]);  // real part
-      this->internal.fd(j,d)[1] = std::imag(F[d]);  // imag part
-    }
-  }
-
-  // correct mode 0
-  if (prank == m0_rank) {
-    for (const auto& d : this->internal.getComponents()) {
-      this->internal.fd(m0_index,d)[0] = 0.;  // real part
-      this->internal.fd(m0_index,d)[1] = 0.;  // imag part
-    }
-  }
+  this->computeF(this->internal, _disp, this->convols);
 }
 
 /* -------------------------------------------------------------------------- */

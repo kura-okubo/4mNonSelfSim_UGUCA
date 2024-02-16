@@ -68,20 +68,6 @@ protected:
   void computeStressFourierCoeffQuasiDynamic(bool predicting,
 					     bool correcting);
 
-  // To be deleted
-  void computeF3D(std::vector<std::complex<double>> & F,
-		  double k,
-		  double m,
-		  std::vector<std::complex<double>> & U,
-		  std::complex<double> conv_H00_U0_j,
-		  std::complex<double> conv_H00_U2_j,
-		  std::complex<double> conv_H01_U0_j,
-		  std::complex<double> conv_H01_U2_j,
-		  std::complex<double> conv_H01_U1_j,
-		  std::complex<double> conv_H11_U1_j,
-		  std::complex<double> conv_H22_U0_j,
-		  std::complex<double> conv_H22_U2_j);				   
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -91,7 +77,6 @@ public:
 
   // get stable time step
   virtual double getStableTimeStep();
-
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

@@ -31,12 +31,16 @@
 #ifndef __UCA_COMMON_H__
 #define __UCA_COMMON_H__
 #include <set>
+#include <vector>
+#include <complex>
 #include "uca_config.hh"
 
 #define __BEGIN_UGUCA__ namespace uguca {
 #define __END_UGUCA__  }
 
 namespace uguca {
+
+  enum class Krnl { H00, H01, H11, H22 };
 
   enum SolverMethod {
     _static = 0,
@@ -47,7 +51,9 @@ namespace uguca {
 
   enum SpatialDirection { _x = 0, _y = 1, _z = 2, _spatial_dir_count = 3 };
   using SpatialDirectionSet = std::set<int>;
-  
+
+  typedef std::vector<std::complex<double>> VecComplex;
+
 } // namespace
 
 #endif /* __UCA_COMMON_H__ */

@@ -36,7 +36,7 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Convolutions::Convolutions(HistFFTableNodalField & field) :
-  field(field), double_zeros(field.getNbFFT(),0) {
+  field(field) {
 
   // zeros vector
   VecComplex tmp(this->field.getNbFFT());
@@ -51,19 +51,15 @@ Convolutions::~Convolutions() {}
 
 /* -------------------------------------------------------------------------- */
 void Convolutions::preintegrate(Material & material,
-				Kernel::Krnl kernel,
+				Krnl kernel,
 				double scale_factor,
 				double time_step) {
 
   // preintegrated kernels: create vector and resize it
-  this->pi_kernels.insert(std::pair<Kernel::Krnl,PIKernelVector>(kernel, PIKernelVector()));
+  this->pi_kernels.insert(std::pair<Krnl,PIKernelVector>(kernel, PIKernelVector()));
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
   pik_vector.resize(this->field.getNbFFT());
 
-  // integrals of kernels: create vector and resize it
-  this->kernel_integrals.insert(std::pair<Kernel::Krnl,std::vector<double>>(kernel, std::vector<double>(this->field.getNbFFT())));
-  std::vector<double> & int_vector = this->kernel_integrals[kernel];
-  
   const TwoDVector & wave_numbers = this->field.getMesh().getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
@@ -78,9 +74,6 @@ void Convolutions::preintegrate(Material & material,
     double qj_cs = std::sqrt(qq) * scale_factor;
     
     pik_vector[j]->preintegrate(qj_cs, time_step);
-
-    // full integral of kernel
-    int_vector[j] = pik_vector[j]->getIntegral();
   }
 }
 
@@ -102,34 +95,57 @@ void Convolutions::init(ConvPair conv) {
 /* -------------------------------------------------------------------------- */
 void Convolutions::convolve() {
 
-ConvMap::iterator it;
+  ConvMap::iterator it;
 
 #ifdef UCA_USE_OPENMP
 #pragma omp parallel for
 #pragma omp single nowait
 #endif
- for(it=this->results.begin(); it!=this->results.end(); ++it) {
+  for(it=this->results.begin(); it!=this->results.end(); ++it) {
 #ifdef UCA_USE_OPENMP
 #pragma omp task firstprivate(datIt)
 #endif
-   // history for q1 is longest q = j*q1
-   for (int j=0; j<this->field.getNbFFT(); ++j) { //parallel loop
+    // history for q1 is longest q = j*q1
+    for (int j=0; j<this->field.getNbFFT(); ++j) { //parallel loop
 
-     // kernel 
-     Kernel::Krnl kernel = it->first.first;
+      // kernel 
+      Krnl kernel = it->first.first;
 
-     // modal U
-     unsigned int U_dim = it->first.second;
-     const ModalLimitedHistory & U_j = this->field.hist(j,U_dim);
+      // modal U
+      unsigned int U_dim = it->first.second;
+      const ModalLimitedHistory & U_j = this->field.hist(j,U_dim);
      
-     // std::vector<std::complex<double>> & res = it->second;
-     it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);
-   }
- }
+      // std::vector<std::complex<double>> & res = it->second;
+      it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);
+    }
+  }
 }
 
 /* -------------------------------------------------------------------------- */
-const Convolutions::VecComplex & Convolutions::getResult(ConvPair pair) {
+void Convolutions::convolveSteadyState() {
+
+  // loop over Kernel-dim pairs
+  for(ConvMap::iterator it=this->results.begin();
+      it!=this->results.end(); ++it) {
+
+    // loop over modes
+    for (int j=0; j<this->field.getNbFFT(); ++j) {
+
+      // kernel 
+      Krnl kernel = it->first.first;
+
+      // modal U (current value)
+      unsigned int U_dim = it->first.second;
+      std::complex<double> U_j = this->field.fd_or_zero(j,U_dim);
+
+      // compute convolution with time-constant U_j
+      it->second[j] = this->pi_kernels[kernel][j]->getIntegral() * U_j;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+const VecComplex & Convolutions::getResult(ConvPair pair) const {
 
   auto it = this->results.find(pair); // attempt to find the result
 
@@ -138,19 +154,6 @@ const Convolutions::VecComplex & Convolutions::getResult(ConvPair pair) {
   }
   else {
     return this->complex_zeros; // not found, return vector full of complex zeros
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-const std::vector<double> & Convolutions::getKernelIntegrals(Kernel::Krnl kernel) {
-
-  auto it = this->kernel_integrals.find(kernel); // attempt to find the integral
-
-  if (it != this->kernel_integrals.end()) {
-    return it->second; // found integral, return it
-  }
-  else {
-    return this->double_zeros; // not found, return vector full of zeros
   }
 }
 

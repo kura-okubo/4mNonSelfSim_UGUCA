@@ -92,7 +92,8 @@ int main(){
     if (prank==0) { // real space computations are on 0 rank process
       if (false) {
 	std::cout<<"solution"<<std::endl
-		 << std::setprecision(12) << inter.fd(4,0)[0] << ", " << inter.fd(4,0)[1] << std::endl
+		 << std::setprecision(12)
+		 << inter.fd(4,0)[0] << ", " << inter.fd(4,0)[1] << std::endl
 		 << inter.fd(2,1)[0] << ", " << inter.fd(2,1)[1] << std::endl;
       }
       else {

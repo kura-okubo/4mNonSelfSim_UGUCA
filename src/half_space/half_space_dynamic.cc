@@ -79,15 +79,15 @@ void HalfSpaceDynamic::setTimeStep(double time_step) {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::preintegrateKernels() {
 
-  this->convols.preintegrate(this->material, Kernel::Krnl::H00,
+  this->convols.preintegrate(this->material, Krnl::H00,
 			     this->material.getCs(), this->time_step);
-  this->convols.preintegrate(this->material, Kernel::Krnl::H01,
+  this->convols.preintegrate(this->material, Krnl::H01,
 			     this->material.getCs(), this->time_step);
-  this->convols.preintegrate(this->material, Kernel::Krnl::H11,
+  this->convols.preintegrate(this->material, Krnl::H11,
 			     this->material.getCs(), this->time_step);
 
   if (this->mesh.getDim()==3)
-    this->convols.preintegrate(this->material, Kernel::Krnl::H22,
+    this->convols.preintegrate(this->material, Krnl::H22,
 			       this->material.getCs(), this->time_step);
 }
 
@@ -96,16 +96,16 @@ void HalfSpaceDynamic::initConvolutions() {
 
   this->preintegrateKernels();
 
-  this->convols.init(std::make_pair(Kernel::Krnl::H00,0)); // H00-U0
-  this->convols.init(std::make_pair(Kernel::Krnl::H01,0)); // H01-U0
-  this->convols.init(std::make_pair(Kernel::Krnl::H11,1)); // H11-U1
-  this->convols.init(std::make_pair(Kernel::Krnl::H01,1)); // H01-U1
+  this->convols.init(std::make_pair(Krnl::H00,0)); // H00-U0
+  this->convols.init(std::make_pair(Krnl::H01,0)); // H01-U0
+  this->convols.init(std::make_pair(Krnl::H11,1)); // H11-U1
+  this->convols.init(std::make_pair(Krnl::H01,1)); // H01-U1
 
   if (this->mesh.getDim()==3) {
-    this->convols.init(std::make_pair(Kernel::Krnl::H22,0)); // H22-U0
-    this->convols.init(std::make_pair(Kernel::Krnl::H00,2)); // H00-U2
-    this->convols.init(std::make_pair(Kernel::Krnl::H01,2)); // H01-U2
-    this->convols.init(std::make_pair(Kernel::Krnl::H22,2)); // H22-U2
+    this->convols.init(std::make_pair(Krnl::H22,0)); // H22-U0
+    this->convols.init(std::make_pair(Krnl::H00,2)); // H00-U2
+    this->convols.init(std::make_pair(Krnl::H01,2)); // H01-U2
+    this->convols.init(std::make_pair(Krnl::H22,2)); // H22-U2
   }    
 
   // history of mode 0 needs to be of length zero
@@ -143,9 +143,7 @@ void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 							bool correcting) {
 
-  // --------------
-  // UPDATE HISTORY
-  // --------------
+  // update history
   if (predicting) {
     this->disp.addCurrentValueToHistory(this->disp_pc);
   }
@@ -156,37 +154,18 @@ void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
     this->disp.changeCurrentValueOfHistory();
   }
   
-  // --------------
-  // CONVOLUTION
-  // --------------
+  // compute convolutions
   this->convols.convolve();
     
-  // --------------
-  // COMPUTE F
-  // --------------
+  // compute F
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
-  this->computeF(this->internal,_disp,
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H00,0)),  // H00-U0
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H00,2)),  // H00-U2
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H01,0)),  // H01-U0
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H01,2)),  // H01-U2
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H01,1)),  // H01-U1
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H11,1)),  // H11-U1
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H22,0)),  // H22-U0
-		 this->convols.getResult(std::make_pair(Kernel::Krnl::H22,2))); // H22-U2
+  this->computeF(this->internal, _disp, this->convols);
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeF(FFTableNodalField & F,
 				const FFTableNodalField & U,
-				const Convolutions::VecComplex & c_H00_U0,
-				const Convolutions::VecComplex & c_H00_U2,
-				const Convolutions::VecComplex & c_H01_U0,
-				const Convolutions::VecComplex & c_H01_U2,
-				const Convolutions::VecComplex & c_H01_U1,
-				const Convolutions::VecComplex & c_H11_U1,
-				const Convolutions::VecComplex & c_H22_U0,
-				const Convolutions::VecComplex & c_H22_U2) {
+				const Convolutions & cnvls) {
 
   // parallel information
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -225,6 +204,12 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
 
       // X component
       else if (d == 0) {
+	const VecComplex & c_H00_U0 = cnvls.getResult(std::make_pair(Krnl::H00,0));
+	const VecComplex & c_H00_U2 = cnvls.getResult(std::make_pair(Krnl::H00,2));
+	const VecComplex & c_H01_U1 = cnvls.getResult(std::make_pair(Krnl::H01,1));
+	const VecComplex & c_H22_U0 = cnvls.getResult(std::make_pair(Krnl::H22,0));
+	const VecComplex & c_H22_U2 = cnvls.getResult(std::make_pair(Krnl::H22,2));
+	  
 	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
 	F_tmp += imag * mu * k * c_H01_U1[j];
 	F_tmp -= this->side_factor * mu *
@@ -234,6 +219,10 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
       
       // Y component
       else if (d == 1) {
+	const VecComplex & c_H01_U0 = cnvls.getResult(std::make_pair(Krnl::H01,0));
+	const VecComplex & c_H01_U2 = cnvls.getResult(std::make_pair(Krnl::H01,2));
+	const VecComplex & c_H11_U1 = cnvls.getResult(std::make_pair(Krnl::H11,1));
+	
 	F_tmp = -imag * mu * (2-eta) * (k * U.fd_or_zero(j,0) + m * U.fd_or_zero(j,2));
 	F_tmp -= mu * imag * (c_H01_U0[j] * k + c_H01_U2[j] * m);
 	F_tmp -= this->side_factor * mu * q * c_H11_U1[j];
@@ -241,6 +230,12 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
       
       // Z component
       else if (d == 2) {
+	const VecComplex & c_H00_U0 = cnvls.getResult(std::make_pair(Krnl::H00,0));
+	const VecComplex & c_H00_U2 = cnvls.getResult(std::make_pair(Krnl::H00,2));
+	const VecComplex & c_H01_U1 = cnvls.getResult(std::make_pair(Krnl::H01,1));
+	const VecComplex & c_H22_U0 = cnvls.getResult(std::make_pair(Krnl::H22,0));
+	const VecComplex & c_H22_U2 = cnvls.getResult(std::make_pair(Krnl::H22,2));
+	
 	F_tmp = imag * mu * (2-eta) * m * U.fd_or_zero(j,1);
 	F_tmp += imag * mu * m * c_H01_U1[j];
 	F_tmp -= this->side_factor * mu *
@@ -267,7 +262,6 @@ void HalfSpaceDynamic::registerToRestart(Restart & restart) {
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::setSteadyState(bool predicting) {
-
   if (predicting)
     this->disp.fillHistoryWithCurrentValue(this->disp_pc);
   else

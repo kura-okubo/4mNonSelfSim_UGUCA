@@ -64,28 +64,23 @@ public:
   virtual void setSteadyState(bool predicting = false);
   
 protected:
-  // preintegrate kernels
+  /// preintegrate kernels
   virtual void preintegrateKernels();
 
+  /// compute the stress fourier coefficients (fails if not dynamic)
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
 					 bool dynamic = true);
 
+  /// compute the stress fourier coefficients for dynamic case
   void computeStressFourierCoeffDynamic(bool predicting,
 					bool correcting);
 
   /// compute F from U in fourier space
   void computeF(FFTableNodalField & F,
 		const FFTableNodalField & U,
-		const Convolutions::VecComplex & conv_H00_U0,
-		const Convolutions::VecComplex & conv_H00_U2,
-		const Convolutions::VecComplex & conv_H01_U0,
-		const Convolutions::VecComplex & conv_H01_U2,
-		const Convolutions::VecComplex & conv_H01_U1,
-		const Convolutions::VecComplex & conv_H11_U1,
-		const Convolutions::VecComplex & conv_H22_U0,
-		const Convolutions::VecComplex & conv_H22_U2);
-
+		const Convolutions & cnvls);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */

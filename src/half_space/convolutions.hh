@@ -44,12 +44,10 @@ class Convolutions {
   /* ------------------------------------------------------------------------ */
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
-public:
+protected:
   typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
-  //protected:
-  typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
-  typedef std::pair<Kernel::Krnl,unsigned int> ConvPair;
-  typedef std::vector<std::complex<double>> VecComplex;
+  typedef std::map<Krnl,PIKernelVector> PIKernelMap;
+  typedef std::pair<Krnl,unsigned int> ConvPair;
   typedef std::map<ConvPair,VecComplex> ConvMap;
   
   
@@ -67,7 +65,7 @@ public:
 public:
   
   // preintegrate kernels
-  void preintegrate(Material & material, Kernel::Krnl kernel,
+  void preintegrate(Material & material, Krnl kernel,
 		    double scale_factor, double time_step);
 
   // initialize a convolution computation
@@ -75,17 +73,17 @@ public:
 
   // compute convolution results
   void convolve();
+
+  // compute convolution results for steady state (i.e. U constant)
+  void convolveSteadyState();
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
 
-  // simple full integral of kernel if it exists, otherwise vector of zeros
-  const std::vector<double> & getKernelIntegrals(Kernel::Krnl kernel);
-
   /// returns the convolution result if it exists, otherwise vector of zeros
-  const VecComplex & getResult(ConvPair pair);
+  const VecComplex & getResult(ConvPair pair) const;
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -96,18 +94,14 @@ private:
   HistFFTableNodalField & field;
   
   // preintegrated kernels [kernel][mode]
-  // e.g., pi_kernels[Kernel::Krnl::H00][1]
+  // e.g., pi_kernels[Krnl::H00][1]
   PIKernelMap pi_kernels;
-
-  // integrals of kernels [kernel][mode]
-  std::map<Kernel::Krnl,std::vector<double>> kernel_integrals;
   
   /// convolution results
   ConvMap results;
 
   /// result for when there is no result for a given convolution pair
   VecComplex complex_zeros;
-  std::vector<double> double_zeros;
 };
 
 /* -------------------------------------------------------------------------- */

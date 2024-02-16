@@ -37,9 +37,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <memory>
-#include <complex>
 
 __BEGIN_UGUCA__
 

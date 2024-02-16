@@ -38,8 +38,6 @@
 #include "uca_fftable_mesh.hh"
 #include "uca_restart.hh"
 
-#include <vector>
-
 __BEGIN_UGUCA__
 
 class Interface : public Dumper {
