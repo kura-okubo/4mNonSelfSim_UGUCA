@@ -1,12 +1,10 @@
 ###
 # @file   CMakeLists.txt
 #
-# @author David S. Kammer <dkammer@ethz.ch>
-# @author Gabriele Albertini <ga288@cornell.edu>
 # @author Chun-Yu Ke <ck659@cornell.edu>
 #
-# @date creation: Fri Feb 5 2021
-# @date last modification: Fri Feb 5 2021
+# @date creation: Wed Mar 7 2024
+# @date last modification: Wed Mar 7 2024
 #
 # @brief  TODO
 #
@@ -28,19 +26,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with uguca.  If not, see <https://www.gnu.org/licenses/>.
 ####
-function(uguca_add_benchmark NAME)
-  add_subdirectory(${NAME})
-  configure_file("plotting_utils.py" "${NAME}/plotting_utils.py" COPYONLY)
-  configure_file("${NAME}/inspect_results.py" "${NAME}/inspect_results.py" COPYONLY)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/benchmarks/${NAME}/ref)
-    file(COPY "${NAME}/ref" DESTINATION "${NAME}")
-  endif()
-endfunction()
-
-uguca_add_benchmark(TPV3)
-uguca_add_benchmark(TPV101)
-uguca_add_benchmark(TPV102)
-uguca_add_benchmark(TPV103)
-uguca_add_benchmark(TPV104)
-uguca_add_benchmark(TPV205)
-uguca_add_benchmark(BP1-FD)
+add_simulation(BP1-FD BP1-FD.cc)
+configure_file(BP1-FD.sh BP1-FD.sh COPYONLY)
+configure_file(result_summary.py result_summary.py COPYONLY)
+configure_file(generate_output.py generate_output.py COPYONLY)
