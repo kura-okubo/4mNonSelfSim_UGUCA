@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
   double f0 = 0.6;
 
   // initial conditions
-  double sigma_n = -50.0e6;
+  double sigma_n = 50.0e6;
   double V_init = 1.0e-9;
   double V_p = 1.0e-9;
   double theta_init = 1.606238999213454e9;
@@ -131,11 +131,13 @@ int main(int argc, char *argv[]) {
   SimpleMesh mesh(length_x, nb_nodes_x, length_z, nb_nodes_z);
 
   // constitutive interface law
+  SpatialDirection slip_dir = _z;
   RateAndStateLaw law(mesh, a_max, b0, Dc, V0, f0, theta_init,
-                      RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0);
+                      RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0, 0.0, slip_dir);
   NodalField & theta = law.getTheta();
   NodalField & a = law.getA();
   NodalField & b = law.getB();
+  NodalField & sigma = law.getSigma();
 
   double mu = Cs * Cs * rho;
   double lambda = Cp * Cp * rho - 2.0 * mu;
@@ -153,7 +155,7 @@ int main(int argc, char *argv[]) {
   // ---------------------------------------------------------------------------
   // weak interface
 
-  UnimatShearInterface interface(mesh, {_x, _z}, mat, law);
+  UnimatShearInterface interface(mesh, {_z}, mat, law);
 
   // ---------------------------------------------------------------------------
   // initial conditions
@@ -162,13 +164,13 @@ int main(int argc, char *argv[]) {
 
   NodalField & external = interface.getLoad();
   double tau0 = sigma_n * a_max * std::asinh(V_init / V0 / 2.0 * std::exp((f0 + b0 * std::log(V0 / V_init))/a_max));
-  external.setAllValuesTo(tau0, 0);
-  external.setAllValuesTo(sigma_n, 1);
+  external.setAllValuesTo(tau0, slip_dir);
+  sigma.setAllValuesTo(sigma_n);
 
   // init velocity
   HalfSpace& top = interface.getTop();
   NodalField& velo_top = top.getVelo();
-  velo_top.setAllValuesTo(V_init / 2,0);
+  velo_top.setAllValuesTo(V_init / 2, 2);
 
   const TwoDVector &  coords = mesh.getLocalCoords();
 
@@ -184,7 +186,7 @@ int main(int argc, char *argv[]) {
 
   // init theta
   for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
-    theta(i) = Dc / V0 * std::exp(a(i) / b(i) * std::log(2.0 * V0 / V_init * std::sinh(tau0 / a(i) / std::abs(sigma_n))) - f0 / b(i));
+    theta(i) = Dc / V0 * std::exp(a(i) / b(i) * std::log(2.0 * V0 / V_init * std::sinh(tau0 / a(i) / sigma_n)) - f0 / b(i));
   }
 
   // time step

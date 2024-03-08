@@ -1,12 +1,12 @@
 /**
  * @file   rate_and_state_law.hh
  *
+ 
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
  * @author Chun-Yu Ke <ck659@cornell.edu>
  *
  * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date last modification: Thu Mar 7 2024
  *
  * @brief  TODO
  *
@@ -53,18 +53,18 @@ public:
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
   RateAndStateLaw(
-       BaseMesh & mesh,
-       double a_default,
-       double b_default,
-       double Dc_default,
-       double V0,
-       double f0,
-       double theta_default,
-       EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
-       bool predictor_corrector = true,
-       double plate_velocity = 0.0,
-       const std::string & name = "rslaw"
-       );
+      BaseMesh &mesh,
+      double a_default,
+      double b_default,
+      double Dc_default,
+      double V0,
+      double f0,
+      double theta_default,
+      EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
+      bool predictor_corrector = true,
+      double plate_velocity = 0.0,
+      SpatialDirection slip_direction = _x,
+      const std::string &name = "rslaw");
   virtual ~RateAndStateLaw();
 
   /* ------------------------------------------------------------------------ */
@@ -92,6 +92,7 @@ public:
   NodalField & getTheta() { return this->theta; };
   NodalField & getA() { return this->a; };
   NodalField & getB() { return this->b; };
+  NodalField & getSigma() { return this->sigma; };
   NodalField & getVw();    // for slip law with strong rate weakening
   void setFw(double fw);  // for slip law with strong rate weakening
 
@@ -101,7 +102,7 @@ public:
  protected:
   NodalField theta;          // state variable
   NodalField theta_pc;       // state variable for predictor
-  //NodalField sigma;          // normal stress (compression is positive)
+  NodalField sigma;          // normal stress (compression is positive)
   NodalField V;              // slip rate
   NodalField iterations;     // iterations took in Newton-Raphson algorithm
   NodalField rel_error;      // for Newton-Raphson algorithm debugging
@@ -115,6 +116,7 @@ public:
   EvolutionLaw evolution_law;         // indicates which state evolution law to use
   double Vguard = 1.0e-20;            // minimum absolute velocity
   double Vplate;                      // plate velocity
+  SpatialDirection slip_direction;
   NodalField Vw;             // for slip law with strong rate weakening
   double fw = -1.0;                   // for slip law with strong rate weakening
 };
