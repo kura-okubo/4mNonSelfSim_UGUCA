@@ -81,6 +81,16 @@ void NodalField::resize(BaseMesh & mesh, SpatialDirectionSet components) {
 }
 
 /* -------------------------------------------------------------------------- */
+void NodalField::resizeTo(const NodalField & other,
+			  SpatialDirectionSet components) {
+  
+  if (components.empty()) {
+    components = other.components;
+  }
+  this->resize(*(other.mesh), components);
+}
+
+/* -------------------------------------------------------------------------- */
 void NodalField::zeros() {
   this->setAllValuesTo(0.);
 }

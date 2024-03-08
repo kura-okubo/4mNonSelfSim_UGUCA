@@ -78,7 +78,8 @@ RateAndStateLaw::RateAndStateLaw(
   evolution_law(evolution_law),
   Vplate(plate_velocity),
   slip_direction(slip_direction),
-  Vw() // not allocated
+  Vw(), // not allocated
+  constant_pressure() // not allocated
 {
   this->theta.setAllValuesTo(theta_default);
   this->theta.setName(name+"_theta");
@@ -146,6 +147,16 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);
 
+  // access to contact pressure
+  // if constant contact pressure was initiated, use it
+  const double * cp = NULL;
+  if (!this->constant_pressure.isInitialized()) {
+    cp = cohesion.data(1);
+  }
+  else {
+    cp = this->constant_pressure.data(1);
+  }
+  
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
@@ -194,8 +205,8 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
     // Newton-Raphson
     do {
       ++iter;
-      tau = this->a(i) * std::abs(cohesion(i,1)) * std::asinh(Z * (v_prev + Vplate));
-      dtau = this->a(i) * std::abs(cohesion(i,1)) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
+      tau = this->a(i) * std::abs(cp[i]) * std::asinh(Z * (v_prev + Vplate));
+      dtau = this->a(i) * std::abs(cp[i]) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
       F = fact_both * (ext(i, slip_direction) - tau) + fact_top * inttop(i, slip_direction) +
           fact_bot * intbot(i, slip_direction) - v_prev;
       dF = -fact_both * dtau - 1.0;
@@ -225,7 +236,7 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
     if (iter == max_iter) {
       throw std::runtime_error("Newton-Raphson not converged in RateAndStateLaw::computeCohesiveForces");
     }
-    tau = this->a(i) * std::abs(cohesion(i,1)) * std::asinh(Z * (v + Vplate));
+    tau = this->a(i) * std::abs(cp[i]) * std::asinh(Z * (v + Vplate));
     cohesion(i, slip_direction) = tau;
     this->iterations(i) = iter;
     this->rel_error(i) = rel_change;

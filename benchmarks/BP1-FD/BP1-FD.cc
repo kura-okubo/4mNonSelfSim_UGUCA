@@ -137,7 +137,6 @@ int main(int argc, char *argv[]) {
   NodalField & theta = law.getTheta();
   NodalField & a = law.getA();
   NodalField & b = law.getB();
-  NodalField & sigma = law.getSigma();
 
   double mu = Cs * Cs * rho;
   double lambda = Cp * Cp * rho - 2.0 * mu;
@@ -165,7 +164,10 @@ int main(int argc, char *argv[]) {
   NodalField & external = interface.getLoad();
   double tau0 = sigma_n * a_max * std::asinh(V_init / V0 / 2.0 * std::exp((f0 + b0 * std::log(V0 / V_init))/a_max));
   external.setAllValuesTo(tau0, slip_dir);
-  sigma.setAllValuesTo(sigma_n);
+
+  // impose a constant contact pressure
+  NodalField & sigma = law.getConstantPressure();
+  sigma.setAllValuesTo(sigma_n,1);
 
   // init velocity
   HalfSpace& top = interface.getTop();
@@ -247,11 +249,11 @@ int main(int argc, char *argv[]) {
         // plate rate
         double z = std::abs(coords(i, 2) - length_z / domain_factor);
         if (z > Wf) {
-          velo_top(i) = V_p;
+          velo_top(i,2) = V_p;
         }
         // free surface
-        u_top(nb_nodes_z - i, 0) = u_top(i, 0);
-        velo_top(nb_nodes_z - i, 0) = velo_top(i, 0);
+        u_top(nb_nodes_z - i, 2) = u_top(i, 2);
+        velo_top(nb_nodes_z - i, 2) = velo_top(i, 2);
       }
     }
 

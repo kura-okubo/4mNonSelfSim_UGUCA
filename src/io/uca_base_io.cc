@@ -173,9 +173,14 @@ void BaseIO::dumpField(std::fstream * dump_file,
 		       const NodalField & nodal_field) {
   if (!this->initiated) return;
 
-  this->write(dump_file,
-	      nodal_field.data(),
-	      nodal_field.getNbNodes()*nodal_field.getNbComponents());
+  auto cmps = nodal_field.getComponents();
+  if (!cmps.empty()) {
+    auto cmp0 = *(cmps.begin());
+    
+    this->write(dump_file,
+		nodal_field.data(cmp0),
+		nodal_field.getNbNodes()*nodal_field.getNbComponents());
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -251,9 +256,14 @@ void BaseIO::loadField(std::fstream * load_file,
 		       NodalField & nodal_field) {
   if (!this->initiated) return;
 
-  this->read(load_file,
-	     nodal_field.data(),
-	     nodal_field.getNbNodes()*nodal_field.getNbComponents());
+  auto cmps = nodal_field.getComponents();
+  if (!cmps.empty()) {
+    auto cmp0 = *(cmps.begin());
+
+    this->read(load_file,
+	       nodal_field.data(cmp0),
+	       nodal_field.getNbNodes()*nodal_field.getNbComponents());
+  }
 }
 
 /* -------------------------------------------------------------------------- */

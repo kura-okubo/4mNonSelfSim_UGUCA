@@ -66,6 +66,10 @@ public:
   // clears the NodalField and reinitializes it
   virtual void resize(BaseMesh & mesh, SpatialDirectionSet components);
 
+  // changes size to same as other with possibly different components
+  void resizeTo(const NodalField & other,
+		SpatialDirectionSet components = {});
+  
   // set all entries to zero
   void zeros();
 
@@ -91,6 +95,9 @@ public:
   // get name of nodal field
   std::string getName() const { return this->name; }
 
+  // check if initialzied
+  bool isInitialized() const { return this->initialized; }
+  
   // set name of nodal field
   void setName(const std::string & name) { this->name = name; }
   
@@ -108,8 +115,8 @@ public:
   inline const double & operator()(int n, int d=0) const;
   
   // access to storage
-  inline double * data(int i = 0);
-  inline const double * data(int = 0) const;
+  inline double * data(int d = 0);
+  inline const double * data(int d = 0) const;
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

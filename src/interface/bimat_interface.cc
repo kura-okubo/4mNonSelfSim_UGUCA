@@ -60,6 +60,12 @@ BimatInterface::~BimatInterface() {
 /* -------------------------------------------------------------------------- */
 void BimatInterface::closingNormalGapForce(NodalField & close_force,
                                            bool predicting) {
+
+  // check if the normal direction exists (it doesn't for antiplane)
+  if (!close_force.getComponents().count(_y)) {
+    return;
+  }
+
   // top material information
   const Material & mat_t = this->top->getMaterial();
   double cp_t = mat_t.getCp();

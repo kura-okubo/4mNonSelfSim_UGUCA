@@ -92,17 +92,26 @@ public:
   NodalField & getTheta() { return this->theta; };
   NodalField & getA() { return this->a; };
   NodalField & getB() { return this->b; };
-  NodalField & getSigma() { return this->sigma; };
   NodalField & getVw();    // for slip law with strong rate weakening
   void setFw(double fw);  // for slip law with strong rate weakening
 
+  // access to constant contact pressure
+  // if this is called once, then it will be used as contact pressure
+  // (instead of computed cohesion(i,1)
+  NodalField & getConstantPressure() {
+    if (!this->constant_pressure.isInitialized()) {
+      this->constant_pressure.resizeTo(this->theta, {_y});
+    }
+    return this->constant_pressure;
+  }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
  protected:
   NodalField theta;          // state variable
   NodalField theta_pc;       // state variable for predictor
-  NodalField sigma;          // normal stress (compression is positive)
+  //NodalField sigma;          // normal stress (compression is positive)
   NodalField V;              // slip rate
   NodalField iterations;     // iterations took in Newton-Raphson algorithm
   NodalField rel_error;      // for Newton-Raphson algorithm debugging
@@ -119,6 +128,9 @@ public:
   SpatialDirection slip_direction;
   NodalField Vw;             // for slip law with strong rate weakening
   double fw = -1.0;                   // for slip law with strong rate weakening
+
+  // mostly for anti-plane case
+  NodalField constant_pressure; // normal stress (imposed by user)
 };
 
 __END_UGUCA__
