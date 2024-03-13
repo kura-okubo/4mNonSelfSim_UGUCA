@@ -63,7 +63,6 @@ public:
       EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
       bool predictor_corrector = true,
       double plate_velocity = 0.0,
-      SpatialDirection slip_direction = _x,
       const std::string &name = "rslaw");
   virtual ~RateAndStateLaw();
 
@@ -125,7 +124,6 @@ public:
   EvolutionLaw evolution_law;         // indicates which state evolution law to use
   double Vguard = 1.0e-20;            // minimum absolute velocity
   double Vplate;                      // plate velocity
-  SpatialDirection slip_direction;
   NodalField Vw;             // for slip law with strong rate weakening
   double fw = -1.0;                   // for slip law with strong rate weakening
 

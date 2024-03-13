@@ -61,7 +61,6 @@ RateAndStateLaw::RateAndStateLaw(
        EvolutionLaw evolution_law,
        bool predictor_corrector,
        double plate_velocity,
-       SpatialDirection slip_direction,
        const std::string & name):
   InterfaceLaw(mesh,name),
   theta(mesh),
@@ -77,7 +76,6 @@ RateAndStateLaw::RateAndStateLaw(
   predictor_corrector(predictor_corrector),
   evolution_law(evolution_law),
   Vplate(plate_velocity),
-  slip_direction(slip_direction),
   Vw(), // not allocated
   constant_pressure() // not allocated
 {
@@ -111,20 +109,17 @@ void RateAndStateLaw::init() {
   // check if external load is not all zero on the other direction
   if (mesh.getDim() == 2)
     return;
-  if (slip_direction == _z)
-    return;
-  SpatialDirection other_shear_dir = slip_direction == _x ? _z : _x;
-  bool checks_out = true;
   unsigned int nb = this->mesh.getNbLocalNodes();
-  const double *external_other = this->interface->getLoad().data(other_shear_dir);
+  const double *external_2 = this->interface->getLoad().data(2);
+  bool checks_out = true;
   for (unsigned i = 0; i < nb; ++i) {
-    if (external_other[i] != 0.0) {
+    if (external_2[i] != 0.0) {
       checks_out = false;
       break;
     }
   }
   if (!checks_out) {
-    std::string message = "[ERROR] RateAndStateLaw currently only supports friction in one direction.";
+    std::string message = "[ERROR] RateAndStateLaw currently only supports friction in 0 direction.";
     std::cerr << message << std::endl;
     throw message;
   }
@@ -207,8 +202,8 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
       ++iter;
       tau = this->a(i) * std::abs(cp[i]) * std::asinh(Z * (v_prev + Vplate));
       dtau = this->a(i) * std::abs(cp[i]) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
-      F = fact_both * (ext(i, slip_direction) - tau) + fact_top * inttop(i, slip_direction) +
-          fact_bot * intbot(i, slip_direction) - v_prev;
+      F = fact_both * (ext(i, 0) - tau) + fact_top * inttop(i, 0) +
+          fact_bot * intbot(i, 0) - v_prev;
       dF = -fact_both * dtau - 1.0;
       v = v_prev - F / dF;
       rel_change = std::abs(F / dF / v_prev);
@@ -237,7 +232,7 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
       throw std::runtime_error("Newton-Raphson not converged in RateAndStateLaw::computeCohesiveForces");
     }
     tau = this->a(i) * std::abs(cp[i]) * std::asinh(Z * (v + Vplate));
-    cohesion(i, slip_direction) = tau;
+    cohesion(i, 0) = tau;
     this->iterations(i) = iter;
     this->rel_error(i) = rel_change;
   }
