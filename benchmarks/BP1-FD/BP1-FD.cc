@@ -52,15 +52,13 @@ int main(int argc, char *argv[]) {
   // default parameters
 
   double length_x_rpt = 50e3;
-  double length_z_rpt = 50e3;
 
   double domain_factor = 2.0;
 
   double duration = 47304000000; // 1500 years
   double dump_int = 1e6;
 
-  unsigned nb_nodes_x = 1;
-  unsigned nb_nodes_z = 2000; // 50e3 / 25 = 2000
+  unsigned nb_nodes_x = 2000;  // 50e3 / 25 = 2000
   double time_step_factor = 0.35;
 
   unsigned n_pc = 1;
@@ -82,10 +80,10 @@ int main(int argc, char *argv[]) {
               "\t-s: factor of domain size (%f)\n"
               "\t-f: time step factor (%f)\n"
               "\t-p: predictor-corrector iterations (%d)\n",
-              argv[0], nb_nodes_z, duration, dump_int, domain_factor,
+              argv[0], nb_nodes_x, duration, dump_int, domain_factor,
               time_step_factor, n_pc);
       return -1;
-    case 'N': nb_nodes_z       = atoi(optarg); break;
+    case 'N': nb_nodes_x       = atoi(optarg); break;
     case 'T': duration         = atof(optarg); break;
     case 't': dump_int         = atof(optarg); break;
     case 's': domain_factor    = atof(optarg); break;
@@ -98,8 +96,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  double length_x = length_x_rpt * 1;
-  double length_z = length_z_rpt * domain_factor;
+  double length_x = length_x_rpt * domain_factor;
 
   // ---------------------------------------------------------------------------
   // problem parameters
@@ -128,7 +125,7 @@ int main(int argc, char *argv[]) {
 
   // ---------------------------------------------------------------------------
   // mesh
-  SimpleMesh mesh(length_x, nb_nodes_x, length_z, nb_nodes_z);
+  SimpleMesh mesh(length_x, nb_nodes_x);
 
   // constitutive interface law
   SpatialDirection slip_dir = _z;
@@ -178,11 +175,11 @@ int main(int argc, char *argv[]) {
 
   // init a
   for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
-    double z = std::abs(coords(i,2) - length_z / 2);
-    if (z < H) {
+    double x = std::abs(coords(i,0) - length_x / 2);
+    if (x < H) {
       a(i) = a0;
-    } else if (z < H + h) {
-      a(i) = a0 + (a_max - a0) * (z - H) / h;
+    } else if (x < H + h) {
+      a(i) = a0 + (a_max - a0) * (x - H) / h;
     }
   }
 
@@ -208,7 +205,7 @@ int main(int argc, char *argv[]) {
   std::ostringstream bname_out;
   bname_out << std::fixed << std::setprecision(2)
             << "BP1-FD_Nx" << nb_nodes_x
-            << "_Nz" << nb_nodes_z
+            << "_Nx" << nb_nodes_x
             << "_s" << domain_factor
             << "_tf" << time_step_factor
             << "_npc" << n_pc;
@@ -244,16 +241,16 @@ int main(int argc, char *argv[]) {
 
     if (world_rank == mesh.getRoot()) {
       // only works with SimpleMesh
-      int nb_nodes_z = mesh.getNbGlobalNodes(2);
-      for (int i = 1; i < nb_nodes_z / 2; ++i) {
+      int nb_nodes_x = mesh.getNbGlobalNodes(0);
+      for (int i = 1; i < nb_nodes_x / 2; ++i) {
         // plate rate
-        double z = std::abs(coords(i, 2) - length_z / domain_factor);
-        if (z > Wf) {
+        double x = std::abs(coords(i, 0) - length_x / domain_factor);
+        if (x > Wf) {
           velo_top(i,2) = V_p;
         }
         // free surface
-        u_top(nb_nodes_z - i, 2) = u_top(i, 2);
-        velo_top(nb_nodes_z - i, 2) = velo_top(i, 2);
+        u_top(nb_nodes_x - i, 2) = u_top(i, 2);
+        velo_top(nb_nodes_x - i, 2) = velo_top(i, 2);
       }
     }
 
