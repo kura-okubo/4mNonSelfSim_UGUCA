@@ -30,7 +30,7 @@
  */
 
 #include "uca_distributed_fftable_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 
 #include <iostream>
 #include <cmath>
@@ -142,14 +142,14 @@ int main(){
     std::cout << "2d fft data success!" << std::endl;
 
 
-  FFTableNodalFieldComponent fnfc(mesh2d);
+  FFTableNodalField fnfc(mesh2d);
   if (prank==0) {
     for (int i=0; i<mesh2d.getNbGlobalFFT(); ++i) {
       fnfc.fd(i)[0] = i;
       fnfc.fd(i)[1] = 100+i;
     }
   }
-  fftw_complex * p_fnfc = fnfc.fd_storage();
+  fftw_complex * p_fnfc = fnfc.fd_data();
 
   /*
   if (prank==0)
@@ -164,7 +164,7 @@ int main(){
     std::cout << "-----------" << std::flush << std::endl;
   }
   
-  mesh2d.sortAndScatterFFTModes(fnfc.fd_storage(),root);
+  mesh2d.sortAndScatterFFTModes(fnfc.fd_data(),root);
 
   if (false) {
     std::cout << "sorted and scattered" << std::endl;
@@ -174,7 +174,7 @@ int main(){
     std::cout << "-----------" << std::flush << std::endl;
   }
   
-  mesh2d.gatherAndSortFFTModes(fnfc.fd_storage(),root);
+  mesh2d.gatherAndSortFFTModes(fnfc.fd_data(),root);
 
   if (false) {
     std::cout << "gathered and sorted" << std::endl;

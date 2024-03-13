@@ -30,6 +30,7 @@
  */
 #ifndef __UCA_COMMON_H__
 #define __UCA_COMMON_H__
+#include <set>
 #include "uca_config.hh"
 
 #define __BEGIN_UGUCA__ namespace uguca {
@@ -43,6 +44,9 @@ namespace uguca {
     _dynamic = 2,
     _hybrid = 3
   };
+
+  enum SpatialDirection { _x = 0, _y = 1, _z = 2, _spatial_dir_count = 3 };
+  using SpatialDirectionSet = std::set<int>;
   
 } // namespace
 

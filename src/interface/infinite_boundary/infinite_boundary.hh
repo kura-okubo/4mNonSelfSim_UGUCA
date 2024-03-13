@@ -45,6 +45,7 @@ public:
 
   // side factor top=1 bot=-1
   InfiniteBoundary(FFTableMesh & mesh,
+		   SpatialDirectionSet components,
 		   int side_factor,
 		   Material & material,
 		   const std::string & name = "inf_boundary",
@@ -71,7 +72,7 @@ private:
   void computeExternal();
 
   // due to inheritance from interface
-  void closingNormalGapForce(NodalFieldComponent &, bool) {
+  void closingNormalGapForce(NodalField &, bool) {
     throw std::runtime_error(
 	 "InfiniteBoundary::closingNormalGapForce not implemented.");
   }

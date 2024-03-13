@@ -34,15 +34,16 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 Interface::Interface(FFTableMesh & mesh,
+		     SpatialDirectionSet components,
 		     InterfaceLaw & law,
 		     const std::string & name) :
   Dumper(mesh),
   name(name),
   mesh(mesh),
   time_step(0.),
-  load(mesh,name+"_load"),
-  cohesion(mesh,name+"_cohesion"),
-  scratch_field(mesh,name+"_scratch"),
+  load(mesh,components,name+"_load"),
+  cohesion(mesh,components,name+"_cohesion"),
+  scratch_field(mesh,components,name+"_scratch"),
   law(&law) {
   
   this->law->setInterface(this);
@@ -50,14 +51,15 @@ Interface::Interface(FFTableMesh & mesh,
 
 /* -------------------------------------------------------------------------- */
 Interface::Interface(FFTableMesh & mesh,
+		     SpatialDirectionSet components,
 		     const std::string & name) :
   Dumper(mesh),
   name(name),
   mesh(mesh),
   time_step(0.),
-  load(mesh,name+"_load"),
-  cohesion(mesh,name+"_cohesion"),
-  scratch_field(mesh,name+"_scratch"),
+  load(mesh,components,name+"_load"),
+  cohesion(mesh,components,name+"_cohesion"),
+  scratch_field(mesh,components,name+"_scratch"),
   law(NULL) {}
 
 /* -------------------------------------------------------------------------- */
@@ -194,9 +196,9 @@ void Interface::combineLoadAndCohesion(NodalField & load_and_cohesion) {
   for (int d=0; d<this->mesh.getDim(); ++d) {
 
     // tau_0 - tau_coh
-    double * load_and_cohesion_p = load_and_cohesion.storage(d);
-    double * coh_p = this->cohesion.storage(d);
-    double * load_p = this->load.storage(d);
+    double * load_and_cohesion_p = load_and_cohesion.data(d);
+    double * coh_p = this->cohesion.data(d);
+    double * load_p = this->load.data(d);
 
     for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       load_and_cohesion_p[n] = load_p[n] - coh_p[n];
@@ -207,19 +209,10 @@ void Interface::combineLoadAndCohesion(NodalField & load_and_cohesion) {
 /* -------------------------------------------------------------------------- */
 void Interface::registerDumpField(const std::string & field_name) {
 
-  int d = std::atoi(&field_name[field_name.length()-1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
-
-  if (field_name == "load_"+std::to_string(d))
-    this->registerIO(field_name,
-			  this->load.component(d));
-
-  else if (field_name == "cohesion_"+std::to_string(d))
-    this->registerIO(field_name,
-			  this->cohesion.component(d));
+  if (field_name == "load")
+    this->registerIO(field_name, this->load);
+  else if (field_name == "cohesion")
+    this->registerIO(field_name, this->cohesion);
 
   else
     this->law->registerDumpField(field_name);

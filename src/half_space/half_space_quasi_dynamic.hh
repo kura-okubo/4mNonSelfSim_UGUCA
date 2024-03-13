@@ -43,6 +43,7 @@ class HalfSpaceQuasiDynamic : public HalfSpace {
   /* ------------------------------------------------------------------------ */
 public:
   HalfSpaceQuasiDynamic(Material & material, FFTableMesh & mesh, int side_factor,
+			SpatialDirectionSet components,
 			const std::string & name = "half_space");
 
   virtual ~HalfSpaceQuasiDynamic();

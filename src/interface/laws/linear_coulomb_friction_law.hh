@@ -72,8 +72,8 @@ public:
   void computeCohesiveForces(NodalField & cohesion,
 			     bool predicting = false);
 
-  void computeRegContactPressure(NodalFieldComponent & cohesion_1,
-				 NodalFieldComponent & reg_cont_pres);
+  void computeRegContactPressure(NodalField & cohesion,
+				 NodalField & reg_cont_pres);
 
   // dumper function
   virtual void registerDumpField(const std::string & field_name);
@@ -85,10 +85,10 @@ public:
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent & getMuS() { return this->mu_s; };
-  NodalFieldComponent & getMuK() { return this->mu_k; };
-  NodalFieldComponent & getDc() { return this->d_c; };
-  NodalFieldComponent & getCharacteristicTime() { return this->char_time; };
+  NodalField & getMuS() { return this->mu_s; };
+  NodalField & getMuK() { return this->mu_k; };
+  NodalField & getDc() { return this->d_c; };
+  NodalField & getCharacteristicTime() { return this->char_time; };
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -96,14 +96,14 @@ public:
 private:
   bool initialized;
 
-  NodalFieldComponent reg_contact_pressure;
-  NodalFieldComponent mu_s;
-  NodalFieldComponent mu_k;
-  NodalFieldComponent d_c;
-  NodalFieldComponent char_time;
+  NodalField reg_contact_pressure;
+  NodalField mu_s;
+  NodalField mu_k;
+  NodalField d_c;
+  NodalField char_time;
 
   // for predictor-corrector approach
-  NodalFieldComponent reg_cont_pres_tmp;
+  NodalField reg_cont_pres_tmp;
 };
 
 __END_UGUCA__

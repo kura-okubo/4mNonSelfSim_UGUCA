@@ -41,8 +41,9 @@ __BEGIN_UGUCA__
 HalfSpaceQuasiDynamic::HalfSpaceQuasiDynamic(Material & material,
 					     FFTableMesh & mesh,
 					     int side_factor,
+					     SpatialDirectionSet components,
 					     const std::string & name) :
-  HalfSpace(material, mesh, side_factor, name),
+  HalfSpace(material, mesh, side_factor, components, name),
   convolutions(mesh) {
 
 #ifdef UCA_VERBOSE
@@ -181,7 +182,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
   // access to fourier coefficients of stresses
   fftw_complex * internal_fd[3];
   for (int d = 0; d < this->mesh.getDim(); ++d)
-    internal_fd[d] = this->internal.fd_storage(d);
+    internal_fd[d] = this->internal.fd_data(d);
 
   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
 
@@ -192,7 +193,7 @@ void HalfSpaceQuasiDynamic::computeStressFourierCoeffQuasiDynamic(bool predictin
     U.resize(this->mesh.getDim());
 
     for (int d = 0; d < this->mesh.getDim(); ++d) {
-      U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
+      U[d] = {_disp.fd(j,d)[0], _disp.fd(j,d)[1]};
     }
 
     double H00_integrated = this->convolutions.getKernelIntegral(Kernel::Krnl::H00,j);

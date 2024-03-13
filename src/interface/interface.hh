@@ -49,6 +49,7 @@ class Interface : public Dumper {
 public:
 
   Interface(FFTableMesh & mesh,
+	    SpatialDirectionSet components,
 	    InterfaceLaw & law,
 	    const std::string & name = "interface");
 
@@ -57,6 +58,7 @@ public:
 protected:
   // for inheritate object: infinite boundary
   Interface(FFTableMesh & mesh,
+	    SpatialDirectionSet components,
 	    const std::string & name = "interface");
   
   /* ------------------------------------------------------------------------ */
@@ -93,7 +95,7 @@ public:
   void combineLoadAndCohesion(NodalField & load_and_cohesion);
 
   // compute force needed to close normal gap
-  virtual void closingNormalGapForce(NodalFieldComponent & close_force,
+  virtual void closingNormalGapForce(NodalField & close_force,
                                      bool predicting = false) = 0;
 
   // compute force needed to maintain current shear gap

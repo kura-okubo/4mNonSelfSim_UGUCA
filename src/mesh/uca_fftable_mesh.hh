@@ -40,7 +40,7 @@
 
 __BEGIN_UGUCA__
 
-class FFTableNodalFieldComponent;
+class FFTableNodalField;
 
 class FFTableMesh : public BaseMesh {
   /* ------------------------------------------------------------------------ */
@@ -63,11 +63,11 @@ public:
 public:
   virtual void init();
 
-  virtual void registerForFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void unregisterForFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void registerForFFT(FFTableNodalField & nodal_field);
+  virtual void unregisterForFFT(FFTableNodalField & nodal_field);
 
-  virtual void forwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void backwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void forwardFFT(FFTableNodalField & nodal_field);
+  virtual void backwardFFT(FFTableNodalField & nodal_field);
   
 protected:
   virtual void initWaveNumbersGlobal(double ** wave_numbers);

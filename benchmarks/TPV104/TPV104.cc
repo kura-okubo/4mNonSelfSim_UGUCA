@@ -151,10 +151,10 @@ int main(int argc, char *argv[]) {
       RateAndStateLaw::EvolutionLaw::SlipLawWithStrongRateWeakening, n_pc > 0);
   law.setFw(fw);
 
-  NodalFieldComponent & theta = law.getTheta();
-  NodalFieldComponent & a = law.getA();
+  NodalField & theta = law.getTheta();
+  NodalField & a = law.getA();
   // NodalField* b = law.getB();
-  NodalFieldComponent & Vw = law.getVw();
+  NodalField & Vw = law.getVw();
 
   double mu = Cs * Cs * rho;
   double lambda = Cp * Cp * rho - 2.0 * mu;
@@ -171,21 +171,20 @@ int main(int argc, char *argv[]) {
   // ---------------------------------------------------------------------------
   // weak interface
 
-  UnimatShearInterface interface(mesh, mat, law);
+  UnimatShearInterface interface(mesh, {_x,_y,_z},  mat, law);
 
   // ---------------------------------------------------------------------------
   // initial conditions
 
   // init external load
-  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
-  NodalFieldComponent & ext_normal = interface.getLoad().component(1);
-  ext_shear.setAllValuesTo(shear_load);
-  ext_normal.setAllValuesTo(normal_load);
+  NodalField & external = interface.getLoad();
+  external.setAllValuesTo(shear_load,0);
+  external.setAllValuesTo(normal_load,1);
 
   // init velocity
   HalfSpace& top = interface.getTop();
-  NodalFieldComponent & velo0_top = top.getVelo().component(0);
-  velo0_top.setAllValuesTo(V_init / 2);
+  NodalField & velo_top = top.getVelo();
+  velo_top.setAllValuesTo(V_init / 2,0);
 
   double ** coords = mesh.getLocalCoords();
 
@@ -268,9 +267,7 @@ int main(int argc, char *argv[]) {
   interface.dump(0, 0);
   s_dump = dump_int / time_step + 1;
 
-  NodalFieldComponent & u0_top = top.getDisp().component(0);
-  NodalFieldComponent & u2_top = top.getDisp().component(2);
-  NodalFieldComponent & velo2_top = top.getVelo().component(2);
+  NodalField & u_top = top.getDisp();
 
   if (world_rank == 0) std::cout << "simulation start..." << std::endl;
 
@@ -291,7 +288,7 @@ int main(int argc, char *argv[]) {
       if (r < R) F = std::exp(r * r / (r * r - R * R));
       double G = 1.0;
       if (t < T) G = std::exp((t - T) * (t - T) / t / (t - 2.0 * T));
-      ext_shear(i) = shear_load + delta_tau_0 * F * G;
+      external(i,0) = shear_load + delta_tau_0 * F * G;
     }
 
     // free surface
@@ -303,10 +300,10 @@ int main(int argc, char *argv[]) {
 	  int ij = i * nb_nodes_z + j;
 	  int ijsym = i * nb_nodes_z + nb_nodes_z - j;
 	  
-	  u0_top   (ijsym) =  u0_top   (ij);
-	  velo0_top(ijsym) =  velo0_top(ij);
-	  u2_top   (ijsym) = -u2_top   (ij);
-	  velo2_top(ijsym) = -velo2_top(ij);
+	  u_top   (ijsym,0) =  u_top   (ij,0);
+	  velo_top(ijsym,0) =  velo_top(ij,0);
+	  u_top   (ijsym,2) = -u_top   (ij,2);
+	  velo_top(ijsym,2) = -velo_top(ij,2);
 	}
       }
     }

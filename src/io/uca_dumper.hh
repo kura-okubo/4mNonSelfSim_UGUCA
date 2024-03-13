@@ -57,7 +57,7 @@ public:
                         const Format format = Format::ASCII);
 
   void registerIO(const std::string & field_name,
-		  NodalFieldComponent & nodal_field);
+		  NodalField & nodal_field);
 
   void dump(unsigned int step, double time);
 

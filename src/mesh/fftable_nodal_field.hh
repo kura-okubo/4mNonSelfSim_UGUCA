@@ -32,22 +32,34 @@
 #ifndef __FFTABLE_NODAL_FIELD_H__
 #define __FFTABLE_NODAL_FIELD_H__
 /* -------------------------------------------------------------------------- */
+#include <map>
 #include "uca_common.hh"
 #include "nodal_field.hh"
-#include "fftable_nodal_field_component.hh"
 #include "uca_fftable_mesh.hh"
 
 /* -------------------------------------------------------------------------- */
 
 __BEGIN_UGUCA__
-
+/* **
+ * MPI:
+ * use default FFTW MPI datastructure N0x(N1/2+1)*2
+ * note integer division rounds down
+ *
+ * Serial:
+ * use default FFTW datastructure N0xN1
+ */
 class FFTableNodalField : public NodalField {
+
+  friend class FFTableMesh;
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
   FFTableNodalField(const std::string & name = "unnamed") : NodalField(name) {}
+
   FFTableNodalField(FFTableMesh & mesh,
+		    SpatialDirectionSet components = {0},
 		    const std::string & name = "unnamed");
 
   virtual ~FFTableNodalField() {}
@@ -60,36 +72,64 @@ private:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init(FFTableMesh & mesh);
+  // clears the NodalField and reinitializes it
+  virtual void resize(BaseMesh & mesh, SpatialDirectionSet components) {
+    NodalField::resize(mesh, components);
+    this->resize();
+  }
+private:
+  virtual void resize();
 
+public:
   void forwardFFT();
   void backwardFFT();
-
-protected:
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  inline FFTableNodalFieldComponent & component(int i) {
-    return (FFTableNodalFieldComponent&)(*this->field[i]);
-  }
+  // get number of nodes
+  int getNbFFT() const { return ((FFTableMesh *)this->mesh)->getNbLocalFFT(); }
 
-  inline fftw_complex * fd_storage(int d) {
-    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd_storage();
-  }
-  
+  // get fftw plan id for component
+  inline int getFFTWPlanId(int d) { return this->fftw_plan_ids[d]; }
+
   // get one value of frequency domain in direction d
-  inline fftw_complex & fd(int d, int f) {
-    return ((FFTableNodalFieldComponent*)(this->field[d]))->fd(f);
-  }
+  inline fftw_complex & fd(int f, int d=0);
+  
+  // get access directly to frequency domain
+  // WARNING: convert it to double (assuming that fftw_complex is double[2])
+  inline fftw_complex * fd_data(int d=0);
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
 
+  // start indices for each component
+  std::vector<int> fd_start;
+  
+  // values in frequency domain in complex form
+  std::vector<fftw_complex> fd_storage;
+
+  // fftw plan id (given by mesh)
+  std::map<int, int> fftw_plan_ids;
 };
+
+/* -------------------------------------------------------------------------- */
+/* inline functions                                                           */
+/* -------------------------------------------------------------------------- */
+inline fftw_complex & FFTableNodalField::fd(int f, int d) {
+  if (!this->components.count(d)) 
+    throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+  return this->fd_storage[this->fd_start[d]+f];
+}
+
+inline fftw_complex * FFTableNodalField::fd_data(int d) {
+  if (!this->components.count(d))
+    throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+  return this->fd_storage.data() + this->fd_start[d];
+}
 
 __END_UGUCA__
 

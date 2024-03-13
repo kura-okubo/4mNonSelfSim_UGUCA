@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 exname = 'friction_2d_example'
 
-def plot(fldname,ax):
+def plot(fldname,comp,ax):
 
     # get time data
     Tdata = []
@@ -30,6 +30,10 @@ def plot(fldname,ax):
         Vdata.append([float(i) for i in line.strip().split()])
     Vdata = np.array(Vdata)
 
+    # get components
+    nb_nodes = (int)(Vdata.shape[1]/2)
+    Vdata = Vdata[:,comp*nb_nodes:(comp+1)*nb_nodes]
+    
     # plot
     XV, TV = np.meshgrid(Xdata, Tdata)
     pc = ax.pcolor(XV,TV,Vdata)
@@ -38,17 +42,20 @@ def plot(fldname,ax):
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    if len(sys.argv) not in [2]:
+    if len(sys.argv) not in [3]:
         sys.exit('Missing argument! usage: ./friction_2d_example_plot.py '
                  + 'fieldname '
                  + '(options: cohesion_0 top_disp_0 '
-                 + 'mu_s)')
+                 + 'mu_s) \n'
+                 + 'comp '
+                 + '(options: 0 1)')
 
     fldname=str(sys.argv[1])
+    comp=int(sys.argv[2])
         
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    pc = plot(fldname,ax)
+    pc = plot(fldname,comp,ax)
     cbar = fig.colorbar(pc)
     cbar.set_label(fldname)
     ax.set_xlabel('x')

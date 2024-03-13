@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 exname = 'fracture_3d_example'
 
-def plot(fldname,time):
+def plot(fldname,comp,time):
 
     # get time data
     Tdata = []
@@ -39,6 +39,10 @@ def plot(fldname,time):
         if i==tidx:
             Vdata.append([float(i) for i in line.strip().split()])
     Vdata = np.array(Vdata[0])
+
+    # get components
+    nb_nodes = (int)(Vdata.shape[0]/3)
+    Vdata = Vdata[comp*nb_nodes:(comp+1)*nb_nodes]
 
     print(Xdata.shape,Zdata.shape,Vdata.shape)
     
@@ -74,11 +78,11 @@ def plot(fldname,time):
 # -----------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    if len(sys.argv) not in [3]:
-        sys.exit('Missing argument! usage: ./fracture_2d_example_plot.py '
-                 + 'fieldname time'
-                 + '(options for fieldname: cohesion_0 cohesion_1 cohesion_2 '
-                 + 'top_disp_0 top_disp_1 top_disp_2)')
+    if len(sys.argv) not in [4]:
+        sys.exit('Missing argument! usage: ./fracture_3d_example_plot.py '
+                 + 'fieldname comp time'
+                 + '\n(options for fieldname: cohesion top_disp)'
+                 + '\n(options for comp: 0 1 2)')
 
-    plot(str(sys.argv[1]),float(sys.argv[2]))
+    plot(str(sys.argv[1]),int(sys.argv[2]),float(sys.argv[3]))
     plt.show()

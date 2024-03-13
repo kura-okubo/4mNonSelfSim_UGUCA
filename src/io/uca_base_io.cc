@@ -103,20 +103,11 @@ void BaseIO::initIO(const std::string &bname,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(const std::string & name,
-			NodalFieldComponent & nodal_field) {
+			NodalField & nodal_field) {
   if (this->registered_fields.find(name) == this->registered_fields.end())
     this->registered_fields[name] = (&nodal_field);
   else
     throw std::runtime_error("Field already registered: "+name);
-}
-
-/* -------------------------------------------------------------------------- */
-void BaseIO::registerIO(const std::string & name,
-			NodalField & nodal_field) {
-  for (int d=0; d<nodal_field.getDim(); ++d) {
-    std::string component_name = name + "_" + std::to_string(d);
-    this->registerIO(component_name, nodal_field.component(d));
-  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -129,15 +120,8 @@ void BaseIO::registerIO(const std::string & name,
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseIO::registerIO(NodalFieldComponent & nodal_field) {
-  this->registerIO(nodal_field.getName(), nodal_field);
-}
-
-/* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(NodalField & nodal_field) {
-  for (int d=0; d<nodal_field.getDim(); ++d) {
-    this->registerIO(nodal_field.component(d));
-  }
+  this->registerIO(nodal_field.getName(), nodal_field);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -186,13 +170,12 @@ void BaseIO::closeFiles(bool release_memory) {
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::dumpField(std::fstream * dump_file,
-		       const NodalFieldComponent & nodal_field) {
+		       const NodalField & nodal_field) {
   if (!this->initiated) return;
 
-  int nb_nodes = nodal_field.getNbNodes();
-  const double * nf_data = nodal_field.storage();
-
-  this->write(dump_file, nf_data, nb_nodes);
+  this->write(dump_file,
+	      nodal_field.data(),
+	      nodal_field.getNbNodes()*nodal_field.getNbComponents());
 }
 
 /* -------------------------------------------------------------------------- */
@@ -265,13 +248,12 @@ void BaseIO::write(std::fstream * dump_file,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::loadField(std::fstream * load_file,
-		       NodalFieldComponent & nodal_field) {
+		       NodalField & nodal_field) {
   if (!this->initiated) return;
 
-  int nb_nodes = nodal_field.getNbNodes();
-  double * nf_data = nodal_field.storage();
-
-  this->read(load_file, nf_data, nb_nodes);
+  this->read(load_file,
+	     nodal_field.data(),
+	     nodal_field.getNbNodes()*nodal_field.getNbComponents());
 }
 
 /* -------------------------------------------------------------------------- */

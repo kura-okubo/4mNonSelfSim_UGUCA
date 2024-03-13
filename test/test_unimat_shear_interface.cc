@@ -52,14 +52,14 @@ int checkClosingNormalGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
   std::uniform_real_distribution<double> unif(0, 1);
   std::default_random_engine re;
   HalfSpace &top = interface.getTop();
-  FFTableNodalFieldComponent & disp_1_top = top.getDisp(false).component(1);
+  FFTableNodalField & disp_top = top.getDisp(false);
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
     double random_value = unif(re);
     u_1.push_back(random_value);
-    disp_1_top.set(i) = random_value;
+    disp_top(i,1) = random_value;
     random_value = unif(re);
     load_1.push_back(random_value);
-    interface.getLoad().component(1).set(i) = random_value;
+    interface.getLoad()(i,1) = random_value;
   }
   // compute reference closing forces, note that internal is zero.
   std::vector<double> ref_close_force;
@@ -74,9 +74,9 @@ int checkClosingNormalGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
   }
   // check results
   double tol = 1e-10;
-  interface.closingNormalGapForce(fields.component(1), false);  // not predicting
+  interface.closingNormalGapForce(fields, false);  // not predicting
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-    if (std::abs(fields.component(1).at(i)-ref_close_force[i]) > tol) {
+    if (std::abs(fields(i,1)-ref_close_force[i]) > tol) {
       std::cout << "discrepancy found in closingNormalGapForce" << std::endl;
       return 1;  // failure
     }
@@ -96,10 +96,10 @@ int checkMaintainShearGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
     double random_value = unif(re);
     load_0.push_back(random_value);
-    interface.getLoad().component(0).set(i) = random_value;
+    interface.getLoad()(i,0) = random_value;
     random_value = unif(re);
     load_2.push_back(random_value);
-    interface.getLoad().component(2).set(i) = random_value;
+    interface.getLoad()(i,2) = random_value;
   }
   // compute reference solutions, note that internal is zero.
   std::vector<double> ref_maintain_force_0;
@@ -118,11 +118,11 @@ int checkMaintainShearGapForce(SimpleMesh &mesh, UnimatShearInterface &interface
   interface.maintainShearGapForce(fields);  // not predicting
   double tol = 1e-10;
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-    if (std::abs(fields.component(0).at(i)-ref_maintain_force_0[i]) > tol) {
+    if (std::abs(fields(i,0)-ref_maintain_force_0[i]) > tol) {
       std::cout << "discrepancy found in maintainShearGapForce" << std::endl;
       return 1;  // failure
     }
-    if (std::abs(fields.component(2).at(i)-ref_maintain_force_2[i]) > tol) {
+    if (std::abs(fields(i,2)-ref_maintain_force_2[i]) > tol) {
       std::cout << "discrepancy found in maintainShearGapForce" << std::endl;
       return 1;  // failure
     }
@@ -144,10 +144,10 @@ int checkComputeGaps(SimpleMesh &mesh, UnimatShearInterface &interface,
     for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
       double random_value = unif(re);
       disp[j].push_back(random_value);
-      top.getDisp().component(j).set(i) = random_value;
+      top.getDisp()(i,j) = random_value;
       random_value = unif(re);
       velo[j].push_back(random_value);
-      top.getVelo().component(j).set(i) = random_value;
+      top.getVelo()(i,j) = random_value;
     }
   }
   // check results
@@ -155,7 +155,7 @@ int checkComputeGaps(SimpleMesh &mesh, UnimatShearInterface &interface,
   double tol = 1e-10;
   for (size_t j = 0; j < 3; ++j) {
     for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-      if (std::abs(fields.component(j).at(i)-disp[j][i] * 2) > tol) {
+      if (std::abs(fields(i,j)-disp[j][i] * 2) > tol) {
         std::cout << "discrepancy found in computeGap" << std::endl;
         return 1;  // failure
       }
@@ -164,7 +164,7 @@ int checkComputeGaps(SimpleMesh &mesh, UnimatShearInterface &interface,
   interface.computeGapVelocity(fields, false);  // not predicting
   for (size_t j = 0; j < 3; ++j) {
     for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-      if (std::abs(fields.component(j).at(i)-velo[j][i] * 2) > tol) {
+      if (std::abs(fields(i,j)-velo[j][i] * 2) > tol) {
         std::cout << "discrepancy found in computeGapVelocity" << std::endl;
         return 1;  // failure
       }
@@ -205,12 +205,12 @@ int main(){
   // interface
   // --------------------------------------------------------------
   double time_step = 1.0e-1;
-  UnimatShearInterface interface(mesh, material_top, law);
+  UnimatShearInterface interface(mesh, {_x,_y,_z},  material_top, law);
   interface.setTimeStep(time_step);
   // --------------------------------------------------------------
   // container
   // --------------------------------------------------------------
-  NodalField fields(mesh);
+  NodalField fields(mesh, {_x,_y,_z});
   // --------------------------------------------------------------
 
   // Check BimatInterface::closingNormalGapForce

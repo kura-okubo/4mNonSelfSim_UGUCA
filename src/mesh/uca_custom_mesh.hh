@@ -63,8 +63,8 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void forwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void backwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void forwardFFT(FFTableNodalField & nodal_field);
+  virtual void backwardFFT(FFTableNodalField & nodal_field);
 
 protected:
   virtual void init(std::vector<double> & x_coords,

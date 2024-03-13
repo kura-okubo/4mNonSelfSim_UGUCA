@@ -31,7 +31,7 @@
 #include "uca_custom_mesh.hh"
 #include "static_communicator_mpi.hh"
 #include "uca_simple_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 
 #include <iomanip>
 #include <cmath>
@@ -109,41 +109,36 @@ void CustomMesh::init(std::vector<double> & x_coords,
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void CustomMesh::forwardFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
 
-  double * disp_tmp = NULL;
+  NodalField tmp;
   // copy displacement for after gatherAndSort
   if (prank == this->root) {
-    disp_tmp = new double[this->nb_nodes_local];
-    double * p_nfc = nodal_field_comp.storage();
-    for (int n=0; n<nodal_field_comp.getNbNodes(); ++n)
-      disp_tmp[n] = p_nfc[n];
+    tmp.copyDataFrom(nodal_field);
   }
-  else {
-    disp_tmp = new double[1];
-    disp_tmp[0] = 0;
+
+  // loop over all components of the nodal field
+  for (const auto& d : nodal_field.getComponents()) {
+    this->gatherAndSortCustomNodes(nodal_field.data(d), this->root);
   }
-  
-  this->gatherAndSortCustomNodes(nodal_field_comp.storage(), this->root);
-  SimpleMesh::forwardFFT(nodal_field_comp);
+  SimpleMesh::forwardFFT(nodal_field);
 
   // restore the displacement
   if (prank == this->root) {
-    double * p_nfc = nodal_field_comp.storage();
-    for (int n=0; n<nodal_field_comp.getNbNodes(); ++n)
-      p_nfc[n] = disp_tmp[n];
+    nodal_field.copyDataFrom(tmp);
   }
-
-  delete[] disp_tmp;
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void CustomMesh::backwardFFT(FFTableNodalField & nodal_field) {
 
-  SimpleMesh::backwardFFT(nodal_field_comp);
-  this->sortAndScatterCustomNodes(nodal_field_comp.storage(), this->root);
+  SimpleMesh::backwardFFT(nodal_field);
+  // loop over all components of the nodal field
+  for (const auto& d : nodal_field.getComponents()) {
+    this->sortAndScatterCustomNodes(nodal_field.data(d), this->root);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
