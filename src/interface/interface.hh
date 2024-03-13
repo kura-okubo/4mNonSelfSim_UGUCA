@@ -38,8 +38,6 @@
 #include "uca_fftable_mesh.hh"
 #include "uca_restart.hh"
 
-#include <vector>
-
 __BEGIN_UGUCA__
 
 class Interface : public Dumper {
@@ -128,8 +126,6 @@ public:
 
   virtual void setTimeStep(double time_step);
   double getTimeStep() const { return this->time_step; }
-
-  void setDynamic(bool fully_dynamic);
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

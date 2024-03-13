@@ -144,11 +144,11 @@ int checkCoords(SimpleMesh& mesh, std::string bname, std::string path,
     std::cout << "wrong # of nodes in *.coord" << std::endl;
     return 1;  // failure
   }
-  double ** coords_ref = mesh.getLocalCoords();
+  const TwoDVector & coords_ref = mesh.getLocalCoords();
   double tol = 1e-5;
   for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
     for (unsigned j = 0; j < 3; ++j) {
-      if (std::abs(coords[i][j] - coords_ref[j][i]) > tol) {
+      if (std::abs(coords[i][j] - coords_ref(i,j)) > tol) {
         std::cout << "discrepancy found in *.coord" << std::endl;
         return 1;  // failure
       }

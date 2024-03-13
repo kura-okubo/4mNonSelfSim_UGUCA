@@ -31,6 +31,10 @@
 #include "nodal_field.hh"
 #include <stdexcept>
 #include <cmath>
+#ifdef UCA_VERBOSE
+#include <iostream>
+#include "static_communicator_mpi.hh"
+#endif // UCA_VERBOSE
 
 __BEGIN_UGUCA__
 

@@ -214,17 +214,17 @@ int main(int argc, char *argv[]) {
   NodalField & Gamma_c = law.getGc();
   double tol = 0.1*length_x/nb_nodes_x/2.0;
 
-  double ** coords = mesh.getLocalCoords();
+  const TwoDVector & coords = mesh.getLocalCoords();
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol) {
+    if (std::abs( coords(i,0) - length_x/2.0) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol) {
       load(i,0) = 0.5*(nuc_shear_load+shear_load);
     }
   }
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol) {
+    if (std::abs( coords(i,0) - length_x/2.0) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol) {
       load(i,0) = nuc_shear_load;
     }
   }
@@ -233,8 +233,8 @@ int main(int argc, char *argv[]) {
   // infinite strength zone;
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0)  > length_x_rpt/2.0-tol ||
-	std::abs( coords[2][i] - length_z/2.0) > length_z_rpt/2.0-tol) {
+    if (std::abs( coords(i,0) - length_x/2.0)  > length_x_rpt/2.0-tol ||
+	std::abs( coords(i,2) - length_z/2.0) > length_z_rpt/2.0-tol) {
 	Gamma_c(i) = 1e24*Gc;
 	tauc(i) = 1e24*tau_c;
     }
@@ -243,15 +243,15 @@ int main(int argc, char *argv[]) {
   //-------------
   // strengh barrier higher
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0+strength_barrier_center)) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
+    if (std::abs( coords(i,0) - (length_x/2.0+strength_barrier_center)) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
       {
 	load(i,0) = 0.5*(strong_patch_shear_load+shear_load);
       }
   }
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0+strength_barrier_center)) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
+    if (std::abs( coords(i,0) - (length_x/2.0+strength_barrier_center)) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
       {
 	load(i,0) = strong_patch_shear_load;
       }
@@ -260,16 +260,16 @@ int main(int argc, char *argv[]) {
   //-------------
   // strengh barrier lower
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0-strength_barrier_center)) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
+    if (std::abs( coords(i,0) - (length_x/2.0-strength_barrier_center)) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
       {
 	load(i,0) = 0.5*(weak_patch_shear_load+shear_load);
       }
   }
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0-strength_barrier_center)) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
+    if (std::abs( coords(i,0) - (length_x/2.0-strength_barrier_center)) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
       {
 	load(i,0) = weak_patch_shear_load;
       }
@@ -354,8 +354,8 @@ int main(int argc, char *argv[]) {
 
     // free surface
     if (world_rank == mesh.getRoot()) { // only works with SimpleMesh
-      int nb_nodes_x = mesh.getNbGlobalNodesX();
-      int nb_nodes_z =  mesh.getNbGlobalNodesZ();
+      int nb_nodes_x = mesh.getNbGlobalNodes(0);
+      int nb_nodes_z = mesh.getNbGlobalNodes(2);
       
       for (int i = 0; i < nb_nodes_x; ++i) {
 	for (int j = 1; j < nb_nodes_z / 2; ++j) {

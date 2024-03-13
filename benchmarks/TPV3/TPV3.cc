@@ -218,19 +218,19 @@ int main(int argc, char *argv[]) {
   NodalField & tauc = law.getTauc();
   NodalField & Gamma_c = law.getGc();
 
-  double ** coords = mesh.getLocalCoords();
+  const TwoDVector & coords = mesh.getLocalCoords();
   double tol = 0.1*length_x/nb_nodes_x/2.0;
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0) < a0/2.0+tol) {
+    if (std::abs( coords(i,0) - length_x/2.0) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0) < a0/2.0+tol) {
       load(i,0) = 0.5*(nuc_shear_load+shear_load);
     }
   }
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0) < a0/2.0-tol) {
+    if (std::abs( coords(i,0) - length_x/2.0) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0) < a0/2.0-tol) {
       load(i,0) = nuc_shear_load;
     }
   }
@@ -238,8 +238,8 @@ int main(int argc, char *argv[]) {
   //--------------
   // infinite strength zone;
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) > length_x_rpt/2.0-tol ||
-	std::abs( coords[2][i] - length_z/2.0) > length_z_rpt/2.0-tol) {
+    if (std::abs( coords(i,0) - length_x/2.0) > length_x_rpt/2.0-tol ||
+	std::abs( coords(i,2) - length_z/2.0) > length_z_rpt/2.0-tol) {
 	Gamma_c(i) = 1e24*Gc;
 	tauc(i) = 1e24*tau_c;
     }

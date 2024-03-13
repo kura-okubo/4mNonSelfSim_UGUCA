@@ -44,11 +44,9 @@ if __name__ == "__main__":
 
     if len(sys.argv) not in [3]:
         sys.exit('Missing argument! usage: ./friction_2d_example_plot.py '
-                 + 'fieldname '
-                 + '(options: cohesion_0 top_disp_0 '
-                 + 'mu_s) \n'
-                 + 'comp '
-                 + '(options: 0 1)')
+                 + 'fieldname comp '
+                 + '(fieldname options: cohesion top_disp mu_s) \n'
+                 + '(comp options: 0 1)')
 
     fldname=str(sys.argv[1])
     comp=int(sys.argv[2])

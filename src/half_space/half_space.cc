@@ -30,6 +30,8 @@
  */
 #include "half_space.hh"
 #include "half_space_dynamic.hh"
+#include "half_space_quasi_dynamic.hh"
+#include "half_space_adaptive.hh"
 
 #include <limits>
 
@@ -68,6 +70,12 @@ HalfSpace * HalfSpace::newHalfSpace(Material & material,
   if (method == _dynamic) {
     hs = new HalfSpaceDynamic(material, mesh, side_factor, components, name);
   }
+  else if (method == _quasi_dynamic) {
+    hs = new HalfSpaceQuasiDynamic(material, mesh, side_factor, components, name);
+  }
+  else if (method == _adaptive) {
+    hs = new HalfSpaceAdaptive(material, mesh, side_factor, components, name);
+  }
   else {
     throw std::runtime_error("HalfSpace: solver method not implemented");
   }
@@ -98,14 +106,14 @@ void HalfSpace::computeDisplacement(bool predicting) {
 
 /* -------------------------------------------------------------------------- */
 // u_i+1 = u_i + dt * v_i
-void HalfSpace::computeDisplacement(NodalField & _disp,
-				    NodalField & _velo,
+void HalfSpace::computeDisplacement(NodalField & disp,
+				    NodalField & velo,
 				    NodalField & target) {
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  for (const auto& d : target.getComponents()) {
 
-    double * disp_p = _disp.data(d);
-    double * velo_p = _velo.data(d);
+    double * disp_p   = disp.data(d);
+    double * velo_p   = velo.data(d);
     double * target_p = target.data(d);
 
     for (int n=0; n<target.getNbNodes(); ++n) {
@@ -134,7 +142,9 @@ void HalfSpace::backwardFFT() {
 /* -------------------------------------------------------------------------- */
 // residual = (internal + external) * side_factor
 void HalfSpace::computeResidual(NodalField & external) {
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+
+  for (const auto& d : this->residual.getComponents()) {
+
     double *int_p = this->internal.data(d);
     double *ext_p = external.data(d);
     double *res_p = this->residual.data(d);
@@ -152,9 +162,12 @@ void HalfSpace::computeVelocity(bool predicting) {
 
 /* -------------------------------------------------------------------------- */
 void HalfSpace::updateVelocity() {
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+
+  for (const auto& d : this->velo.getComponents()) {
+
     double *velo_p = this->velo.data(d);
     double *velo_pc_p = this->velo_pc.data(d);
+
     for (int n = 0; n < this->velo_pc.getNbNodes(); ++n) {
       velo_pc_p[n] = velo_p[n];
     }
@@ -172,7 +185,8 @@ void HalfSpace::correctVelocity(NodalField & velo_n,
 				NodalField & velo_pc,
 				NodalField & target) {
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  for (const auto& d : target.getComponents()) {
+
     double * velo_n_p = velo_n.data(d);
     double * velo_pc_p = velo_pc.data(d);
     double * target_p = target.data(d);
@@ -187,18 +201,19 @@ void HalfSpace::correctVelocity(NodalField & velo_n,
 // velocity = cs / mu       * residual (for in-plane shear components)
 // velocity = cs / mu / eta * residual (for normal component)
 // velocity = cs / mu       * residual (for out-of-plane shear components)
-void HalfSpace::computeVelocity(NodalField & _velo) {
+void HalfSpace::computeVelocity(NodalField & velo) {
   double mu = this->material.getShearModulus();
   double Cs = this->material.getCs();
   double Cp = this->material.getCp();
   std::vector<double> eta = {1.0, Cp / Cs, 1.0};
 
-  for (int d=0; d < this->mesh.getDim(); ++d) {
-    double * velo_p = _velo.data(d);
+  for (const auto& d : velo.getComponents()) {
+
+    double * velo_p = velo.data(d);
     double * res_p = this->residual.data(d);
     double eta_d = eta[d];
 
-    for (int n=0; n<_velo.getNbNodes(); ++n)
+    for (int n=0; n<velo.getNbNodes(); ++n)
       velo_p[n] = Cs / mu / eta_d * res_p[n];
   }
 }

@@ -137,7 +137,7 @@ int main() {
 		  inf_length_y, inf_nb_nodes_y,
 		  x_coord_tmp, z_coord_tmp);
   int dim = mesh.getDim();
-  double** coord_tmp = mesh.getLocalCoords();
+  const TwoDVector & coord_tmp = mesh.getLocalCoords();
 
   InfiniteBoundary infinite_boundary(mesh,
 				     {_x,_y,_z},
@@ -160,7 +160,7 @@ int main() {
   // populate fields
   for (int i=0; i<dim; ++i) {
     for (int n=0; n<inf_bc_vel.getNbNodes(); ++n){
-      inf_bc_vel(n,i)=coord_tmp[0][n]*coord_tmp[2][n]+coord_tmp[0][n]+coord_tmp[2][n];
+      inf_bc_vel(n,i)=coord_tmp(n,0)*coord_tmp(n,2)+coord_tmp(n,0)+coord_tmp(n,2);
     }
   }
 

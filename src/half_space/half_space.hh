@@ -35,6 +35,7 @@
 #include "material.hh"
 #include "nodal_field.hh"
 #include "fftable_nodal_field.hh"
+#include "hist_fftable_nodal_field.hh"
 #include "uca_fftable_mesh.hh"
 #include "uca_dumper.hh"
 #include "uca_restart.hh"
@@ -168,7 +169,8 @@ protected:
   int side_factor;
 
   // displacement 0 x "in-plane shear" ; 1 y "normal"; 2 z "out-of-plane shear"
-  FFTableNodalField disp;
+  // with limited history
+  HistFFTableNodalField disp;
 
   // velocity
   NodalField velo;

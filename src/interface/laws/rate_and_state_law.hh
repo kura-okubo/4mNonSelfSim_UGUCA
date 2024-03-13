@@ -35,8 +35,6 @@
 
 #include "interface_law.hh"
 
-#include <vector>
-
 /*
   Rate and state slip law in shear direction only.
   No interpenetration allowed

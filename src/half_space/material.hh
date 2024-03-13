@@ -79,7 +79,7 @@ public:
   bool getPStress() const { return this->pstress; };
 
   // access kernels
-  Kernel * getKernel(Kernel::Krnl krnl) { return this->kernels.get(krnl); }
+  Kernel * getKernel(Krnl krnl) { return this->kernels.get(krnl); }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */

@@ -116,7 +116,7 @@ void BimatInterface::maintainShearGapForce(NodalField & maintain_force) {
   fact_t/=fact_mf;
   fact_b/=fact_mf;
 
-  for (int d=0; d<this->mesh.getDim();d+=2) {
+  for (const auto& d : maintain_force.getComponents()) {
     // accessors
     double * f_t = this->top->getInternal().data(d);
     double * f_b = this->bot->getInternal().data(d);
@@ -134,8 +134,8 @@ void BimatInterface::maintainShearGapForce(NodalField & maintain_force) {
 void BimatInterface::computeGap(NodalField & gap,
                                 bool predicting) {
 
-  for (int d=0;d<this->mesh.getDim();++d) {
-
+  for (const auto& d : gap.getComponents()) {
+    
     double * top_disp = this->top->getDisp(predicting).data(d);
     double * bot_disp = this->bot->getDisp(predicting).data(d);
     double * gap_p = gap.data(d);
@@ -150,7 +150,7 @@ void BimatInterface::computeGap(NodalField & gap,
 void BimatInterface::computeGapVelocity(NodalField & gap_velo,
                                         bool predicting) {
 
-  for (int d=0;d<this->mesh.getDim();++d) {
+  for (const auto& d : gap_velo.getComponents()) {
 
     double * top_velo = this->top->getVelo(predicting).data(d);
     double * bot_velo = this->bot->getVelo(predicting).data(d);
@@ -164,12 +164,6 @@ void BimatInterface::computeGapVelocity(NodalField & gap_velo,
 
 /* -------------------------------------------------------------------------- */
 void BimatInterface::registerDumpField(const std::string &field_name) {
-
-  int d = std::atoi(&field_name[field_name.length() - 1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
 
   bool registered = false;
   // field_name starts with "top"

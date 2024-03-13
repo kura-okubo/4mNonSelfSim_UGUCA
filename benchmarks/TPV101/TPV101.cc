@@ -179,12 +179,12 @@ int main(int argc, char *argv[]) {
   NodalField& velo_top = top.getVelo();
   velo_top.setAllValuesTo(V_init / 2,0);
 
-  double ** coords = mesh.getLocalCoords();
+  const TwoDVector &  coords = mesh.getLocalCoords();
 
   // init a
   for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
-    double x = std::abs(coords[0][i] - length_x / 2);
-    double z = std::abs(coords[2][i] - length_z / 2);
+    double x = std::abs(coords(i,0) - length_x / 2);
+    double z = std::abs(coords(i,2) - length_z / 2);
     double Bx = 0.0;
     if (x <= W) {
       Bx = 1.0;
@@ -258,8 +258,8 @@ int main(int argc, char *argv[]) {
     // nucleation
     double t = time_step * s;
     for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
-      double x = std::abs(coords[0][i] - length_x / 2);
-      double z = std::abs(coords[2][i] - length_z / 2);
+      double x = std::abs(coords(i,0) - length_x / 2);
+      double z = std::abs(coords(i,2) - length_z / 2);
       double r = std::sqrt(x * x + z * z);
       double F = 0.0;
       if (r < R)

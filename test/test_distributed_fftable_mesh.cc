@@ -43,7 +43,6 @@ public:
   TestMesh(double Lx, int Nx) : DistributedFFTableMesh(Lx,Nx) {}
   TestMesh(double Lx, int Nx,
 	   double Lz, int Nz) : DistributedFFTableMesh(Lx,Nx,Lz,Nz) {}
-  int getNbLocalFFTalloc() { return this->nb_fft_local_alloc; }
   void sortAndScatterFFTModes(fftw_complex * U, int root_rank) {
     DistributedFFTableMesh::sortAndScatterFFTModes(U,root_rank);
   }
@@ -51,7 +50,8 @@ public:
     DistributedFFTableMesh::gatherAndSortFFTModes(U,root_rank);
   }
   void printSortMap() {
-    std::cout << "global=" << this->getNbGlobalFFT() << " local_alloc=" << this->nb_fft_local_alloc << std::endl;
+    std::cout << "global=" << this->getNbGlobalFFT()
+	      << " local_alloc=" << this->getNbLocalFFTAlloc() << std::endl;
     for (int i=0; i<this->getNbGlobalFFT(); ++i)
       std::cout << this->sort_fft_modes_map[i] << " ";
     std::cout << std::endl;
@@ -83,7 +83,7 @@ int main(){
   if (prank==0)
     std::cout << "test 2d fft data" << std::endl;
 
-  itest = mesh2d.getNbGlobalFFTX();
+  itest = mesh2d.getNbGlobalFFT(0);
   isol  = nb_nodes_x / 2 + 1;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -91,7 +91,7 @@ int main(){
     return 1; // failure
   }
   
-  itest = mesh2d.getNbGlobalFFTZ();
+  itest = mesh2d.getNbGlobalFFT(2);
   isol  = 1;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -122,7 +122,7 @@ int main(){
     return 1; // failure
   }
 
-  itest = mesh2d.getNbLocalFFTalloc();
+  itest = mesh2d.getNbLocalFFTAlloc();
   if (psize==1)
     isol = nb_nodes_x / 2 + 1;
   else
@@ -203,7 +203,7 @@ int main(){
   if (prank==0)
     std::cout << "test 3d fft data" << std::endl;
 
-  itest = mesh3d.getNbGlobalFFTX();
+  itest = mesh3d.getNbGlobalFFT(0);
   isol  = nb_nodes_x;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -211,7 +211,7 @@ int main(){
     return 1; // failure
   }
   
-  itest = mesh3d.getNbGlobalFFTZ();
+  itest = mesh3d.getNbGlobalFFT(2);
   isol  = nb_nodes_z / 2 + 1;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -242,7 +242,7 @@ int main(){
     return 1; // failure
   }
 
-  itest = mesh3d.getNbLocalFFTalloc();
+  itest = mesh3d.getNbLocalFFTAlloc();
   if (psize==1)
     isol = nb_nodes_x * (nb_nodes_z / 2 + 1);
   else if (prank==0)

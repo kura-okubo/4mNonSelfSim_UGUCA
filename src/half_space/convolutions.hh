@@ -31,7 +31,7 @@
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include "material.hh"
-#include "uca_fftable_mesh.hh"
+#include "hist_fftable_nodal_field.hh"
 #include "preint_kernel.hh"
 
 #include <map>
@@ -39,19 +39,15 @@
 
 __BEGIN_UGUCA__
 
-class LimitedHistory;
-
 class Convolutions {
 
   /* ------------------------------------------------------------------------ */
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
-public:
-  typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
 protected:
-  typedef std::map<Kernel::Krnl,PIKernelVector> PIKernelMap;
-  typedef std::pair<Kernel::Krnl,unsigned int> ConvPair;
-  typedef std::vector<std::complex<double>> VecComplex;
+  typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
+  typedef std::map<Krnl,PIKernelVector> PIKernelMap;
+  typedef std::pair<Krnl,unsigned int> ConvPair;
   typedef std::map<ConvPair,VecComplex> ConvMap;
   
   
@@ -59,7 +55,7 @@ protected:
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  Convolutions(FFTableMesh & mesh);
+  Convolutions(HistFFTableNodalField & field);
 
   virtual ~Convolutions();
 
@@ -69,48 +65,43 @@ public:
 public:
   
   // preintegrate kernels
-  void preintegrate(Material & material, Kernel::Krnl kernel,
+  void preintegrate(Material & material, Krnl kernel,
 		    double scale_factor, double time_step);
 
-  void registerHistory(LimitedHistory & limited_history) {
-    this->field = &(limited_history);
-  }
-  
   // initialize a convolution computation
   void init(ConvPair conv);
 
-  // get convolution results
+  // compute convolution results
   void convolve();
+
+  // compute convolution results for steady state (i.e. U constant)
+  void convolveSteadyState();
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
 
-  // simple full integral of kernel
-  double getKernelIntegral(Kernel::Krnl kernel, int wave_number) {
-    return this->pi_kernels[kernel][wave_number]->getIntegral();
-  }
-  
-  const ConvMap & getResults() { return this->results; }
+  /// returns the convolution result if it exists, otherwise vector of zeros
+  const VecComplex & getResult(ConvPair pair) const;
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
 
-  // reference to mesh
-  FFTableMesh & mesh;
-
-  // pointer to limited history to convolve kernels with
-  LimitedHistory * field;
+  // field to convolve on
+  HistFFTableNodalField & field;
   
   // preintegrated kernels [kernel][mode]
-  // e.g., pi_kernels[Kernel::Krnl::H00][1]
+  // e.g., pi_kernels[Krnl::H00][1]
   PIKernelMap pi_kernels;
-
+  
   /// convolution results
   ConvMap results;
+
+  /// result for when there is no result for a given convolution pair
+  VecComplex complex_zeros;
 };
 
 /* -------------------------------------------------------------------------- */

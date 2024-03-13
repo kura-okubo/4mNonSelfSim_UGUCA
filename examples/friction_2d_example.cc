@@ -93,11 +93,11 @@ int main(int argc, char *argv[]) {
   interface.setTimeStep(time_step);
 
   // heterogeneity in system: "random" strength
-  double * X = mesh.getLocalCoords()[0];
+  const TwoDVector & coords = mesh.getLocalCoords();
   NodalField & mus = law.getMuS();
   double mus_min = std::numeric_limits<double>::max();
   for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
-    double x = X[i];
+    double x = coords(i,0);
     mus(i) = data.get<double>("mus","friction")
       + data.get<double>("mus_ampl","friction") * (1.0*std::sin(2*x*M_PI)
 					+ 0.5*std::cos(12*x*M_PI)

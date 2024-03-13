@@ -68,7 +68,7 @@ public:
 		       SpatialDirectionSet components,
 		       Material & top_material,
 		       InterfaceLaw & law,
-		       const SolverMethod & method = _dynamic);
+		       const SolverMethod & method = _adaptive);
 
   virtual ~UnimatShearInterface();
 

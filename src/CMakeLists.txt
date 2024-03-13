@@ -51,6 +51,8 @@ set(UGUCA_HEADER
   # nodal fields
   mesh/nodal_field.hh
   mesh/fftable_nodal_field.hh
+  mesh/hist_fftable_nodal_field.hh
+  mesh/modal_limited_history.hh
   
   # kernels and material
   half_space/kernel.hh
@@ -59,14 +61,13 @@ set(UGUCA_HEADER
   half_space/material.hh
 
   # half spaces
-  half_space/modal_limited_history.hh
-  half_space/limited_history.hh
   half_space/preint_kernel.hh
   half_space/convolutions.hh
   half_space/half_space.hh
-  half_space/half_space_quasi_dynamic.hh
   half_space/half_space_dynamic.hh
-
+  half_space/half_space_quasi_dynamic.hh
+  half_space/half_space_adaptive.cc
+  
   # interfaces
   interface/interface.hh
   interface/bimat_interface.hh
@@ -107,7 +108,9 @@ set(UGUCA_SRC
   # nodal fields
   mesh/nodal_field.cc
   mesh/fftable_nodal_field.cc
-
+  mesh/hist_fftable_nodal_field.cc
+  mesh/modal_limited_history.cc
+  
   # kernels and material
   half_space/kernel.cc
   half_space/precomputed_kernel.cc
@@ -115,13 +118,12 @@ set(UGUCA_SRC
   half_space/material.cc
 
   # half spaces
-  half_space/modal_limited_history.cc
-  half_space/limited_history.cc
   half_space/preint_kernel.cc
   half_space/convolutions.cc
   half_space/half_space.cc
   half_space/half_space_dynamic.cc
   half_space/half_space_quasi_dynamic.cc
+  half_space/half_space_adaptive.cc
 
   # interfaces
   interface/interface.cc

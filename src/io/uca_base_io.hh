@@ -32,7 +32,8 @@
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
 #include "nodal_field.hh"
-#include "limited_history.hh"
+#include "hist_fftable_nodal_field.hh"
+//#include "limited_history.hh"
 
 #include <fstream>
 #include <map>
@@ -48,7 +49,7 @@ public:
   /* ------------------------------------------------------------------------ */
 protected:
   typedef std::map<const std::string, NodalField *> FieldMap;
-  typedef std::map<const std::string, LimitedHistory *> HistoryMap;
+  typedef std::map<const std::string, HistFFTableNodalField *> HistoryMap;
   typedef std::map<const std::string, std::fstream *> FileMap;
 
   /* ------------------------------------------------------------------------ */
@@ -70,7 +71,7 @@ public:
   virtual void registerIO(const std::string & name,
 			  NodalField & nodal_field);
   virtual void registerIO(const std::string & name,
-			  LimitedHistory & lim_history);
+			  HistFFTableNodalField & lim_history);
 
   virtual void registerIO(NodalField & nodal_field);
   
@@ -90,9 +91,9 @@ protected:
 		 NodalField & nodal_field);
 
   void dumpHistory(std::fstream * dump_file,
-		   const LimitedHistory & limited_history);
+		   const HistFFTableNodalField & limited_history);
   void loadHistory(std::fstream * dump_file,
-		   LimitedHistory & limited_history);
+		   HistFFTableNodalField & limited_history);
 
   // writing data
   void write(std::fstream * dump_file, const double * data, int size);

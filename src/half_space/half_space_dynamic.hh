@@ -31,13 +31,13 @@
 #ifndef __HALF_SPACE_DYNAMIC_H__
 #define __HALF_SPACE_DYNAMIC_H__
 /* -------------------------------------------------------------------------- */
-#include "half_space_quasi_dynamic.hh"
-#include "limited_history.hh"
+#include "half_space.hh"
+#include "convolutions.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class HalfSpaceDynamic : public HalfSpaceQuasiDynamic {
+class HalfSpaceDynamic : public HalfSpace {
   
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
@@ -53,23 +53,34 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+  
   // init convolutions
   virtual void initConvolutions();
 
   // restart
   virtual void registerToRestart(Restart & restart);
   
-  // for transition from quasi dynamic integration to full dynamic
+  // set to steady state
   virtual void setSteadyState(bool predicting = false);
   
 protected:
+  /// preintegrate kernels
+  virtual void preintegrateKernels();
+
+  /// compute the stress fourier coefficients (fails if not dynamic)
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
 					 bool dynamic = true);
 
+  /// compute the stress fourier coefficients for dynamic case
   void computeStressFourierCoeffDynamic(bool predicting,
 					bool correcting);
 
+  /// compute F from U in fourier space
+  void computeF(FFTableNodalField & F,
+		const FFTableNodalField & U,
+		const Convolutions & cnvls);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
@@ -79,21 +90,14 @@ public:
 
   // get stable time step
   virtual double getStableTimeStep();
-
-  // get limited history
-  LimitedHistory & getLimitedHistory() { return U_history; }
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
 
-  // past values of displacement in frequency domain
-  // each LimitedHistory is for a given wave number q
-  LimitedHistory U_history;
-  
-  // keeps information if previous step was dynamic
-  bool previously_dynamic;
+  // convolutions 
+  Convolutions convols;
 };
 
 __END_UGUCA__

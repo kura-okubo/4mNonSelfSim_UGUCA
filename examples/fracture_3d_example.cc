@@ -99,13 +99,12 @@ int main(int argc, char *argv[]) {
   interface.init();
 
   // heterogeneity for nucleation: decreased strength
-  double * X = mesh.getLocalCoords()[0];
-  double * Z = mesh.getLocalCoords()[2];
+  const TwoDVector & coords = mesh.getLocalCoords();
   NodalField & tau_max = law.getTauMax();
   double a0 = data.get<double>("a0");
   for (int i=0;i<mesh.getNbLocalNodes(); ++i)
-    if ((std::abs(X[i] - x_length/2.) < a0/2.) &&
-	(std::abs(Z[i] - z_length/2.) < a0/2.))
+    if ((std::abs(coords(i,0) - x_length/2.) < a0/2.) &&
+	(std::abs(coords(i,2) - z_length/2.) < a0/2.))
       tau_max(i) = 0.;
 
   // dumping

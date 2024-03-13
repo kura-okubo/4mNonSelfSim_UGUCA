@@ -88,6 +88,9 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // get mesh of nodal field
+  const FFTableMesh & getMesh() const { return *((FFTableMesh *)this->mesh); }
+  
   // get number of nodes
   int getNbFFT() const { return ((FFTableMesh *)this->mesh)->getNbLocalFFT(); }
 
@@ -96,11 +99,14 @@ public:
 
   // get one value of frequency domain in direction d
   inline fftw_complex & fd(int f, int d=0);
+
+  // get one value of frequency domain in direction d if it exists, otherwise zero
+  inline std::complex<double> fd_or_zero(int f, int d=0) const;
   
   // get access directly to frequency domain
   // WARNING: convert it to double (assuming that fftw_complex is double[2])
   inline fftw_complex * fd_data(int d=0);
-  
+
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
@@ -121,13 +127,24 @@ protected:
 /* -------------------------------------------------------------------------- */
 inline fftw_complex & FFTableNodalField::fd(int f, int d) {
   if (!this->components.count(d)) 
-    throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+    throw std::runtime_error("FFTableNodalField "+this->name
+			     +" has no component "+std::to_string(d)+"\n");
   return this->fd_storage[this->fd_start[d]+f];
+}
+
+inline std::complex<double> FFTableNodalField::fd_or_zero(int f, int d) const {
+  if (!this->components.count(d))
+    return std::complex<double>(0,0);
+  else {
+    const auto & v = const_cast<FFTableNodalField*>(this)->fd(f,d);
+    return std::complex<double>(v[0],v[1]);
+  }
 }
 
 inline fftw_complex * FFTableNodalField::fd_data(int d) {
   if (!this->components.count(d))
-    throw std::runtime_error("FFTableNodalField "+this->name+" has no component "+std::to_string(d)+"\n");
+    throw std::runtime_error("FFTableNodalField "+this->name
+			     +" has no component "+std::to_string(d)+"\n");
   return this->fd_storage.data() + this->fd_start[d];
 }
 
