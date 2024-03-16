@@ -104,7 +104,7 @@ def compare_station(full_path, bname, x_interest, z_interest):
   dx = length_x / nb_nodes_x
   dz = length_z / nb_nodes_z
   x = np.arange(nb_nodes_x) * dx - length_x / 2
-  z = -7.5e3 + length_z / 2 - np.arange(nb_nodes_z) * dz
+  z = 7.5e3 + length_z / 2 - np.arange(nb_nodes_z) * dz
   idx_x = np.argmin(np.abs(x - x_interest))
   idx_z = np.argmin(np.abs(z - z_interest))
   idx = (idx_x - 1) * nb_nodes_z + idx_z

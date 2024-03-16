@@ -28,5 +28,4 @@
 ####
 add_simulation(BP1-FD BP1-FD.cc)
 configure_file(BP1-FD.sh BP1-FD.sh COPYONLY)
-configure_file(result_summary.py result_summary.py COPYONLY)
 configure_file(generate_output.py generate_output.py COPYONLY)
