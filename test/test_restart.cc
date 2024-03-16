@@ -29,7 +29,6 @@
 
 #include "uca_restart.hh"
 #include "uca_simple_mesh.hh"
-#include "nodal_field_component.hh"
 #include "material.hh"
 #include "linear_shear_cohesive_law.hh"
 #include "bimat_interface.hh"
@@ -66,7 +65,7 @@ int main(int argc, char *argv[]) {
 
   LinearShearCohesiveLaw law(mesh, 1., 2e6);
   
-  BimatInterface interface(mesh, top_mat, bot_mat, law);
+  BimatInterface interface(mesh, {_x,_y,_z}, top_mat, bot_mat, law);
   interface.setTimeStep(0.3*interface.getStableTimeStep());
   interface.init();
   
@@ -79,7 +78,8 @@ int main(int argc, char *argv[]) {
   // test dump and read of NodalFieldComponent
   std::cout << "start: dump and reload NodalFieldComponent" << std::endl;
   int rs_number = 1;
-  NodalFieldComponent nf1(mesh,"nf1");
+  NodalField nf1(mesh);
+  nf1.setName("nf1");
   restart_dump.registerIO(nf1);
   restart_load.registerIO(nf1);
   
@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
 
   // check
   for (int i=0; i<nf1.getNbNodes(); ++i) {
-    if (std::abs((nf1.at(i) - nf1v) / nf1v) > 1e-6) {
-      std::cerr << "should be " << nf1v << ": " << nf1.at(i) << std::endl;
+    if (std::abs((nf1(i) - nf1v) / nf1v) > 1e-6) {
+      std::cerr << "should be " << nf1v << ": " << nf1(i) << std::endl;
       return 1; // failure
     }
   }
@@ -114,8 +114,8 @@ int main(int argc, char *argv[]) {
 
   // check
   for (int i=0; i<nf1.getNbNodes(); ++i) {
-    if (std::abs((nf1.at(i) - nf2v)/nf2v) > 1e-6) {
-      std::cerr << "should be " << nf2v << ": " << nf1.at(i) << std::endl;
+    if (std::abs((nf1(i) - nf2v)/nf2v) > 1e-6) {
+      std::cerr << "should be " << nf2v << ": " << nf1(i) << std::endl;
       return 1; // failure
     }
   }
@@ -124,7 +124,8 @@ int main(int argc, char *argv[]) {
 
   // test dump and read of NodalField
   std::cout << "start: dump and reload NodalField" << std::endl;
-  NodalField nf3(mesh, "nf3");
+  NodalField nf3(mesh);
+  nf3.setName("nf3");
   restart_dump.registerIO(nf3);
   restart_load.registerIO(nf3);
   
@@ -136,10 +137,10 @@ int main(int argc, char *argv[]) {
   restart_load.load(rs_number);
 
   // check
-  for (int d=0; d<nf3.getDim(); ++d) {
+  for (const auto& d : nf3.getComponents()) {
     for (int i=0; i<nf3.getNbNodes(); ++i) {
-      if (std::abs((nf3.component(d).at(i) - nf3v) / nf3v) > 1e-6) {
-	std::cerr << "should be " << nf3v << ": " << nf3.component(d).at(i) << std::endl;
+      if (std::abs((nf3(i,d) - nf3v) / nf3v) > 1e-6) {
+	std::cerr << "should be " << nf3v << ": " << nf3(i,d) << std::endl;
 	return 1; // failure
       }
     }
@@ -157,14 +158,15 @@ int main(int argc, char *argv[]) {
   double nf4v2 = 1.2;
   interface.getCohesion().setAllValuesTo(nf4v);
   HalfSpaceDynamic & top = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
-  double * Ur00 = const_cast<double*>(top.getLimitedHistory().get(0,1)->real());
-  int Ur00_size = top.getLimitedHistory().get(0,1)->getSize();
+  HistFFTableNodalField & top_disp = dynamic_cast<HistFFTableNodalField&>(top.getDisp());
+  double * Ur00 = const_cast<double*>(top_disp.hist(1,0).real());
+  int Ur00_size = top_disp.hist(1,0).getSize();
   std::fill_n(Ur00,Ur00_size,nf4v);
-  double * Ui00 = const_cast<double*>(top.getLimitedHistory().get(0,1)->imag());
-  int Ui00_size = top.getLimitedHistory().get(0,1)->getSize();
+  double * Ui00 = const_cast<double*>(top_disp.hist(1,0).imag());
+  int Ui00_size = top_disp.hist(1,0).getSize();
   std::fill_n(Ui00,Ui00_size,nf4v2);
-  unsigned int nb_history_correct = top.getLimitedHistory().get(0,1)->getNbHistoryPoints();
-  unsigned int index_now_correct = top.getLimitedHistory().get(0,1)->getIndexNow();
+  unsigned int nb_history_correct = top_disp.hist(1,0).getNbHistoryPoints();
+  unsigned int index_now_correct = top_disp.hist(1,0).getIndexNow();
 
   // dump the solution
   interface.registerToRestart(restart_dump);
@@ -173,7 +175,8 @@ int main(int argc, char *argv[]) {
   restart_dump_binary.dump(rs_number);
 
   // fill with other information
-  top.getLimitedHistory().get(0,1)->addCurrentValue(44.);
+  fftw_complex fortyfour = {44., 0};
+  const_cast<ModalLimitedHistory&>(top_disp.hist(1,0)).addCurrentValue(fortyfour);
   interface.getCohesion().setAllValuesTo(nf4v*2);
   std::fill_n(Ur00,Ur00_size,2*nf4v);
   std::fill_n(Ui00,Ui00_size,2*nf4v2);
@@ -182,34 +185,35 @@ int main(int argc, char *argv[]) {
   restart_load.load(rs_number);
 
   // check ACII
-  if (nb_history_correct != top.getLimitedHistory().get(0,1)->getNbHistoryPoints()) {
+  if (nb_history_correct != top_disp.hist(1,0).getNbHistoryPoints()) {
     std::cerr << "should be " << nb_history_correct
-	      << ": " << top.getLimitedHistory().get(0,1)->getNbHistoryPoints()
+	      << ": " << top_disp.hist(1,0).getNbHistoryPoints()
 	      << std::endl;
     return 1; // failure
   }
-  if (index_now_correct != top.getLimitedHistory().get(0,1)->getIndexNow()) {
+  if (index_now_correct != top_disp.hist(1,0).getIndexNow()) {
     std::cerr << "should be " << index_now_correct
-	      << ": " << top.getLimitedHistory().get(0,1)->getIndexNow()
+	      << ": " << top_disp.hist(1,0).getIndexNow()
 	      << std::endl;
     return 1; // failure
   }
       
   NodalField & to_check = interface.getCohesion();
-  for (int d=0; d<to_check.getDim(); ++d) {
+  for (const auto& d : to_check.getComponents()) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
-      if (std::abs((to_check.component(d).at(i) - nf4v) / nf4v) > 1e-6) {
-	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
+      if (std::abs((to_check(i,d) - nf4v) / nf4v) > 1e-6) {
+	std::cerr << "should be " << nf4v << ": " << to_check(i,d) << std::endl;
 	return 1; // failure
       }
     }
   }
 
   HalfSpaceDynamic & top_to_check = dynamic_cast<HalfSpaceDynamic&>(interface.getTop());
-  Ur00 = const_cast<double*>(top_to_check.getLimitedHistory().get(0,1)->real());
-  Ur00_size = top_to_check.getLimitedHistory().get(0,1)->getSize();
-  Ui00 = const_cast<double*>(top_to_check.getLimitedHistory().get(0,1)->imag());
-  Ui00_size = top_to_check.getLimitedHistory().get(0,1)->getSize();
+  HistFFTableNodalField & top_disp_to_check = dynamic_cast<HistFFTableNodalField&>(top_to_check.getDisp());
+  Ur00 = const_cast<double*>(top_disp_to_check.hist(1,0).real());
+  Ur00_size = top_disp_to_check.hist(1,0).getSize();
+  Ui00 = const_cast<double*>(top_disp_to_check.hist(1,0).imag());
+  Ui00_size = top_disp_to_check.hist(1,0).getSize();
   
   for (int i=0; i<Ur00_size; ++i) {
     if (std::abs((Ur00[i] - nf4v) / nf4v) > 1e-6) {
@@ -226,7 +230,7 @@ int main(int argc, char *argv[]) {
   }
 
   // fill with other information
-  top.getLimitedHistory().get(0,1)->addCurrentValue(44.);
+  const_cast<ModalLimitedHistory&>(top_disp.hist(1,0)).addCurrentValue(fortyfour);
   interface.getCohesion().setAllValuesTo(nf4v*2);
   std::fill_n(Ur00,Ur00_size,2*nf4v);
   std::fill_n(Ui00,Ui00_size,2*nf4v2);
@@ -236,32 +240,32 @@ int main(int argc, char *argv[]) {
   restart_load_binary.load(rs_number);
 
   // check binary
-  if (nb_history_correct != top.getLimitedHistory().get(0,1)->getNbHistoryPoints()) {
+  if (nb_history_correct != top_disp.hist(1,0).getNbHistoryPoints()) {
     std::cerr << "nb_history_points should be " << nb_history_correct
-	      << ": " << top.getLimitedHistory().get(0,1)->getNbHistoryPoints()
+	      << ": " << top_disp.hist(1,0).getNbHistoryPoints()
 	      << std::endl;
     return 1; // failure
   }
-  if (index_now_correct != top.getLimitedHistory().get(0,1)->getIndexNow()) {
+  if (index_now_correct != top_disp.hist(1,0).getIndexNow()) {
     std::cerr << "index_now should be " << index_now_correct
-	      << ": " << top.getLimitedHistory().get(0,1)->getIndexNow()
+	      << ": " << top_disp.hist(1,0).getIndexNow()
 	      << std::endl;
     return 1; // failure
   }
 
-  for (int d=0; d<to_check.getDim(); ++d) {
+  for (const auto& d : to_check.getComponents()) {
     for (int i=0; i<to_check.getNbNodes(); ++i) {
-      if (std::abs((to_check.component(d).at(i) - nf4v) / nf4v) > 1e-6) {
-	std::cerr << "should be " << nf4v << ": " << to_check.component(d).at(i) << std::endl;
+      if (std::abs((to_check(i,d) - nf4v) / nf4v) > 1e-6) {
+	std::cerr << "should be " << nf4v << ": " << to_check(i,d) << std::endl;
 	return 1; // failure
       }
     }
   }
 
-  Ur00 = const_cast<double*>(top_to_check.getLimitedHistory().get(0,1)->real());
-  Ur00_size = top_to_check.getLimitedHistory().get(0,1)->getSize();
-  Ui00 = const_cast<double*>(top_to_check.getLimitedHistory().get(0,1)->imag());
-  Ui00_size = top_to_check.getLimitedHistory().get(0,1)->getSize();
+  Ur00 = const_cast<double*>(top_disp_to_check.hist(1,0).real());
+  Ur00_size = top_disp_to_check.hist(1,0).getSize();
+  Ui00 = const_cast<double*>(top_disp_to_check.hist(1,0).imag());
+  Ui00_size = top_disp_to_check.hist(1,0).getSize();
   
   for (int i=0; i<Ur00_size; ++i) {
     if (std::abs((Ur00[i] - nf4v) / nf4v) > 1e-6) {
@@ -284,7 +288,8 @@ int main(int argc, char *argv[]) {
   Restart wrong_restart_load("rs1",folder);
   Restart wrong_restart_load_binary("rs_binary",folder,BaseIO::Format::Binary);
   
-  NodalFieldComponent wrong_nf1(wrong_mesh,"nf1");
+  NodalField wrong_nf1(wrong_mesh);
+  wrong_nf1.setName("nf1");
   wrong_restart_load.registerIO(wrong_nf1);
   wrong_restart_load_binary.registerIO(wrong_nf1);
   
@@ -320,7 +325,7 @@ int main(int argc, char *argv[]) {
 
   
   LinearShearCohesiveLaw wrong_law(wrong_mesh, 1., 2e6);
-  BimatInterface wrong_interface(wrong_mesh, top_mat, bot_mat, wrong_law);
+  BimatInterface wrong_interface(wrong_mesh, {_x,_y,_z}, top_mat, bot_mat, wrong_law);
   wrong_interface.setTimeStep(0.3*wrong_interface.getStableTimeStep());
   wrong_interface.init();
   wrong_interface.registerToRestart(wrong_restart_load);

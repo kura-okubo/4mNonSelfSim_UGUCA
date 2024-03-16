@@ -46,14 +46,12 @@ class DistributedFFTableMesh : public FFTableMesh {
   /* ------------------------------------------------------------------------ */
 public:
   
-  DistributedFFTableMesh(double Lx, int Nx,
-			 bool initialize = true);
+  DistributedFFTableMesh(double Lx, int Nx);
 
   DistributedFFTableMesh(double Lx, int Nx,
-			 double Lz, int Nz,
-			 bool initialize = true);
+			 double Lz, int Nz);
 
-  virtual ~DistributedFFTableMesh();
+  virtual ~DistributedFFTableMesh() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
@@ -62,13 +60,13 @@ public:
   virtual void init();
 
   //virtual void registerForFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void forwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void backwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void forwardFFT(FFTableNodalField & nodal_field);
+  virtual void backwardFFT(FFTableNodalField & nodal_field);
   
 protected:
   // for parallel implementation of computeStressFourierCoeff()
-  void assignFFTModes(double ** wave_numbers_global);
-  void computeWorkPerMode(double ** wave_numbers_global,
+  void assignFFTModes(TwoDVector & wave_numbers_global);
+  void computeWorkPerMode(TwoDVector & wave_numbers_global,
 			  std::vector<double> & work_per_mode);
 
   // useful information
@@ -110,17 +108,14 @@ public:
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // global wave numbers (only used temporarily)
-  double * wave_numbers_global[3];  // local {k,-,m}
-  
   // map for distribution of fft modes
-  int * sort_fft_modes_map;
+  std::vector<int> sort_fft_modes_map;
 
   // maximum of local fft per proc
   int max_fft_pp;
   
   // to sort modes
-  fftw_complex * fftw_complex_buffer; 
+  std::vector<fftw_complex> fftw_complex_buffer; 
 };
 
 __END_UGUCA__

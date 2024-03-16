@@ -64,7 +64,7 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  inline Kernel * get(const Kernel::Krnl krnl);
+  inline Kernel * get(const Krnl krnl);
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -81,19 +81,19 @@ private:
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline Kernel * KernelCollection::get(const Kernel::Krnl krnl) {
+inline Kernel * KernelCollection::get(const Krnl krnl) {
 
   switch (krnl) {
-  case Kernel::Krnl::H00: {
+  case Krnl::H00: {
     return this->H00;
   }
-  case Kernel::Krnl::H01: {
+  case Krnl::H01: {
     return this->H01;
   }
-  case Kernel::Krnl::H11: {
+  case Krnl::H11: {
     return this->H11;
   }
-  case Kernel::Krnl::H22: {
+  case Krnl::H22: {
     return this->H22;
   }
   default:

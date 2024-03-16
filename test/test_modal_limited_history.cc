@@ -1,5 +1,5 @@
 /**
- * @file   test_limited_history.cc
+ * @file   test_modal_limited_history.cc
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -30,29 +30,19 @@
  */
 
 #include "modal_limited_history.hh"
-#include "preint_kernel.hh"
 
 #include <iostream>
 #include <stdexcept>
 
 using namespace uguca;
 
-class PIK : public PreintKernel {
-public:
-  PIK(int size) : PreintKernel(NULL) {
-    this->values.resize(size);
-  }
-};
-
 int main(){
 
   std::cout << "start test: limited_history" << std::endl;
 
   unsigned int size = 4;
-  std::shared_ptr<PIK> pik1(new PIK(size));
   ModalLimitedHistory lh1;
-  lh1.registerKernel(pik1);
-  lh1.resize();
+  lh1.resize(size);
 
   std::cout << "check size" << std::endl;
   if (lh1.getSize() != size) {
@@ -62,8 +52,10 @@ int main(){
   std::cout << "size correct -> success" << std::endl;
 
   double add1 = 2;
-  for (int i=0; i<add1; ++i)
-    lh1.addCurrentValue(i+1);
+  for (int i=0; i<add1; ++i) {
+    fftw_complex tmp = {double(i)+1, 0};
+    lh1.addCurrentValue(tmp);
+  }
 
   std::cout << "check nb history" << std::endl;
   if (lh1.getNbHistoryPoints() != 2) {
@@ -73,8 +65,10 @@ int main(){
   std::cout << "nb history correct -> success" << std::endl;
 
   double add2 = 3;
-  for (int i=0; i<add2; ++i)
-    lh1.addCurrentValue(add1+i+1);
+  for (int i=0; i<add2; ++i) {
+    fftw_complex tmp = {add1+double(i)+1, 0};
+    lh1.addCurrentValue(tmp);
+  }
 
   std::cout << "check nb history" << std::endl;
   if (lh1.getNbHistoryPoints() != size) {
@@ -102,9 +96,7 @@ int main(){
   std::cout << "history correct -> success" << std::endl;
 
   std::cout << "check change size of ModalLimitedHistory" << std::endl;
-  std::shared_ptr<PIK> pik2(new PIK(size*2));
-  lh1.registerKernel(pik2);
-  lh1.resize();
+  lh1.resize(size*2);
   
   // check if history still correct
   for (unsigned int i=0; i<lh1.getNbHistoryPoints(); ++i) {
@@ -119,7 +111,8 @@ int main(){
   
   std::cout << "check change current value" << std::endl;
   double val = 102;
-  lh1.changeCurrentValue(val);
+  fftw_complex cval = {val,0};
+  lh1.changeCurrentValue(cval);
   if (lh1.at(0) != val) {
     std::cerr << "change current value wrong: " << lh1.at(0) << std::endl;
     return 1; // failure

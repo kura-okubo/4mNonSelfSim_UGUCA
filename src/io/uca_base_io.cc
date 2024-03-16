@@ -103,7 +103,7 @@ void BaseIO::initIO(const std::string &bname,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(const std::string & name,
-			NodalFieldComponent & nodal_field) {
+			NodalField & nodal_field) {
   if (this->registered_fields.find(name) == this->registered_fields.end())
     this->registered_fields[name] = (&nodal_field);
   else
@@ -112,16 +112,7 @@ void BaseIO::registerIO(const std::string & name,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(const std::string & name,
-			NodalField & nodal_field) {
-  for (int d=0; d<nodal_field.getDim(); ++d) {
-    std::string component_name = name + "_" + std::to_string(d);
-    this->registerIO(component_name, nodal_field.component(d));
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-void BaseIO::registerIO(const std::string & name,
-			LimitedHistory & lim_history) {
+			HistFFTableNodalField & lim_history) {
   if (this->registered_histories.find(name) == this->registered_histories.end())
     this->registered_histories[name] = (&lim_history);
   else
@@ -129,15 +120,8 @@ void BaseIO::registerIO(const std::string & name,
 }
 
 /* -------------------------------------------------------------------------- */
-void BaseIO::registerIO(NodalFieldComponent & nodal_field) {
-  this->registerIO(nodal_field.getName(), nodal_field);
-}
-
-/* -------------------------------------------------------------------------- */
 void BaseIO::registerIO(NodalField & nodal_field) {
-  for (int d=0; d<nodal_field.getDim(); ++d) {
-    this->registerIO(nodal_field.component(d));
-  }
+  this->registerIO(nodal_field.getName(), nodal_field);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -186,38 +170,37 @@ void BaseIO::closeFiles(bool release_memory) {
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::dumpField(std::fstream * dump_file,
-		       const NodalFieldComponent & nodal_field) {
+		       const NodalField & nodal_field) {
   if (!this->initiated) return;
 
-  int nb_nodes = nodal_field.getNbNodes();
-  const double * nf_data = nodal_field.storage();
-
-  this->write(dump_file, nf_data, nb_nodes);
+  this->write(dump_file,
+	      nodal_field.data(),
+	      nodal_field.getNbNodes()*nodal_field.getNbComponents());
 }
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::dumpHistory(std::fstream * dump_file,
-			 const LimitedHistory & limited_history) {
+			 const HistFFTableNodalField & limited_history) {
   if (!this->initiated) return;
 
   // write nb_history points and index_now
   switch (this->dump_format) {
     case Format::ASCII:
     case Format::CSV: {
-      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
-	(*dump_file) << limited_history.history[i]->getSize() << this->separator;
-	(*dump_file) << limited_history.history[i]->getNbHistoryPoints() << this->separator;
-	(*dump_file) << limited_history.history[i]->getIndexNow() << std::endl;
+      for (unsigned int i=0; i<limited_history.hist_storage.size(); ++i) {
+	(*dump_file) << limited_history.hist_storage[i].getSize() << this->separator;
+	(*dump_file) << limited_history.hist_storage[i].getNbHistoryPoints() << this->separator;
+	(*dump_file) << limited_history.hist_storage[i].getIndexNow() << std::endl;
       }
       break;
     }
     case Format::Binary: {
-      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
-	float temp = (float)(limited_history.history[i]->getSize());
+      for (unsigned int i=0; i<limited_history.hist_storage.size(); ++i) {
+	float temp = (float)(limited_history.hist_storage[i].getSize());
 	(*dump_file).write((char *)&temp, sizeof(float));
-	temp = (float)(limited_history.history[i]->getNbHistoryPoints());
+	temp = (float)(limited_history.hist_storage[i].getNbHistoryPoints());
 	(*dump_file).write((char *)&temp, sizeof(float));
-	temp = (float)(limited_history.history[i]->getIndexNow());
+	temp = (float)(limited_history.hist_storage[i].getIndexNow());
 	(*dump_file).write((char *)&temp, sizeof(float));
       }
       break;
@@ -226,11 +209,11 @@ void BaseIO::dumpHistory(std::fstream * dump_file,
       throw std::runtime_error("Unsupported output format.");
   }
 
-  for (unsigned int i=0; i<limited_history.history.size(); ++i) {
-    int size = limited_history.history[i]->getSize();
-    const double * lh_real_data = limited_history.history[i]->real();
+  for (unsigned int i=0; i<limited_history.hist_storage.size(); ++i) {
+    int size = limited_history.hist_storage[i].getSize();
+    const double * lh_real_data = limited_history.hist_storage[i].real();
     this->write(dump_file, lh_real_data, size);
-    const double * lh_imag_data = limited_history.history[i]->imag();
+    const double * lh_imag_data = limited_history.hist_storage[i].imag();
     this->write(dump_file, lh_imag_data, size);
   }
 }
@@ -265,18 +248,17 @@ void BaseIO::write(std::fstream * dump_file,
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::loadField(std::fstream * load_file,
-		       NodalFieldComponent & nodal_field) {
+		       NodalField & nodal_field) {
   if (!this->initiated) return;
 
-  int nb_nodes = nodal_field.getNbNodes();
-  double * nf_data = nodal_field.storage();
-
-  this->read(load_file, nf_data, nb_nodes);
+  this->read(load_file,
+	     nodal_field.data(),
+	     nodal_field.getNbNodes()*nodal_field.getNbComponents());
 }
 
 /* -------------------------------------------------------------------------- */
 void BaseIO::loadHistory(std::fstream * load_file,
-			 LimitedHistory & limited_history) {
+			 HistFFTableNodalField & limited_history) {
   if (!this->initiated) return;
 
   // read nb_history points and index_now
@@ -284,30 +266,30 @@ void BaseIO::loadHistory(std::fstream * load_file,
     case Format::ASCII:
     case Format::CSV: {
       std::string line;
-      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+      for (unsigned int i=0; i<limited_history.hist_storage.size(); ++i) {
 	std::getline(*load_file,line);
 	std::stringstream ss(line);
 	double temp;
 	ss >> temp;
-	if (temp != limited_history.history[i]->getSize()) 
+	if (temp != limited_history.hist_storage[i].getSize()) 
 	  throw std::runtime_error("reloaded Limited History is of incorrect size");
 	ss >> temp;
-	limited_history.history[i]->nb_history_points = (int)temp;
+	limited_history.hist_storage[i].nb_history_points = (int)temp;
 	ss >> temp;
-	limited_history.history[i]->index_now = (int)temp;
+	limited_history.hist_storage[i].index_now = (int)temp;
       }
       break;
     }
     case Format::Binary: {
-      for (unsigned int i=0; i<limited_history.history.size(); ++i) {
+      for (unsigned int i=0; i<limited_history.hist_storage.size(); ++i) {
 	float temp;
 	(*load_file).read((char *)&temp, sizeof(float));
-	if (temp != limited_history.history[i]->getSize()) 
+	if (temp != limited_history.hist_storage[i].getSize()) 
 	  throw std::runtime_error("reloaded Limited History is of incorrect size");
 	(*load_file).read((char *)&temp, sizeof(float));
-	limited_history.history[i]->nb_history_points = (int)temp;
+	limited_history.hist_storage[i].nb_history_points = (int)temp;
 	(*load_file).read((char *)&temp, sizeof(float));
-	limited_history.history[i]->index_now = (int)temp;
+	limited_history.hist_storage[i].index_now = (int)temp;
       }
       break;
     }
@@ -315,11 +297,11 @@ void BaseIO::loadHistory(std::fstream * load_file,
       throw std::runtime_error("Unsupported output format.");
   }
 
-  for (unsigned int i=0; i<limited_history.history.size(); ++i) {
-    int size = limited_history.history[i]->getSize();
-    double * lh_real_data = const_cast<double*>(limited_history.history[i]->real());
+  for (unsigned int i=0; i<limited_history.hist_storage.size(); ++i) {
+    int size = limited_history.hist_storage[i].getSize();
+    double * lh_real_data = const_cast<double*>(limited_history.hist_storage[i].real());
     this->read(load_file, lh_real_data, size);
-    double * lh_imag_data = const_cast<double*>(limited_history.history[i]->imag());
+    double * lh_imag_data = const_cast<double*>(limited_history.hist_storage[i].imag());
     this->read(load_file, lh_imag_data, size);
   }
 }

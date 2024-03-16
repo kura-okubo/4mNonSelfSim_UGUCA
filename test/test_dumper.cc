@@ -52,8 +52,8 @@ public:
    this->registerIO("field2", this->field2);
   }
   void closeAllFiles() { this->closeFiles(false); }
-  NodalFieldComponent field1;
-  NodalFieldComponent field2;
+  NodalField field1;
+  NodalField field2;
 };
 
 void removeFile(std::string path) { remove(path.c_str()); }
@@ -144,11 +144,11 @@ int checkCoords(SimpleMesh& mesh, std::string bname, std::string path,
     std::cout << "wrong # of nodes in *.coord" << std::endl;
     return 1;  // failure
   }
-  double ** coords_ref = mesh.getLocalCoords();
+  const TwoDVector & coords_ref = mesh.getLocalCoords();
   double tol = 1e-5;
   for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
     for (unsigned j = 0; j < 3; ++j) {
-      if (std::abs(coords[i][j] - coords_ref[j][i]) > tol) {
+      if (std::abs(coords[i][j] - coords_ref(i,j)) > tol) {
         std::cout << "discrepancy found in *.coord" << std::endl;
         return 1;  // failure
       }
@@ -227,7 +227,7 @@ int checkFields(std::string bname, std::string path,
 }
 
 int checkField(SimpleMesh& mesh, std::string bname, std::string path,
-               NodalFieldComponent& field, std::string name, Dumper::Format format,
+               NodalField& field, std::string name, Dumper::Format format,
                std::string file_ext) {
   std::string sep = Dumper::directorySeparator();
   std::string file_name = name + file_ext;
@@ -284,7 +284,7 @@ int checkField(SimpleMesh& mesh, std::string bname, std::string path,
       }
       double tol = 1.0e-6;
       for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-        if (std::abs(data[1][i] - field.at((int)i)) > tol) {
+        if (std::abs(data[1][i] - field((int)i)) > tol) {
           std::cout << "discrepancy found in " << file_name << " at step 1"
                     << std::endl;
           return 1;  // failure
@@ -318,7 +318,7 @@ int checkField(SimpleMesh& mesh, std::string bname, std::string path,
                     << std::endl;
           return 1;  // failure
         }
-        if (std::abs(data[i + (size_t)mesh.getNbLocalNodes()] - field.at(i)) > tol) {
+        if (std::abs(data[i + (size_t)mesh.getNbLocalNodes()] - field(i)) > tol) {
           std::cout << "discrepancy found in " << file_name << " at step 1"
                     << std::endl;
           return 1;  // failure
@@ -351,8 +351,8 @@ int testDumper(SimpleMesh& mesh, std::string bname, std::string path,
   std::uniform_real_distribution<double> unif(0, 1);
   std::default_random_engine re;
   for (size_t i = 0; i < (size_t)mesh.getNbLocalNodes(); ++i) {
-    dumper->field1.set(i) = unif(re);
-    dumper->field2.set(i) = unif(re);
+    dumper->field1(i) = unif(re);
+    dumper->field2(i) = unif(re);
   }
   dumper->dump(1, 0.1);
 

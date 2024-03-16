@@ -63,17 +63,17 @@ int main(){
   if (prank==0)
     std::cout << "test 2d coords" << std::endl;
 
-  double ** coords2d = mesh2d.getLocalCoords();
+  const TwoDVector & coords2d = mesh2d.getLocalCoords();
 
   if (prank==0) {
 
     int nx = mesh2d.getNbLocalNodes();
     for (int i=0; i<nx;++i){
-      if (std::abs(coords2d[0][i] - mesh2d.getLengthX()*i/nx)>1e-6){
+      if (std::abs(coords2d(i,0) - mesh2d.getLength(0)*i/nx)>1e-6){
 	std::cerr << "error0\n";
 	return 1; // failure
       }
-      if (std::abs(coords2d[1][i] - 0.0)>1e-6){
+      if (std::abs(coords2d(i,1) - 0.0)>1e-6){
 	std::cerr << "error1\n";
 	return 1; // failure
       }
@@ -97,24 +97,24 @@ int main(){
 		  length_z,nb_nodes_z);
 
 
-  double ** coords3d = mesh3d.getLocalCoords();
+  const TwoDVector & coords3d = mesh3d.getLocalCoords();
 
   if (prank==0) {
 
-    int nx = mesh3d.getNbGlobalNodesX();
-    int nz = mesh3d.getNbGlobalNodesZ();
+    int nx = mesh3d.getNbGlobalNodes(0);
+    int nz = mesh3d.getNbGlobalNodes(2);
     for (int i=0; i<nx;++i) {
       for (int j=0; j<nz; ++j) {
 	int ij=i*nz+j;
-	if (std::abs(coords3d[0][ij] - mesh3d.getLengthX()*i/nx) > 1e-6) {
+	if (std::abs(coords3d(ij,0) - mesh3d.getLength(0)*i/nx) > 1e-6) {
 	  std::cerr << "error0\n";
 	  return 1; // failure
 	}
-	if (std::abs(coords3d[1][ij] - 0.0) > 1e-6) {
+	if (std::abs(coords3d(ij,1) - 0.0) > 1e-6) {
 	  std::cerr << "error1\n";
 	  return 1; // failure
 	}
-	if (std::abs(coords3d[2][ij] - mesh3d.getLengthZ()*j/nz) > 1e-6) {
+	if (std::abs(coords3d(ij,2) - mesh3d.getLength(2)*j/nz) > 1e-6) {
 	  std::cout<<"error2\n";
 	  return 1; // failure
 	}

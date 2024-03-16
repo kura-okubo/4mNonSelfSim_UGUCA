@@ -35,12 +35,13 @@ __BEGIN_UGUCA__
 
 /*-------------------------------------------------------------------------- */
 UnimatShearInterface::UnimatShearInterface(FFTableMesh & mesh,
+					   SpatialDirectionSet components,
 					   Material & top_material,
 					   InterfaceLaw & law,
 					   const SolverMethod & method) :
-  Interface(mesh, law)
+  Interface(mesh, components, law)
 {
-  this->top = HalfSpace::newHalfSpace(top_material, mesh, 1, this->name+"_top", method);
+  this->top = HalfSpace::newHalfSpace(top_material, mesh, 1, components, this->name+"_top", method);
   
   this->half_spaces.resize(1);
   this->half_spaces[0] = this->top;
@@ -52,7 +53,7 @@ UnimatShearInterface::~UnimatShearInterface() {
 }
 
 /* -------------------------------------------------------------------------- */
-void UnimatShearInterface::closingNormalGapForce(NodalFieldComponent & close_force,
+void UnimatShearInterface::closingNormalGapForce(NodalField & close_force,
 						 bool predicting) {
   // top material information
   const Material & mat_t = this->top->getMaterial();
@@ -63,10 +64,10 @@ void UnimatShearInterface::closingNormalGapForce(NodalFieldComponent & close_for
   double fact_t = this->time_step * cs_t / mu_t / eta_t;
 
   // accessors
-  double * u_1_t = this->top->getDisp(predicting).storage(1);
-  double * f_1_t = this->top->getInternal().storage(1);
-  double * t0_1 = this->load.storage(1);
-  double * cf = close_force.storage();
+  double * u_1_t = this->top->getDisp(predicting).data(1);
+  double * f_1_t = this->top->getInternal().data(1);
+  double * t0_1 = this->load.data(1);
+  double * cf = close_force.data(1);
 
   for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
     double u_1_gap = 0.0 * u_1_t[n];           // for readability
@@ -78,12 +79,12 @@ void UnimatShearInterface::closingNormalGapForce(NodalFieldComponent & close_for
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
 
-  for (int d=0; d<this->mesh.getDim(); d+=2) {
+  for (const auto& d : maintain_force.getComponents()) {
 
     // accessors
-    double *f_t = this->top->getInternal().storage(d);
-    double *t0 = this->load.storage(d);
-    double *mf = maintain_force.storage(d);
+    double *f_t = this->top->getInternal().data(d);
+    double *t0 = this->load.data(d);
+    double *mf = maintain_force.data(d);
 
     for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       mf[n] = t0[n] + f_t[n];
@@ -95,10 +96,10 @@ void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
 void UnimatShearInterface::computeGap(NodalField & gap,
 				      bool predicting) {
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  for (const auto& d : gap.getComponents()) {
 
-    double * top_disp = this->top->getDisp(predicting).storage(d);
-    double * gap_p = gap.storage(d);
+    double * top_disp = this->top->getDisp(predicting).data(d);
+    double * gap_p = gap.data(d);
 
     for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       gap_p[n] = 2 * top_disp[n];
@@ -110,10 +111,10 @@ void UnimatShearInterface::computeGap(NodalField & gap,
 void UnimatShearInterface::computeGapVelocity(NodalField & gap_velo,
 					      bool predicting) {
 
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
+  for (const auto& d : gap_velo.getComponents()) {
 
-    double * top_velo_p = this->top->getVelo(predicting).storage(d);
-    double * gap_velo_p = gap_velo.storage(d);
+    double * top_velo_p = this->top->getVelo(predicting).data(d);
+    double * gap_velo_p = gap_velo.data(d);
 
     for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
       gap_velo_p[n] = 2 * top_velo_p[n];
@@ -123,12 +124,6 @@ void UnimatShearInterface::computeGapVelocity(NodalField & gap_velo,
 
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::registerDumpField(const std::string & field_name) {
-
-  int d = std::atoi(&field_name[field_name.length()-1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
 
   bool registered = false;
   // field_name starts with "top"

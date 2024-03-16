@@ -40,7 +40,7 @@
 
 __BEGIN_UGUCA__
 
-class FFTableNodalFieldComponent;
+class FFTableNodalField;
 
 class FFTableMesh : public BaseMesh {
   /* ------------------------------------------------------------------------ */
@@ -48,12 +48,10 @@ class FFTableMesh : public BaseMesh {
   /* ------------------------------------------------------------------------ */
 public:
   
-  FFTableMesh(double Lx, int Nx,
-	      bool initialize=true);
+  FFTableMesh(double Lx, int Nx);
 
   FFTableMesh(double Lx, int Nx,
-	      double Lz, int Nz,
-	      bool initialize=true);
+	      double Lz, int Nz);
 
   virtual ~FFTableMesh();
 
@@ -61,77 +59,69 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init();
+  void resize(int nb_fft, int alloc=-1);
+  
+  virtual void registerForFFT(FFTableNodalField & nodal_field);
+  virtual void unregisterForFFT(FFTableNodalField & nodal_field);
 
-  virtual void registerForFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void unregisterForFFT(FFTableNodalFieldComponent & nodal_field_comp);
-
-  virtual void forwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void backwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void forwardFFT(FFTableNodalField & nodal_field);
+  virtual void backwardFFT(FFTableNodalField & nodal_field);
   
 protected:
-  virtual void initWaveNumbersGlobal(double ** wave_numbers);
-
-  virtual void initSpectralSpace();
-  virtual void allocateSpectralSpace();
-  virtual void freeSpectralSpace();
+  virtual void initWaveNumbersGlobal(TwoDVector & wave_numbers);
   
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
   // access to the wave numbers
-  double ** getLocalWaveNumbers()
-  { return this->wave_numbers_local; }
+  const TwoDVector & getLocalWaveNumbers() const { return this->wave_numbers_local; }
 
   // geometry of interface
-  double getLengthX() const { return this->length_x; }
-  double getLengthZ() const { return this->length_z; }
-
+  double getLength(int d) const { return this->lengths.at(d); }
+  
   // element sizes
-  double getDeltaX() { return this->length_x / this->nb_nodes_x_global; }
-  double getDeltaZ() { return this->length_z / this->nb_nodes_z_global; }
+  double getDelta(int d) const { return this->lengths.at(d) / this->nb_nodes_global.at(d); }
   
   // global nodes that may not be all here
   virtual int getNbGlobalNodes() const {
-    return this->nb_nodes_x_global * this->nb_nodes_z_global; }
-  int getNbGlobalNodesX() const { return this->nb_nodes_x_global; }
-  int getNbGlobalNodesZ() const { return this->nb_nodes_z_global; }
+    int nb = 1; for (const auto & n : this->nb_nodes_global) nb*=n; return nb; }
+  int getNbGlobalNodes(int d) const { return this->nb_nodes_global.at(d); }
 
   // global nodes in fourier space
-  int getNbGlobalFFTX() const { return this->nb_fft_x_global; }
-  int getNbGlobalFFTZ() const { return this->nb_fft_z_global; }
-  int getNbGlobalFFT() { return this->nb_fft_x_global * this->nb_fft_z_global; }
+  int getNbGlobalFFT() const {
+    int nb = 1; for (const auto& e : this->nb_fft_global) nb*=e; return nb; }
+  int getNbGlobalFFT(int d) const { return this->nb_fft_global.at(d); }
+  
   int getNbLocalFFT() { return this->nb_fft_local; }
   int getNbLocalFFTAlloc() { return this->nb_fft_local_alloc; }
 
   int getMode0Rank() const { return this->mode_zero_rank; }
   int getMode0Index() const { return this->mode_zero_index; }
 
+protected:
+  double * getWaveNumbersLocalData(int d) { return this->wave_numbers_local.data(d).data(); }
+  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // fourier space allocated
-  bool fs_allocated;
-  
   // length of domain / replication length
-  double length_x;
-  double length_z;
-
-  // number of nodes
-  int nb_nodes_x_global; // global
-  int nb_nodes_z_global; // global
-
-  // Fourier modes
-  int nb_fft_x_global; // global
-  int nb_fft_z_global; // global
+  std::vector<double> lengths;
   
+  // number of nodes
+  std::vector<int> nb_nodes_global;
+  
+  // Fourier modes
+  std::vector<int> nb_fft_global;
+  
+private:
   // wave numbers in fourier space: local
   int nb_fft_local;
   int nb_fft_local_alloc;
-  double * wave_numbers_local[3];  // local {k,-,m}
+  TwoDVector wave_numbers_local;   // local {k,-,m}
 
+protected:
   // information on where the zero mode is (it needs to be ignored)
   int mode_zero_rank;
   int mode_zero_index;

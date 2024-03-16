@@ -31,18 +31,18 @@
 #ifndef __HALF_SPACE_QUASIDYNAMIC_H__
 #define __HALF_SPACE_QUASIDYNAMIC_H__
 /* -------------------------------------------------------------------------- */
-#include "half_space.hh"
-#include "convolutions.hh"
+#include "half_space_dynamic.hh"
 
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-class HalfSpaceQuasiDynamic : public HalfSpace {
+class HalfSpaceQuasiDynamic : public HalfSpaceDynamic {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
   HalfSpaceQuasiDynamic(Material & material, FFTableMesh & mesh, int side_factor,
+			SpatialDirectionSet components,
 			const std::string & name = "half_space");
 
   virtual ~HalfSpaceQuasiDynamic();
@@ -54,6 +54,12 @@ public:
   // init convolutions
   virtual void initConvolutions();
 
+  // restart
+  virtual void registerToRestart(Restart & restart);
+  
+  // set to steady state
+  virtual void setSteadyState(bool predicting = false);
+
 protected:
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
@@ -62,41 +68,21 @@ protected:
   void computeStressFourierCoeffQuasiDynamic(bool predicting,
 					     bool correcting);
 
-  void computeF2D(std::vector<std::complex<double>> & F,
-		  double q,
-		  std::vector<std::complex<double>> & U,
-		  std::complex<double> conv_H00_U0_j,
-		  std::complex<double> conv_H01_U0_j,
-		  std::complex<double> conv_H01_U1_j,
-		  std::complex<double> conv_H11_U1_j);
-  
-  void computeF3D(std::vector<std::complex<double>> & F,
-		  double k,
-		  double m,
-		  std::vector<std::complex<double>> & U,
-		  std::complex<double> conv_H00_U0_j,
-		  std::complex<double> conv_H00_U2_j,
-		  std::complex<double> conv_H01_U0_j,
-		  std::complex<double> conv_H01_U2_j,
-		  std::complex<double> conv_H01_U1_j,
-		  std::complex<double> conv_H11_U1_j,
-		  std::complex<double> conv_H22_U0_j,
-		  std::complex<double> conv_H22_U2_j);				   
-
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
+  // set time step
+  virtual void setTimeStep(double time_step);
 
+  // get stable time step
+  virtual double getStableTimeStep();
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
   
-  // convolution kernels
-  Convolutions convolutions; 
-
 };
 
 __END_UGUCA__

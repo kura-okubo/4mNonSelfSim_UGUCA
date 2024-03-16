@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   top_mat.readPrecomputedKernels();
 
   // interface
-  UnimatShearInterface interface(mesh, top_mat, law);
+  UnimatShearInterface interface(mesh, {_x,_y}, top_mat, law);
 
   // time step
   double duration = data.get<double>("duration");
@@ -93,11 +93,11 @@ int main(int argc, char *argv[]) {
   interface.setTimeStep(time_step);
 
   // heterogeneity in system: "random" strength
-  double * X = mesh.getLocalCoords()[0];
-  NodalFieldComponent & mus = law.getMuS();
+  const TwoDVector & coords = mesh.getLocalCoords();
+  NodalField & mus = law.getMuS();
   double mus_min = std::numeric_limits<double>::max();
   for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
-    double x = X[i];
+    double x = coords(i,0);
     mus(i) = data.get<double>("mus","friction")
       + data.get<double>("mus_ampl","friction") * (1.0*std::sin(2*x*M_PI)
 					+ 0.5*std::cos(12*x*M_PI)
@@ -109,10 +109,9 @@ int main(int argc, char *argv[]) {
   // external loading
   double shear_load_rate = data.get<double>("shear_load_rate");
   double normal_load = data.get<double>("normal_load");
-  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
-  NodalFieldComponent & ext_normal = interface.getLoad().component(1);
-  ext_normal.setAllValuesTo(normal_load);
-  ext_shear.setAllValuesTo(mus_min*std::abs(normal_load));
+  NodalField & load = interface.getLoad();
+  load.setAllValuesTo(normal_load,1);
+  load.setAllValuesTo(mus_min*std::abs(normal_load),0);
 
   // initialization
   interface.init();
@@ -125,7 +124,7 @@ int main(int argc, char *argv[]) {
 
   // quasi-dynamic
   bool dynamic_step = false;
-  NodalFieldComponent & velo_0 = interface.getTop().getVelo().component(0);
+  NodalField & velo = interface.getTop().getVelo();
   
   // time stepping
   for (int s=1; s<=nb_time_steps; ++s) {
@@ -134,12 +133,12 @@ int main(int argc, char *argv[]) {
       std::cout.flush();
     }
 
-    ext_shear.setAllValuesTo(mus_min*std::abs(normal_load) + s*time_step*shear_load_rate);
+    load.setAllValuesTo(mus_min*std::abs(normal_load) + s*time_step*shear_load_rate,0);
 
     // switch between quasi-dynamic and dynamic
     double max_velo = 0.;
     for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
-      max_velo = std::max(max_velo,velo_0(i));
+      max_velo = std::max(max_velo,velo(i,0));
     }
     if (max_velo > data.get<double>("dyn_velo_threshold")) {
       if (!dynamic_step)

@@ -143,9 +143,9 @@ int main(int argc, char *argv[]) {
   // constitutive interface law
   RateAndStateLaw law(mesh, a_default, b_default, Dc, V0, f0, theta_init,
                       RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0);
-  NodalFieldComponent & theta = law.getTheta();
-  NodalFieldComponent & a = law.getA();
-  NodalFieldComponent & b = law.getB();
+  NodalField & theta = law.getTheta();
+  NodalField & a = law.getA();
+  NodalField & b = law.getB();
 
   double mu = Cs * Cs * rho;
   double lambda = Cp * Cp * rho - 2.0 * mu;
@@ -163,28 +163,28 @@ int main(int argc, char *argv[]) {
   // ---------------------------------------------------------------------------
   // weak interface
 
-  UnimatShearInterface interface(mesh, mat, law);
+  UnimatShearInterface interface(mesh, {_x,_y,_z}, mat, law);
 
   // ---------------------------------------------------------------------------
   // initial conditions
 
   // init external load
-  NodalFieldComponent & ext_shear = interface.getLoad().component(0);
-  NodalFieldComponent & ext_normal = interface.getLoad().component(1);
-  ext_shear.setAllValuesTo(shear_load);
-  ext_normal.setAllValuesTo(normal_load);
+
+  NodalField & external = interface.getLoad();
+  external.setAllValuesTo(shear_load,0);
+  external.setAllValuesTo(normal_load,1);
 
   // init velocity
   HalfSpace& top = interface.getTop();
-  NodalFieldComponent & velo0_top = top.getVelo().component(0);
-  velo0_top.setAllValuesTo(V_init / 2);
+  NodalField& velo_top = top.getVelo();
+  velo_top.setAllValuesTo(V_init / 2,0);
 
-  double ** coords = mesh.getLocalCoords();
+  const TwoDVector &  coords = mesh.getLocalCoords();
 
   // init a
   for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
-    double x = std::abs(coords[0][i] - length_x / 2);
-    double z = std::abs(coords[2][i] - length_z / 2);
+    double x = std::abs(coords(i,0) - length_x / 2);
+    double z = std::abs(coords(i,2) - length_z / 2);
     double Bx = 0.0;
     if (x <= W) {
       Bx = 1.0;
@@ -234,22 +234,9 @@ int main(int argc, char *argv[]) {
 
   interface.initDump(bname, ".", Dumper::Format::Binary);
 
-  interface.registerDumpField("cohesion_0");
-  // interface.registerDumpField("cohesion_1");
-  // interface.registerDumpField("cohesion_2");
-
-  interface.registerDumpField("top_disp_0");
-  // interface.registerDumpField("top_disp_1");
-  // interface.registerDumpField("top_disp_2");
-
-  interface.registerDumpField("top_velo_0");
-  // interface.registerDumpField("top_velo_1");
-  // interface.registerDumpField("top_velo_2");
-
-  // interface.registerDumpField("load_0");
-  // interface. registerDumpField("load_1");
-  // interface.registerDumpField("load_2");
-
+  interface.registerDumpField("cohesion");
+  interface.registerDumpField("top_disp");
+  interface.registerDumpField("top_velo");
   interface.registerDumpField("theta");
 
   // interface.registerDumpField("iterations");
@@ -271,8 +258,8 @@ int main(int argc, char *argv[]) {
     // nucleation
     double t = time_step * s;
     for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
-      double x = std::abs(coords[0][i] - length_x / 2);
-      double z = std::abs(coords[2][i] - length_z / 2);
+      double x = std::abs(coords(i,0) - length_x / 2);
+      double z = std::abs(coords(i,2) - length_z / 2);
       double r = std::sqrt(x * x + z * z);
       double F = 0.0;
       if (r < R)
@@ -280,7 +267,7 @@ int main(int argc, char *argv[]) {
       double G = 1.0;
       if (t < T)
 	      G = std::exp((t - T) * (t - T) / t / (t - 2.0 * T));
-      ext_shear(i) = shear_load + delta_tau_0 * F * G;
+      external(i,0) = shear_load + delta_tau_0 * F * G;
     }
 
     // time integration

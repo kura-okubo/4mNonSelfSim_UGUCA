@@ -186,9 +186,9 @@ int main(int argc, char *argv[]) {
   //time_step
   Interface * interface;
   if (is_unimat_interface)
-    interface = new UnimatShearInterface(mesh, top_mat, law);
+    interface = new UnimatShearInterface(mesh, {_x,_y,_z}, top_mat, law);
   else
-    interface = new BimatInterface(mesh, top_mat, bot_mat, law);
+    interface = new BimatInterface(mesh, {_x,_y,_z},top_mat, bot_mat, law);
 
   interface->initPredictorCorrector(nb_pc);
 
@@ -197,9 +197,9 @@ int main(int argc, char *argv[]) {
   interface->setTimeStep(time_step);
 
   // external loading
-  interface->getLoad().component(0).setAllValuesTo(shear_load);
-  interface->getLoad().component(1).setAllValuesTo(0.);//normal_load);
-  interface->getLoad().component(2).setAllValuesTo(0.);
+  interface->getLoad().setAllValuesTo(shear_load,0);
+  interface->getLoad().setAllValuesTo(0.,1);//normal_load);
+  interface->getLoad().setAllValuesTo(0.,2);
 
   interface->init();
 
@@ -209,23 +209,23 @@ int main(int argc, char *argv[]) {
 
   //--------------
   // nucleation
-  NodalFieldComponent & load_0 = interface->getLoad().component(0);
-  NodalFieldComponent & tauc = law.getTauc();
-  NodalFieldComponent & Gamma_c = law.getGc();
+  NodalField & load = interface->getLoad();
+  NodalField & tauc = law.getTauc();
+  NodalField & Gamma_c = law.getGc();
   double tol = 0.1*length_x/nb_nodes_x/2.0;
 
-  double ** coords = mesh.getLocalCoords();
+  const TwoDVector & coords = mesh.getLocalCoords();
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol) {
-      load_0(i) = 0.5*(nuc_shear_load+shear_load);
+    if (std::abs( coords(i,0) - length_x/2.0) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol) {
+      load(i,0) = 0.5*(nuc_shear_load+shear_load);
     }
   }
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol) {
-      load_0(i) = nuc_shear_load;
+    if (std::abs( coords(i,0) - length_x/2.0) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol) {
+      load(i,0) = nuc_shear_load;
     }
   }
 
@@ -233,8 +233,8 @@ int main(int argc, char *argv[]) {
   // infinite strength zone;
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - length_x/2.0)  > length_x_rpt/2.0-tol ||
-	std::abs( coords[2][i] - length_z/2.0) > length_z_rpt/2.0-tol) {
+    if (std::abs( coords(i,0) - length_x/2.0)  > length_x_rpt/2.0-tol ||
+	std::abs( coords(i,2) - length_z/2.0) > length_z_rpt/2.0-tol) {
 	Gamma_c(i) = 1e24*Gc;
 	tauc(i) = 1e24*tau_c;
     }
@@ -243,35 +243,35 @@ int main(int argc, char *argv[]) {
   //-------------
   // strengh barrier higher
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0+strength_barrier_center)) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
+    if (std::abs( coords(i,0) - (length_x/2.0+strength_barrier_center)) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
       {
-	load_0(i) = 0.5*(strong_patch_shear_load+shear_load);
+	load(i,0) = 0.5*(strong_patch_shear_load+shear_load);
       }
   }
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0+strength_barrier_center)) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
+    if (std::abs( coords(i,0) - (length_x/2.0+strength_barrier_center)) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
       {
-	load_0(i) = strong_patch_shear_load;
+	load(i,0) = strong_patch_shear_load;
       }
   }
 
   //-------------
   // strengh barrier lower
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0-strength_barrier_center)) < a0/2.0+tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
+    if (std::abs( coords(i,0) - (length_x/2.0-strength_barrier_center)) < a0/2.0+tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0+tol)
       {
-	load_0(i) = 0.5*(weak_patch_shear_load+shear_load);
+	load(i,0) = 0.5*(weak_patch_shear_load+shear_load);
       }
   }
 
   for (int i=0; i<mesh.getNbLocalNodes(); i++) {
-    if (std::abs( coords[0][i] - (length_x/2.0-strength_barrier_center)) < a0/2.0-tol &&
-	std::abs( coords[2][i] - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
+    if (std::abs( coords(i,0) - (length_x/2.0-strength_barrier_center)) < a0/2.0-tol &&
+	std::abs( coords(i,2) - length_z/2.0 + length_z_rpt/4.0) < a0/2.0-tol)
       {
-	load_0(i) = weak_patch_shear_load;
+	load(i,0) = weak_patch_shear_load;
       }
   }
 
@@ -292,34 +292,15 @@ int main(int argc, char *argv[]) {
 
   interface->initDump(bname,".",Dumper::Format::Binary);
 
-  interface->registerDumpField("cohesion_0");
-  interface->registerDumpField("cohesion_1");
-  interface->registerDumpField("cohesion_2");
-
-  interface->registerDumpField("top_disp_0");
-  interface->registerDumpField("top_disp_1");
-  interface->registerDumpField("top_disp_2");
-  interface->registerDumpField("bot_disp_0");
-  interface->registerDumpField("bot_disp_1");
-  interface->registerDumpField("bot_disp_2");
-
-  interface->registerDumpField("top_velo_0");
-  interface->registerDumpField("top_velo_1");
-  interface->registerDumpField("top_velo_2");
-  interface->registerDumpField("bot_velo_0");
-  interface->registerDumpField("bot_velo_1");
-  interface->registerDumpField("bot_velo_2");
+  interface->registerDumpField("cohesion");
+  interface->registerDumpField("top_disp");
+  interface->registerDumpField("bot_disp");
+  interface->registerDumpField("top_velo");
+  interface->registerDumpField("bot_velo");
   /*
-  interface->registerDumpField("top_internal_0");
-  interface->registerDumpField("top_internal_1");
-  interface->registerDumpField("top_internal_2");
-  interface->registerDumpField("bot_internal_0");
-  interface->registerDumpField("bot_internal_1");
-  interface->registerDumpField("bot_internal_2");
-
-  interface->registerDumpField("load_0");
-  interface->registerDumpField("load_1");
-  interface->registerDumpField("load_2");
+  interface->registerDumpField("top_internal");
+  interface->registerDumpField("bot_internal");
+  interface->registerDumpField("load");
   */
   interface->registerDumpField("tau_c");
 
@@ -340,15 +321,15 @@ int main(int argc, char *argv[]) {
   HalfSpace * top = &interface->getTop();
   HalfSpace * bot = &interface->getBot();
 
-  double * u0_top_p = top->getDisp().storage(0);
-  double * v0_top_p = top->getVelo().storage(0);
-  double * u2_top_p = top->getDisp().storage(2);
-  double * v2_top_p = top->getVelo().storage(2);
+  double * u0_top_p = top->getDisp().data(0);
+  double * v0_top_p = top->getVelo().data(0);
+  double * u2_top_p = top->getDisp().data(2);
+  double * v2_top_p = top->getVelo().data(2);
 
-  double * u0_bot_p = bot->getDisp().storage(0);
-  double * v0_bot_p = bot->getVelo().storage(0);
-  double * u2_bot_p = bot->getDisp().storage(2);
-  double * v2_bot_p = bot->getVelo().storage(2);
+  double * u0_bot_p = bot->getDisp().data(0);
+  double * v0_bot_p = bot->getVelo().data(0);
+  double * u2_bot_p = bot->getDisp().data(2);
+  double * v2_bot_p = bot->getVelo().data(2);
 
   int ww=log(nb_time_steps)/log(10);
   if (world_rank==0) {
@@ -373,8 +354,8 @@ int main(int argc, char *argv[]) {
 
     // free surface
     if (world_rank == mesh.getRoot()) { // only works with SimpleMesh
-      int nb_nodes_x = mesh.getNbGlobalNodesX();
-      int nb_nodes_z =  mesh.getNbGlobalNodesZ();
+      int nb_nodes_x = mesh.getNbGlobalNodes(0);
+      int nb_nodes_z = mesh.getNbGlobalNodes(2);
       
       for (int i = 0; i < nb_nodes_x; ++i) {
 	for (int j = 1; j < nb_nodes_z / 2; ++j) {

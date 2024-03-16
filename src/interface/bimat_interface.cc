@@ -36,14 +36,15 @@ __BEGIN_UGUCA__
 /* -------------------------------------------------------------------------- */
 
 BimatInterface::BimatInterface(FFTableMesh & mesh,
+			       SpatialDirectionSet components,
 			       Material & top_material,
 			       Material & bot_material,
 			       InterfaceLaw & law,
 			       const SolverMethod & method) :
-  Interface(mesh, law)
+  Interface(mesh, components, law)
 {
-  this->top = HalfSpace::newHalfSpace(top_material, mesh,  1, this->name+"_top", method);
-  this->bot = HalfSpace::newHalfSpace(bot_material, mesh, -1, this->name+"_bot", method);
+  this->top = HalfSpace::newHalfSpace(top_material, mesh,  1, components, this->name+"_top", method);
+  this->bot = HalfSpace::newHalfSpace(bot_material, mesh, -1, components, this->name+"_bot", method);
   
   this->half_spaces.resize(2);
   this->half_spaces[0] = this->top;
@@ -57,7 +58,7 @@ BimatInterface::~BimatInterface() {
 }
 
 /* -------------------------------------------------------------------------- */
-void BimatInterface::closingNormalGapForce(NodalFieldComponent & close_force,
+void BimatInterface::closingNormalGapForce(NodalField & close_force,
                                            bool predicting) {
   // top material information
   const Material & mat_t = this->top->getMaterial();
@@ -76,12 +77,12 @@ void BimatInterface::closingNormalGapForce(NodalFieldComponent & close_force,
   double fact_b = this->time_step * cs_b / mu_b / eta_b;
 
   // accessors
-  double * u_1_t = this->top->getDisp(predicting).storage(1);
-  double * u_1_b = this->bot->getDisp(predicting).storage(1);
-  double * f_1_t = this->top->getInternal().storage(1);
-  double * f_1_b = this->bot->getInternal().storage(1);
-  double * t0_1 = this->load.storage(1);
-  double * cf = close_force.storage();
+  double * u_1_t = this->top->getDisp(predicting).data(1);
+  double * u_1_b = this->bot->getDisp(predicting).data(1);
+  double * f_1_t = this->top->getInternal().data(1);
+  double * f_1_b = this->bot->getInternal().data(1);
+  double * t0_1 = this->load.data(1);
+  double * cf = close_force.data(1);
 
   double fact_cf = fact_t + fact_b;
 
@@ -115,12 +116,12 @@ void BimatInterface::maintainShearGapForce(NodalField & maintain_force) {
   fact_t/=fact_mf;
   fact_b/=fact_mf;
 
-  for (int d=0; d<this->mesh.getDim();d+=2) {
+  for (const auto& d : maintain_force.getComponents()) {
     // accessors
-    double * f_t = this->top->getInternal().storage(d);
-    double * f_b = this->bot->getInternal().storage(d);
-    double * t0 = this->load.storage(d);
-    double * mf = maintain_force.storage(d);
+    double * f_t = this->top->getInternal().data(d);
+    double * f_b = this->bot->getInternal().data(d);
+    double * t0 = this->load.data(d);
+    double * mf = maintain_force.data(d);
 
     for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       //better for numerical error
@@ -133,11 +134,11 @@ void BimatInterface::maintainShearGapForce(NodalField & maintain_force) {
 void BimatInterface::computeGap(NodalField & gap,
                                 bool predicting) {
 
-  for (int d=0;d<this->mesh.getDim();++d) {
-
-    double * top_disp = this->top->getDisp(predicting).storage(d);
-    double * bot_disp = this->bot->getDisp(predicting).storage(d);
-    double * gap_p = gap.storage(d);
+  for (const auto& d : gap.getComponents()) {
+    
+    double * top_disp = this->top->getDisp(predicting).data(d);
+    double * bot_disp = this->bot->getDisp(predicting).data(d);
+    double * gap_p = gap.data(d);
 
     for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
       gap_p[n] = top_disp[n] - bot_disp[n];
@@ -149,11 +150,11 @@ void BimatInterface::computeGap(NodalField & gap,
 void BimatInterface::computeGapVelocity(NodalField & gap_velo,
                                         bool predicting) {
 
-  for (int d=0;d<this->mesh.getDim();++d) {
+  for (const auto& d : gap_velo.getComponents()) {
 
-    double * top_velo = this->top->getVelo(predicting).storage(d);
-    double * bot_velo = this->bot->getVelo(predicting).storage(d);
-    double * gap_velo_p = gap_velo.storage(d);
+    double * top_velo = this->top->getVelo(predicting).data(d);
+    double * bot_velo = this->bot->getVelo(predicting).data(d);
+    double * gap_velo_p = gap_velo.data(d);
 
     for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n) {
       gap_velo_p[n] = top_velo[n] - bot_velo[n];
@@ -163,12 +164,6 @@ void BimatInterface::computeGapVelocity(NodalField & gap_velo,
 
 /* -------------------------------------------------------------------------- */
 void BimatInterface::registerDumpField(const std::string &field_name) {
-
-  int d = std::atoi(&field_name[field_name.length() - 1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
 
   bool registered = false;
   // field_name starts with "top"

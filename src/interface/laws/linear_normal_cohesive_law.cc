@@ -40,11 +40,14 @@ LinearNormalCohesiveLaw::LinearNormalCohesiveLaw(BaseMesh & mesh,
 						 double sigma_c_default,
 						 const std::string & name) :
   InterfaceLaw(mesh,name),
-  G_c(mesh,name+"_G_c"),
-  sigma_c(mesh,name+"_sigma_c")
+  G_c(mesh),
+  sigma_c(mesh)
 {
   this->G_c.setAllValuesTo(Gc_default);
+  this->G_c.setName(name+"_G_c");
+  
   this->sigma_c.setAllValuesTo(sigma_c_default);
+  this->sigma_c.setName(name+"_sigma_c");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -52,56 +55,46 @@ void LinearNormalCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
 						    bool predicting) {
 
   // find forces needed to close normal gap
-  NodalFieldComponent & coh1 = cohesion.component(1);
-  this->interface->closingNormalGapForce(coh1, predicting);
+  this->interface->closingNormalGapForce(cohesion, predicting);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of normal cohesion
-  NodalFieldComponent normal_trac_norm(this->mesh, "normal_trac_norm");
+  NodalField normal_trac_norm(this->mesh);
   cohesion.computeNorm(normal_trac_norm, 0);
-  double * sigma_normal = normal_trac_norm.storage();
 
   // find current gap
-  NodalField gap(this->mesh, "gap");
+  NodalField gap(this->mesh, cohesion.getComponents());
   this->interface->computeGap(gap, predicting);
 
   // compute norm of normal gap
-  NodalFieldComponent normal_gap_norm(this->mesh, "normal_gap_norm");
+  NodalField normal_gap_norm(this->mesh);
   gap.computeNorm(normal_gap_norm, 0);
-  double * normal_gap = normal_gap_norm.storage();
-
-  // interface properties
-  double * Gc = this->G_c.storage();
-  double * sigmac = this->sigma_c.storage();
-
-  //double * p_coh1 = coh1.storage();
 
   // to be filled
-  NodalFieldComponent alpha_field(this->mesh, "alpha");
-  double * alpha = alpha_field.storage();
+  NodalField alpha(this->mesh);
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
   for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
 
-    if ((Gc[0] < 1e-12) || (sigmac[n] < 1e-12)) {
-      alpha[n] = 0.;
+    if ((G_c(0) < 1e-12) || (sigma_c(n) < 1e-12)) {
+      alpha(n) = 0.;
     }
     else {
     
-      double slope = pow(sigmac[n],2) / 2. / Gc[n];
-      double strength = std::max(sigmac[n] - normal_gap[n] * slope, 0.);
+      double slope = pow(sigma_c(n),2) / 2. / G_c(n);
+      double strength = std::max(sigma_c(n) - normal_gap_norm(n) * slope, 0.);
 
       // maximal normal cohesive force given by strength.
       // keep orientation of normal force
-      alpha[n] = std::min(1.,std::abs(strength / sigma_normal[n]));
+      alpha(n) = std::min(1.,std::abs(strength / normal_trac_norm(n)));
     }
   }
 
   // only in normal direction
-  cohesion.multiplyByScalar(1, alpha_field);
+  cohesion.multiplyByScalarField(alpha,1);
 }
 
 /* -------------------------------------------------------------------------- */

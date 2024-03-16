@@ -33,7 +33,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <stdexcept>
 
 __BEGIN_UGUCA__

@@ -59,8 +59,8 @@ public:
 
 class TestHalfSpace : public HalfSpaceDynamic {
 public:
-  TestHalfSpace(Material & material, SimpleMesh & mesh, int side_factor)
-    : HalfSpaceDynamic(material, mesh, side_factor) {}
+  TestHalfSpace(Material & material, SimpleMesh & mesh, int side_factor, SpatialDirectionSet & comp)
+    : HalfSpaceDynamic(material, mesh, side_factor, comp) {}
   void computeDisplacement(bool = false) {
     computeDisplacementCalled = true;
   }
@@ -109,13 +109,13 @@ public:
 
 class TestInterface : public Interface {
 public:
- TestInterface(SimpleMesh &mesh, InterfaceLaw &law, Material &material)
-   : Interface(mesh, law), top(material, mesh, 1) {
+  TestInterface(SimpleMesh &mesh, SpatialDirectionSet &comp, InterfaceLaw &law, Material &material)
+    : Interface(mesh, comp, law), top(material, mesh, 1, comp) {
    half_spaces.push_back(&top);
    constructed = true;
  }
   // pure virtual functions
-  void closingNormalGapForce(NodalFieldComponent &, bool = false) {
+  void closingNormalGapForce(NodalField &, bool = false) {
     throw "TestInterface::closingNormalGapForce() is not implemented.";
   }
   void maintainShearGapForce(NodalField &) {
@@ -156,6 +156,7 @@ int main(){
   double Lz = 0.3;
   int Nz = 2;
   SimpleMesh mesh(Lx, Nx, Lz, Nz);
+  SpatialDirectionSet sds{_x,_y,_z};
   // --------------------------------------------------------------
   // interface law
   // --------------------------------------------------------------
@@ -172,7 +173,7 @@ int main(){
   // Check Interface::Interface
   // --------------------------------------------------------------
   std::cout << "check Interface::Interface" << std::endl;
-  TestInterface interface(mesh, law, material);
+  TestInterface interface(mesh, sds, law, material);
   if (!interface.constructed) {
     std::cout << "Interface::Interface failed" << std::endl;
     return 1;  // failed
@@ -308,15 +309,15 @@ int main(){
 
   // Check Interface::combineLoadAndCohesion
   // --------------------------------------------------------------
-  NodalField field(mesh);
-  field.component(0).setAllValuesTo(1);
-  field.component(1).setAllValuesTo(2);
-  field.component(2).setAllValuesTo(3);
+  NodalField field(mesh, {_x,_y,_z});
+  field.setAllValuesTo(1,0);
+  field.setAllValuesTo(2,1);
+  field.setAllValuesTo(3,2);
 
   std::cout << "check Interface::combineLoadAndCohesion" << std::endl;
   for (int i = 0; i < 3; ++i) {
-    interface.getLoad().component(i).setAllValuesTo(3);
-    interface.getCohesion().component(i).setAllValuesTo(42);
+    interface.getLoad().setAllValuesTo(3,i);
+    interface.getCohesion().setAllValuesTo(42,i);
   }
   interface.combineLoadAndCohesion(field);
   bool checks_out = true;
@@ -324,7 +325,7 @@ int main(){
   double ref_ans = 3 - 42;
   for (size_t j = 0; j < 3; ++j) {
     for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
-      if (std::abs(field.component(j).at(i) - ref_ans) > tol) {
+      if (std::abs(field(i,j) - ref_ans) > tol) {
         checks_out = false;
         break;
       }

@@ -27,7 +27,6 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "convolutions.hh"
-#include "limited_history.hh"
 
 #ifdef UCA_USE_OPENMP
 #include <omp.h>
@@ -36,33 +35,41 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-Convolutions::Convolutions(FFTableMesh & mesh) :
-  mesh(mesh) {}
+Convolutions::Convolutions(HistFFTableNodalField & field) :
+  field(field) {
+
+  // zeros vector
+  VecComplex tmp(this->field.getNbFFT());
+  for (auto& element : tmp) {
+    element = {0.,0.};
+  }
+  this->complex_zeros.swap(tmp);
+}
 
 /* -------------------------------------------------------------------------- */
 Convolutions::~Convolutions() {}
 
 /* -------------------------------------------------------------------------- */
 void Convolutions::preintegrate(Material & material,
-				Kernel::Krnl kernel,
+				Krnl kernel,
 				double scale_factor,
 				double time_step) {
 
-  // create vector and resize it
-  this->pi_kernels.insert(std::pair<Kernel::Krnl,PIKernelVector>(kernel, PIKernelVector()));
+  // preintegrated kernels: create vector and resize it
+  this->pi_kernels.insert(std::pair<Krnl,PIKernelVector>(kernel, PIKernelVector()));
   PIKernelVector & pik_vector = this->pi_kernels[kernel];
-  pik_vector.resize(this->mesh.getNbLocalFFT());
+  pik_vector.resize(this->field.getNbFFT());
 
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
+  const TwoDVector & wave_numbers = this->field.getMesh().getLocalWaveNumbers();
 
   // history for q1 is longest q = j*q1
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
+  for (int j=0; j<this->field.getNbFFT(); ++j) { //parallel loop
 
     pik_vector[j] = std::make_shared<PreintKernel>(material.getKernel(kernel));
 
     double qq = 0.0;
-    for (int d=0; d<this->mesh.getDim();d+=2)
-      qq +=(wave_numbers[d])[j]*(wave_numbers[d])[j];
+    for (const auto& d : this->field.getComponents())
+      qq += wave_numbers(j,d)*wave_numbers(j,d);
 
     double qj_cs = std::sqrt(qq) * scale_factor;
     
@@ -71,42 +78,83 @@ void Convolutions::preintegrate(Material & material,
 }
 
 /* -------------------------------------------------------------------------- */
-void Convolutions::init(ConvPair conv) {   //std::pair<Kernel::Krnl,unsigned int> ConvPair;
+void Convolutions::init(ConvPair conv) {
   
-  // make sure that the fields have the correct length
-  this->field->registerKernel(this->pi_kernels[conv.first],conv.second);
+  // make sure that the history of the field has the necessary length
+  for (int j=0; j<this->field.getNbFFT(); ++j) {
+    for (const auto& d : this->field.getComponents()) {
+      this->field.hist(j,d).extend(this->pi_kernels[conv.first][j]->getSize());
+    }
+  }
   
   // prepare results
-  this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(this->mesh.getNbLocalFFT())));
+  int vec_size = this->field.getNbFFT();
+  this->results.insert(std::pair<ConvPair,VecComplex>(conv,VecComplex(vec_size)));
 }
 
 /* -------------------------------------------------------------------------- */
 void Convolutions::convolve() {
 
-ConvMap::iterator it;
+  ConvMap::iterator it;
 
 #ifdef UCA_USE_OPENMP
 #pragma omp parallel for
 #pragma omp single nowait
 #endif
- for(it=this->results.begin(); it!=this->results.end(); ++it) {
+  for(it=this->results.begin(); it!=this->results.end(); ++it) {
 #ifdef UCA_USE_OPENMP
 #pragma omp task firstprivate(datIt)
 #endif
-   // history for q1 is longest q = j*q1
-   for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
+    // history for q1 is longest q = j*q1
+    for (int j=0; j<this->field.getNbFFT(); ++j) { //parallel loop
 
-     // kernel 
-     Kernel::Krnl kernel = it->first.first;
+      // kernel 
+      Krnl kernel = it->first.first;
 
-     // modal U
-     unsigned int U_dim = it->first.second;
-     std::shared_ptr<ModalLimitedHistory> U_j = this->field->get(U_dim,j);
+      // modal U
+      unsigned int U_dim = it->first.second;
+      const ModalLimitedHistory & U_j = this->field.hist(j,U_dim);
      
-     // std::vector<std::complex<double>> & res = it->second;
-     it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j.get());
-   }
- }
+      // std::vector<std::complex<double>> & res = it->second;
+      it->second[j] = this->pi_kernels[kernel][j]->convolve(U_j);
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+void Convolutions::convolveSteadyState() {
+
+  // loop over Kernel-dim pairs
+  for(ConvMap::iterator it=this->results.begin();
+      it!=this->results.end(); ++it) {
+
+    // loop over modes
+    for (int j=0; j<this->field.getNbFFT(); ++j) {
+
+      // kernel 
+      Krnl kernel = it->first.first;
+
+      // modal U (current value)
+      unsigned int U_dim = it->first.second;
+      std::complex<double> U_j = this->field.fd_or_zero(j,U_dim);
+
+      // compute convolution with time-constant U_j
+      it->second[j] = this->pi_kernels[kernel][j]->getIntegral() * U_j;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+const VecComplex & Convolutions::getResult(ConvPair pair) const {
+
+  auto it = this->results.find(pair); // attempt to find the result
+
+  if (it != this->results.end()) {
+    return it->second; // found result, return it
+  }
+  else {
+    return this->complex_zeros; // not found, return vector full of complex zeros
+  }
 }
 
 __END_UGUCA__

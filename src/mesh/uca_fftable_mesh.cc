@@ -29,7 +29,7 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "uca_fftable_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 #include "static_communicator_mpi.hh"
 
 #include <cmath>
@@ -38,38 +38,38 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-FFTableMesh::FFTableMesh(double Lx, int Nx, bool initialize) :
+FFTableMesh::FFTableMesh(double Lx, int Nx) :
   BaseMesh(2, Nx),
-  fs_allocated(false),
-  length_x(Lx),
-  length_z(0.),
-  nb_nodes_x_global(Nx),
-  nb_nodes_z_global(1),
+  lengths({Lx,0,0}),
+  nb_nodes_global({Nx,1,1}),
+  wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
-  if (initialize)
-    this->init();
+
+  this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1,1,1};
+
+  this->resize(this->getNbGlobalFFT());
+  this->initWaveNumbersGlobal(this->wave_numbers_local);
 }
 
 /* -------------------------------------------------------------------------- */
 FFTableMesh::FFTableMesh(double Lx, int Nx,
-			 double Lz, int Nz,
-			 bool initialize) :
+			 double Lz, int Nz) :
   BaseMesh(3, Nx*Nz),
-  fs_allocated(false),
-  length_x(Lx),
-  length_z(Lz),
-  nb_nodes_x_global(Nx),
-  nb_nodes_z_global(Nz),
+  lengths({Lx,0,Lz}),
+  nb_nodes_global({Nx,1,Nz}),
+  wave_numbers_local(3,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
-  if (initialize)
-    this->init();
+
+  this->nb_fft_global = {this->nb_nodes_global[0], 1, this->nb_nodes_global[2] / 2 + 1};
+
+  this->resize(this->getNbGlobalFFT());
+  this->initWaveNumbersGlobal(this->wave_numbers_local);
 }
 
 /* -------------------------------------------------------------------------- */
 FFTableMesh::~FFTableMesh() {
-  this->freeSpectralSpace();
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
@@ -80,121 +80,95 @@ FFTableMesh::~FFTableMesh() {
       // do not call fftw_cleanup() because we don't know if all plans are destroyed
     }
   }
-  //this->forward_plans.resize(0);
-  //this->backward_plans.resize(0);
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::init() {
-  this->initSpectralSpace();
-  this->allocateSpectralSpace();
-  this->initWaveNumbersGlobal(this->wave_numbers_local);
+void FFTableMesh::resize(int nb_fft, int alloc) {
+  this->nb_fft_local = nb_fft;
+  this->nb_fft_local_alloc = (alloc < nb_fft ? nb_fft : alloc);
+  this->wave_numbers_local.resize(this->nb_fft_local_alloc);
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::initSpectralSpace() {
-
-  if (this->dim==2) {
-    this->nb_fft_x_global = this->nb_nodes_x_global / 2 + 1;
-    this->nb_fft_z_global = 1;
-  }
-  else if (this->dim==3) {
-    this->nb_fft_x_global = this->nb_nodes_x_global;
-    this->nb_fft_z_global = this->nb_nodes_z_global / 2 + 1;
-  }
-
-  this->nb_fft_local = this->getNbGlobalFFT();
-  this->nb_fft_local_alloc = this->nb_fft_local;
-}
-
-/* -------------------------------------------------------------------------- */
-void FFTableMesh::allocateSpectralSpace() {
-
-  // do not initialize twice
-  if (this->fs_allocated)
-    throw std::runtime_error("FFTableMesh: do not allocate twice\n");
-
-  this->allocateVector(this->wave_numbers_local, this->nb_fft_local_alloc);
-  this->fs_allocated = true;
-}
-
-/* -------------------------------------------------------------------------- */
-void FFTableMesh::freeSpectralSpace() {
-
-  if (this->fs_allocated) {
-    this->freeVector(this->wave_numbers_local);
-  }
-  this->fs_allocated = false;
-}
-
-/* -------------------------------------------------------------------------- */
-void FFTableMesh::registerForFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::registerForFFT(FFTableNodalField & nodal_field) {
 
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
 
-    fftw_plan forward_plan = NULL;
-    fftw_plan backward_plan = NULL;
-    if (this->dim==2) {
-      forward_plan = fftw_plan_dft_r2c_1d(this->nb_nodes_x_global,
-					  nodal_field_comp.storage(),
-					  nodal_field_comp.fd_storage(),
-					  FFTW_MEASURE);
-      
-      backward_plan = fftw_plan_dft_c2r_1d(this->nb_nodes_x_global,
-					   nodal_field_comp.fd_storage(),
-					   nodal_field_comp.storage(),
-					   FFTW_MEASURE);
-    }
-    else if (this->dim==3) {
-      forward_plan = fftw_plan_dft_r2c_2d(this->nb_nodes_x_global,
-					  this->nb_nodes_z_global,
-					  nodal_field_comp.storage(),
-					  nodal_field_comp.fd_storage(),
-					  FFTW_MEASURE);
-      backward_plan = fftw_plan_dft_c2r_2d(this->nb_nodes_x_global,
-					   this->nb_nodes_z_global,
-					   nodal_field_comp.fd_storage(),
-					   nodal_field_comp.storage(),
-					   FFTW_MEASURE);
-    }
-    this->forward_plans.push_back(forward_plan);
-    this->backward_plans.push_back(backward_plan);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+
+      // access relevant storage
+      double * nfc = nodal_field.data(d);
+      fftw_complex * fd_nfc = nodal_field.fd_data(d);
+
+      // set plans to NULL
+      fftw_plan forward_plan = NULL;
+      fftw_plan backward_plan = NULL;
+
+      // create fftw plans for relevant dimension
+      if (this->dim==2) {
+	forward_plan = fftw_plan_dft_r2c_1d(this->nb_nodes_global[0],
+					    nfc, fd_nfc, FFTW_MEASURE);
+	backward_plan = fftw_plan_dft_c2r_1d(this->nb_nodes_global[0],
+					     fd_nfc, nfc, FFTW_MEASURE);
+      }
+      else if (this->dim==3) {
+	forward_plan = fftw_plan_dft_r2c_2d(this->nb_nodes_global[0],
+					    this->nb_nodes_global[2],
+					    nfc, fd_nfc, FFTW_MEASURE);
+	backward_plan = fftw_plan_dft_c2r_2d(this->nb_nodes_global[0],
+					     this->nb_nodes_global[2],
+					     fd_nfc, nfc, FFTW_MEASURE);
+      }
+      this->forward_plans.push_back(forward_plan);
+      this->backward_plans.push_back(backward_plan);
     
-    // set the fftw_plan_id of the nodal field component (can do because friend)
-    nodal_field_comp.fftw_plan_id = this->forward_plans.size()-1;
+      // set the fftw_plan_id of the nodal field component (can do because friend)
+      nodal_field.fftw_plan_ids[d] = this->forward_plans.size()-1;
+    }
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::unregisterForFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::unregisterForFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
-    fftw_destroy_plan(this->forward_plans[nodal_field_comp.getFFTWPlanId()]);
-    fftw_destroy_plan(this->backward_plans[nodal_field_comp.getFFTWPlanId()]);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+      fftw_destroy_plan(this->forward_plans[nodal_field.getFFTWPlanId(d)]);
+      fftw_destroy_plan(this->backward_plans[nodal_field.getFFTWPlanId(d)]);
+    }
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::forwardFFT(FFTableNodalField & nodal_field) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
-    fftw_execute(this->forward_plans[nodal_field_comp.getFFTWPlanId()]);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+      fftw_execute(this->forward_plans[nodal_field.getFFTWPlanId(d)]);
+    }
   }
 }
   
 /* -------------------------------------------------------------------------- */
-void FFTableMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void FFTableMesh::backwardFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   if (prank == this->root) {
-    fftw_execute(this->backward_plans[nodal_field_comp.getFFTWPlanId()]);
+    // loop over all components of the nodal field
+    for (const auto& d : nodal_field.getComponents()) {
+
+      fftw_execute(this->backward_plans[nodal_field.getFFTWPlanId(d)]);
     
-    double nb_nodes_global = this->getNbGlobalNodes();
-    double * p_field = nodal_field_comp.storage();
-    for (int i=0; i<this->nb_nodes_local_alloc; ++i) { // for fftw_mpi it includes padding
-      p_field[i] /= nb_nodes_global;
+      double nb_nodes_global = this->getNbGlobalNodes();
+      double * p_field = nodal_field.data(d);
+      for (int i=0; i<this->getNbLocalNodesAlloc(); ++i) { // for fftw_mpi it includes padding
+	p_field[i] /= nb_nodes_global;
+      }
     }
   }
 }
@@ -206,35 +180,35 @@ void FFTableMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
  * computeStressFourierCoeff()
  *
  */
-void FFTableMesh::initWaveNumbersGlobal(double ** wave_numbers) {
+void FFTableMesh::initWaveNumbersGlobal(TwoDVector & wave_numbers) {
 
   // fundamental mode
-  double k1 = 2*M_PI / this->length_x;
+  double k1 = 2*M_PI / this->lengths[0];
   double m1 = 0.0;
   if (this->dim == 3)
-    m1 = 2*M_PI / this->length_z;
+    m1 = 2*M_PI / this->lengths[2];
 
   // compute nyquest frequency
-  int f_ny_x = this->nb_fft_x_global; // 2D
+  int f_ny_x = this->nb_fft_global[0]; // 2D
   if (this->dim == 3)
-    f_ny_x = this->nb_fft_x_global/2+1;
+    f_ny_x = this->nb_fft_global[0]/2+1;
 
   // init wave numbers global
-  for (int i=0; i<this->nb_fft_x_global; ++i) {
-    for (int j=0; j<this->nb_fft_z_global; ++j) {
-      int ij =  i*this->nb_fft_z_global + j;
+  for (int i=0; i<this->nb_fft_global[0]; ++i) {
+    for (int j=0; j<this->nb_fft_global[2]; ++j) {
+      int ij =  i*this->nb_fft_global[2] + j;
       
       if (this-> dim == 2) {
-	wave_numbers[0][ij] = k1 * i;
+	wave_numbers(ij,0) = k1 * i;
       }
       else {
 	// after nyquest frequncy modes are negative
 	// e.g. 0, 1, 2, ... ny, -ny, -ny+1, ... -2, -1
-	wave_numbers[0][ij] = k1 * (i - (i/f_ny_x)*this->nb_fft_x_global);
-	wave_numbers[2][ij] = m1 * j;
+	wave_numbers(ij,0) = k1 * (i - (i/f_ny_x)*this->nb_fft_global[0]);
+	wave_numbers(ij,2) = m1 * j;
       }
 
-      wave_numbers[1][ij] = 0.0; // we re on the xz plane
+      wave_numbers(ij,1) = 0.0; // we re on the xz plane
     }
   }
 }

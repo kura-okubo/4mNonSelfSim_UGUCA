@@ -51,20 +51,13 @@ public:
 	     std::vector<double> & x_coords,
 	     std::vector<double> & z_coords);
 
-protected:
-  // protected constructor for inheritated construction without init
-  CustomMesh(double Lx, int Nx);
-  CustomMesh(double Lx, int Nx,
-	     double Lz, int Nz);
-  
-public:
-  virtual ~CustomMesh();
+  virtual ~CustomMesh() {};
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void forwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
-  virtual void backwardFFT(FFTableNodalFieldComponent & nodal_field_comp);
+  virtual void forwardFFT(FFTableNodalField & nodal_field);
+  virtual void backwardFFT(FFTableNodalField & nodal_field);
 
 protected:
   virtual void init(std::vector<double> & x_coords,
@@ -74,7 +67,7 @@ protected:
 				std::vector<double> & z_coords);
 
   virtual void initSortCustomNodesMap();
-  virtual void checkCustomCoords(double ** coords_global);
+  virtual void checkCustomCoords(TwoDVector & coords_global);
 
   // comm for parallel
   template <typename T> void sortCustomNodes  (T * un_sorted, T * sorted,
@@ -114,13 +107,13 @@ public:
 protected:
 
   // for sorting nodes to processes
-  int * sort_custom_nodes_map;
+  std::vector<int> sort_custom_nodes_map;
 
   // maximum of local nodes per proc
   int max_nodes_pp;
   
   // for sorting nodes
-  double * double_buffer;
+  std::vector<double> double_buffer;
 };
 
 __END_UGUCA__

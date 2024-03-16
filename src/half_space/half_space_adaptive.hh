@@ -1,12 +1,14 @@
 /**
- * @file   limited_history.hh
+ * @file   half_space_adaptive.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
+ * @author Gabriele Albertini <ga288@cornell.edu>
+ * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Sun Jul 10 2022
- * @date last modification: Sun Jul 10 2022
+ * @date creation: Fri Feb 5 2021
+ * @date last modification: Fri Feb 5 2021
  *
- * @brief  Limited history for all dimensions and modes
+ * @brief  TODO
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -26,75 +28,65 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifndef __HALF_SPACE_ADAPTIVE_H__
+#define __HALF_SPACE_ADAPTIVE_H__
 /* -------------------------------------------------------------------------- */
-#ifndef __LIMITED_HISTORY_H__
-#define __LIMITED_HISTORY_H__
-/* -------------------------------------------------------------------------- */
-#include "uca_common.hh"
-#include "uca_fftable_mesh.hh"
-#include "modal_limited_history.hh"
-#include "convolutions.hh"
-
-#include <memory>
+#include "half_space_quasi_dynamic.hh"
 
 __BEGIN_UGUCA__
 
-class LimitedHistory {
-  
-  friend class BaseIO;
-  
-  /* ------------------------------------------------------------------------ */
-  /* Typedefs                                                                 */
-  /* ------------------------------------------------------------------------ */
-protected:
-  typedef std::vector<std::shared_ptr<ModalLimitedHistory>> LHVector;
-  
+/* -------------------------------------------------------------------------- */
+class HalfSpaceAdaptive : public HalfSpaceQuasiDynamic {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  LimitedHistory(FFTableMesh & mesh);
-  virtual ~LimitedHistory() {};
+  HalfSpaceAdaptive(Material & material, FFTableMesh & mesh, int side_factor,
+			SpatialDirectionSet components,
+			const std::string & name = "half_space");
+
+  virtual ~HalfSpaceAdaptive();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
+  // init convolutions
+  virtual void initConvolutions();
 
-  // registers Kernel to all modes of a history
-  void registerKernel(Convolutions::PIKernelVector & pi_kernels,
-		      unsigned int dim);
+  // restart
+  virtual void registerToRestart(Restart & restart);
   
+  // set to steady state
+  virtual void setSteadyState(bool predicting = false);
+
+protected:
+  virtual void computeStressFourierCoeff(bool predicting = false,
+					 bool correcting = false,
+					 bool dynamic = false);
+
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  std::shared_ptr<ModalLimitedHistory> get(unsigned int dim,
-					   unsigned int wave_number) {
-    return this->history[dim*this->nbfft+wave_number];
-  }
-  
+  // set time step
+  virtual void setTimeStep(double time_step);
+
+  // get stable time step
+  virtual double getStableTimeStep();
+
+
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // copy of spatial dimension for fast use in get accessor
-  unsigned int dimension;
 
-  // copy of nbfft for fast useful
-  unsigned int nbfft;
-  
-  // past values of field in frequency domain
-  // each LimitedHistory is for a given dimension d and wave number q
-  LHVector history;
+  // keeps information if previous step was dynamic
+  bool previously_dynamic;
 };
-
-
-/* -------------------------------------------------------------------------- */
-/* inline functions                                                           */
-/* -------------------------------------------------------------------------- */
-
 
 __END_UGUCA__
 
-#endif /* __LIMITED_HISTORY_H__ */
+//#include "half_space_adaptive_impl.cc"
+
+#endif /* __HALF_SPACE_ADAPTIVE_H__ */

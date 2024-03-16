@@ -74,15 +74,15 @@ public:
  /* Accessors                                                                */
  /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent & getGc()     { return this->G_c;   }
-  NodalFieldComponent & getSigmac() { return this->sigma_c; }
+  NodalField & getGc()     { return this->G_c;   }
+  NodalField & getSigmac() { return this->sigma_c; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
-  NodalFieldComponent G_c;
-  NodalFieldComponent sigma_c;
+  NodalField G_c;
+  NodalField sigma_c;
 };
 
 __END_UGUCA__
