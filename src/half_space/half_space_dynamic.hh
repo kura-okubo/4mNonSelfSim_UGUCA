@@ -70,7 +70,7 @@ protected:
   /// compute the stress fourier coefficients (fails if not dynamic)
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
-					 bool dynamic = true);
+					 SolverMethod sm = _dynamic);
 
   /// compute the stress fourier coefficients for dynamic case
   void computeStressFourierCoeffDynamic(bool predicting,

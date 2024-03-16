@@ -71,7 +71,7 @@ public:
 				   unsigned int ts_factor = 1.);
   virtual void computeInternal(bool predicting = false,
 			       bool correcting = false,
-			       bool dynamic = true);
+			       SolverMethod solver_method = _dynamic);
   virtual void computeResidual(NodalField & external);
   virtual void computeVelocity(bool predicting = false);
 
@@ -103,7 +103,7 @@ protected:
 
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
-					 bool dynamic = true) = 0;
+					 SolverMethod sm = _dynamic) = 0;
 
 private:
   void computeDisplacement(NodalField & disp,

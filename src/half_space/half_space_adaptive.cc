@@ -57,8 +57,8 @@ void HalfSpaceAdaptive::setTimeStep(double time_step) {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceAdaptive::computeStressFourierCoeff(bool predicting,
 						  bool correcting,
-						  bool dynamic) {
-  if (!dynamic) {
+						  SolverMethod sm) {
+  if (sm == _quasi_dynamic) {
     this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
     this->previously_dynamic = false;
   }

@@ -85,7 +85,7 @@ int main(){
       std::cout << "check computeStressFourierCoeff 2D (prank>0)" << std::endl;
     }
 
-    hs2.computeInternal(false,false,false); // predicting, correcting, dynamic
+    hs2.computeInternal(false,false,_quasi_dynamic); // predicting, correcting, dynamic
 
     FFTableNodalField & inter = hs2.getInternal();
 
@@ -157,7 +157,7 @@ int main(){
     }
 
     // destroys the fourier space
-    hs3.computeInternal(false,false,false); // predicting, correcting, dynamic
+    hs3.computeInternal(false,false,_quasi_dynamic); // predicting, correcting, dynamic
 
     if (prank==0) // complete data is gathered to process 0
     {

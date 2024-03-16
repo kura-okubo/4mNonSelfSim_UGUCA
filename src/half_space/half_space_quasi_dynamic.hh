@@ -63,7 +63,7 @@ public:
 protected:
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
-					 bool dynamic = false);
+					 SolverMethod sm = _quasi_dynamic);
 
   void computeStressFourierCoeffQuasiDynamic(bool predicting,
 					     bool correcting);
