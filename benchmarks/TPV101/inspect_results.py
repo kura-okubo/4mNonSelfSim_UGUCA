@@ -46,9 +46,7 @@ def compare_cplot(full_path, bname):
   nt = len(t)
   xx, zz = np.meshgrid(x, z, indexing='ij')
 
-  delta_dot = read_data_cplot('%s-DataFiles/top_velo.out' %
-                         full_path, nb_nodes_x, nb_nodes_z, nt, 3) * 2
-  
+  delta_dot = read_data_cplot('%s-DataFiles/top_velo.out' % full_path, nb_nodes_x, nb_nodes_z, nt, 3) * 2
   delta_dot = delta_dot[:, 0, :, :]
 
   rpt_arrival = np.zeros(xx.shape)
@@ -114,17 +112,13 @@ def compare_station(full_path, bname, x_interest, z_interest):
   t = np.fromfile('%s.time' % full_path, sep=' ')
   t = t[1::2]
   nt = len(t)
-  delta = read_data('%s-DataFiles/top_disp.out' %
-                    full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3) * 2
+  delta = read_data('%s-DataFiles/top_disp.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3) * 2
   delta = delta[:, 0]
-  delta_dot = read_data('%s-DataFiles/top_velo.out' %
-                        full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3) * 2
+  delta_dot = read_data('%s-DataFiles/top_velo.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3) * 2
   delta_dot = delta_dot[:, 0]
-  cohesion = read_data('%s-DataFiles/cohesion.out' %
-                       full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3)
+  cohesion = read_data('%s-DataFiles/cohesion.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3)
   cohesion = cohesion[:, 0]
-  theta = read_data('%s-DataFiles/theta.out' % full_path,
-                    nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)
+  theta = read_data('%s-DataFiles/theta.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)
 
   params = {
       'text.latex.preamble': r'''\usepackage{siunitx}',

@@ -48,10 +48,13 @@ def compare_station(full_path, bname, x_interest, y_interest):
   t = np.fromfile('%s.time' % full_path, sep=' ')
   t = t[1:-1:2]
   nt = len(t)
-  delta     = read_data('%s-DataFiles/top_disp_0.out' % full_path, nb_nodes_x, nb_nodes_y, nt, idx_x,idx_y) * 2
-  delta_dot = read_data('%s-DataFiles/top_velo_0.out' % full_path, nb_nodes_x, nb_nodes_y, nt, idx_x,idx_y) * 2
-  cohesion  = read_data('%s-DataFiles/cohesion_0.out' % full_path, nb_nodes_x, nb_nodes_y, nt, idx_x,idx_y)
-
+  delta     = read_data('%s-DataFiles/top_disp.out' % full_path, nb_nodes_x, nb_nodes_y, nt, idx_x,idx_y, 3) * 2
+  delta = delta[:, 0]
+  delta_dot = read_data('%s-DataFiles/top_velo.out' % full_path, nb_nodes_x, nb_nodes_y, nt, idx_x,idx_y, 3) * 2
+  delta_dot = delta_dot[:, 0]
+  cohesion  = read_data('%s-DataFiles/cohesion.out' % full_path, nb_nodes_x, nb_nodes_y, nt, idx_x,idx_y, 3)
+  cohesion = cohesion[:, 0]
+  
   params = {
     'text.latex.preamble': [
         r'\usepackage{siunitx}',
@@ -134,7 +137,9 @@ def compare_cplot(full_path,bname):
   nt = len(t)
   xx,yy = np.meshgrid(x,y)
 
-  tau0 = read_data_cplot('%s-DataFiles/cohesion_0.out' % full_path,nb_nodes_x,nb_nodes_y,nt)
+  tau0 = read_data_cplot('%s-DataFiles/cohesion.out' % full_path, nb_nodes_x, nb_nodes_y, nt, 3)
+  tau0 = tau0[:, 0, :, :]
+
 
   rpt_arrival=np.zeros(xx.shape)
   for j in range(nb_nodes_x):
