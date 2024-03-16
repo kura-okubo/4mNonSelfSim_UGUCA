@@ -117,7 +117,10 @@ void BimatInterface::maintainShearGapForce(NodalField & maintain_force) {
   fact_t/=fact_mf;
   fact_b/=fact_mf;
 
-  for (const auto& d : maintain_force.getComponents()) {
+  // only in the shear and anti-shear direction
+  SpatialDirectionSet comps = maintain_force.getComponents();
+  comps.erase(_y);
+  for (const auto& d : comps) {
     // accessors
     double * f_t = this->top->getInternal().data(d);
     double * f_b = this->bot->getInternal().data(d);
