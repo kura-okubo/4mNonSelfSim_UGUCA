@@ -43,7 +43,7 @@ def dump_cplot(full_path, bname):
   t = t[1:-1:2]
   nt = len(t)
 
-  delta_dot = read_data_cplot('%s-DataFiles/top_velo_0.out' % full_path, nb_nodes_x, nb_nodes_z, nt) * 2
+  delta_dot = read_data_cplot('%s-DataFiles/top_velo.out' % full_path, nb_nodes_x, nb_nodes_z, nt) * 2
 
   C = np.zeros((nb_nodes_x * nb_nodes_z, 3))
   for j in range(nb_nodes_x):
@@ -106,11 +106,11 @@ def dump_station(full_path, bname, station):
   t = np.fromfile('%s.time' % full_path, sep=' ')
   t = t[1:-1:2]
   nt = len(t)
-  delta = read_data('%s-DataFiles/top_disp_0.out' %
+  delta = read_data('%s-DataFiles/top_disp.out' %
                     full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z) * 2
-  delta_dot = read_data('%s-DataFiles/top_velo_0.out' %
+  delta_dot = read_data('%s-DataFiles/top_velo.out' %
                         full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z) * 2
-  cohesion = read_data('%s-DataFiles/cohesion_0.out' %
+  cohesion = read_data('%s-DataFiles/cohesion.out' %
                        full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)
   theta = read_data('%s-DataFiles/theta.out' % full_path,
                     nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)

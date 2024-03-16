@@ -145,7 +145,8 @@ def compare_cplot(full_path, bname, ax, fig):
   t = t[1:-1:2]
   nt = len(t)
   xx, zz = np.meshgrid(x, z, indexing='ij')
-  tau0 = read_data_cplot('%s-DataFiles/cohesion_0.out' % full_path, nb_nodes_x, nb_nodes_z, nt)
+  tau0 = read_data_cplot('%s-DataFiles/cohesion.out' % full_path, nb_nodes_x, nb_nodes_z, nt, 3)
+  tau0 = tau0[:, 0, :, :]
   rpt_arrival = np.zeros(xx.shape)
   for j in range(nb_nodes_x):
     for k in range(nb_nodes_z):
@@ -202,9 +203,12 @@ def compare_station(full_path, bname, x_interest, z_interest, ax1, ax2, legend_o
   t = np.fromfile('%s.time' % full_path, sep=' ')
   t = t[1:-1:2]
   nt = len(t)
-  delta = read_data('%s-DataFiles/top_disp_0.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z) * 2
-  delta_dot = read_data('%s-DataFiles/top_velo_0.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z) * 2
-  cohesion = read_data('%s-DataFiles/cohesion_0.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)
+  delta = read_data('%s-DataFiles/top_disp.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3) * 2
+  delta = delta[:, 0]
+  delta_dot = read_data('%s-DataFiles/top_velo.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3) * 2
+  delta_dot = delta_dot[:, 0]
+  cohesion = read_data('%s-DataFiles/cohesion.out' % full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z, 3)
+  cohesion = cohesion[:, 0]
 
   ax1.plot(t, cohesion * 1e-6, '-k', label='uguca', linewidth=1, zorder=10)
   ax1.set_ylabel(r'$\tau$ (MPa)')
