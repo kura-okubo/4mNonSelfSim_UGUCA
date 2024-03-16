@@ -74,15 +74,17 @@ public:
   virtual void initPredictorCorrector(int iterations = 1);
 
   // iteration of advancing one time step
-  virtual void advanceTimeStep(bool dynamic=true,
-			       unsigned int ts_factor=1);
+  virtual void advanceTimeStep(SolverMethod solver_method = _dynamic,
+			       unsigned int ts_factor = 1);
   
   // functions used during time stepping for each half-space
-  virtual void computeDisplacement(bool predicting = false);
+  virtual void computeDisplacement(bool predicting = false,
+				   unsigned int ts_factor = 1.);
   virtual void computeInternal(bool predicting = false,
 			       bool correcting = false,
-			       bool dynamic = true);
-  virtual void computeCohesion(bool predicting = false);
+			       SolverMethod solver_method = _dynamic);
+  virtual void computeCohesion(bool predicting = false,
+			       unsigned int ts_factor = 1.);
   virtual void computeResidual();
   virtual void computeVelocity(bool predicting = false);
 
@@ -95,7 +97,8 @@ public:
 
   // compute force needed to close normal gap
   virtual void closingNormalGapForce(NodalField & close_force,
-                                     bool predicting = false) = 0;
+                                     bool predicting = false,
+				     unsigned int ts_factor = 1.) = 0;
 
   // compute force needed to maintain current shear gap
   virtual void maintainShearGapForce(NodalField & maintain_force) = 0;

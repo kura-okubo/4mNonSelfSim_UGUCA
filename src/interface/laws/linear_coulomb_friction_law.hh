@@ -70,7 +70,8 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   void computeCohesiveForces(NodalField & cohesion,
-			     bool predicting = false);
+			     bool predicting = false,
+			     unsigned int ts_factor = 1.);
 
   void computeRegContactPressure(NodalField & cohesion,
 				 NodalField & reg_cont_pres);

@@ -58,7 +58,8 @@ BarrasLaw::BarrasLaw(BaseMesh & mesh,
 
 /* -------------------------------------------------------------------------- */
 void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
-                                      bool predicting) {
+                                      bool predicting,
+				      unsigned int ts_factor) {
 
   // find current gap
   NodalField gap(this->mesh, cohesion.getComponents());
@@ -66,7 +67,7 @@ void BarrasLaw::computeCohesiveForces(NodalField & cohesion,
   gap.computeNorm(this->gap_norm);
 
   // find forces needed to close normal gap
-  this->interface->closingNormalGapForce(cohesion, predicting);
+  this->interface->closingNormalGapForce(cohesion, predicting, ts_factor);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);

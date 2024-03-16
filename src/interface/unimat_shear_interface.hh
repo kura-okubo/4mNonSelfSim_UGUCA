@@ -79,7 +79,8 @@ public:
 
   // compute force needed to close normal gap
   virtual void closingNormalGapForce(NodalField & close_force,
-				     bool predicting = false);
+				     bool predicting = false,
+				     unsigned int ts_factor = 1.);
 
   // compute force needed to maintain current shear gap
   virtual void maintainShearGapForce(NodalField & maintain_force);

@@ -117,15 +117,18 @@ double Interface::getStableTimeStep() {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::computeDisplacement(bool predicting) {
+void Interface::computeDisplacement(bool predicting,
+				    unsigned int ts_factor) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->computeDisplacement(predicting);
+    this->half_spaces[i]->computeDisplacement(predicting, ts_factor);
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::computeInternal(bool predicting, bool correcting, bool dynamic) {
+void Interface::computeInternal(bool predicting, bool correcting,
+				SolverMethod solver_method) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
-    this->half_spaces[i]->computeInternal(predicting, correcting, dynamic);
+    this->half_spaces[i]->computeInternal(predicting, correcting,
+					  solver_method);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -153,7 +156,8 @@ void Interface::correctVelocity(bool last_step) {
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::advanceTimeStep(bool dynamic) {
+void Interface::advanceTimeStep(SolverMethod solver_method,
+				unsigned int ts_factor) {
 
   // predictor-corrector
   for (int i = 0; i < this->nb_pc; ++i) {
@@ -163,10 +167,10 @@ void Interface::advanceTimeStep(bool dynamic) {
     }
     // Predict
     // u* = u + v * dt
-    this->computeDisplacement(true);
+    this->computeDisplacement(true, ts_factor);
     
     // f* -> compute cohesion -> tau_coh*
-    this->computeCohesion(true);
+    this->computeCohesion(true, ts_factor);
     // tau_coh* -> compute residual -> tau_res*
     this->computeResidual();
     // tau_res* -> compute velocity -> v*
@@ -178,16 +182,16 @@ void Interface::advanceTimeStep(bool dynamic) {
   }
 
   // compute displacement
-  this->computeDisplacement();
-  this->computeInternal(false,false,dynamic);
-  this->computeCohesion();
+  this->computeDisplacement(false, ts_factor);
+  this->computeInternal(false,false,solver_method);
+  this->computeCohesion(false, ts_factor);
   this->computeResidual();
   this->computeVelocity();
 }
 
 /* -------------------------------------------------------------------------- */
-void Interface::computeCohesion(bool predicting) {
-  this->law->computeCohesiveForces(this->cohesion, predicting);
+void Interface::computeCohesion(bool predicting, unsigned int ts_factor) {
+  this->law->computeCohesiveForces(this->cohesion, predicting, ts_factor);
 }
 
 /* -------------------------------------------------------------------------- */

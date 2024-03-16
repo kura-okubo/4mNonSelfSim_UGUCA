@@ -144,15 +144,14 @@ int main(int argc, char *argv[]) {
       if (!dynamic_step)
 	std::cout << "quasi-dynamic -> dynamic (s=" << s << ")" << std::endl;
       dynamic_step = true;
+      interface.advanceTimeStep(_dynamic);     
     }
     else {
       if (dynamic_step)
 	std::cout << "dynamic -> quasi-dynamic (s=" << s << ")" << std::endl;
       dynamic_step = false;
+      interface.advanceTimeStep(_quasi_dynamic);
     }
-    
-    // time integration
-    interface.advanceTimeStep(dynamic_step);
 
     // dump
     if (s % dump_int == 0)

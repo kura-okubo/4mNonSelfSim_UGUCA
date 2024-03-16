@@ -67,7 +67,8 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeDisplacement(bool predicting = false);
+  virtual void computeDisplacement(bool predicting = false,
+				   unsigned int ts_factor = 1.);
   virtual void computeInternal(bool predicting = false,
 			       bool correcting = false,
 			       bool dynamic = true);
@@ -107,7 +108,8 @@ protected:
 private:
   void computeDisplacement(NodalField & disp,
 			   NodalField & velo,
-			   NodalField & target);
+			   NodalField & target,
+			   unsigned int ts_factor = 1.);
   void computeVelocity(NodalField & _velo);
   void correctVelocity(NodalField & velo_n,
 		       NodalField & velo_pc,

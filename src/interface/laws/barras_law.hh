@@ -60,7 +60,8 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   void computeCohesiveForces(NodalField & cohesion,
-			     bool predicting = false);
+			     bool predicting = false,
+			     unsigned int ts_factor = 1.);
   
   virtual void registerDumpField(const std::string & field_name);
   

@@ -59,14 +59,15 @@ BimatInterface::~BimatInterface() {
 
 /* -------------------------------------------------------------------------- */
 void BimatInterface::closingNormalGapForce(NodalField & close_force,
-                                           bool predicting) {
+                                           bool predicting,
+					   unsigned int ts_factor) {
   // top material information
   const Material & mat_t = this->top->getMaterial();
   double cp_t = mat_t.getCp();
   double cs_t = mat_t.getCs();
   double mu_t = mat_t.getShearModulus();
   double eta_t = cp_t / cs_t;
-  double fact_t = this->time_step * cs_t / mu_t / eta_t;
+  double fact_t = ts_factor * this->time_step * cs_t / mu_t / eta_t;
 
   // bot material information
   const Material & mat_b = this->bot->getMaterial();
@@ -74,7 +75,7 @@ void BimatInterface::closingNormalGapForce(NodalField & close_force,
   double cs_b = mat_b.getCs();
   double mu_b = mat_b.getShearModulus();
   double eta_b = cp_b / cs_b;
-  double fact_b = this->time_step * cs_b / mu_b / eta_b;
+  double fact_b = ts_factor * this->time_step * cs_b / mu_b / eta_b;
 
   // accessors
   double * u_1_t = this->top->getDisp(predicting).data(1);
