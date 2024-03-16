@@ -85,7 +85,10 @@ void UnimatShearInterface::closingNormalGapForce(NodalField & close_force,
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::maintainShearGapForce(NodalField & maintain_force) {
 
-  for (const auto& d : maintain_force.getComponents()) {
+  // only in the shear and anti-shear direction
+  SpatialDirectionSet comps = maintain_force.getComponents();
+  comps.erase(_y);
+  for (const auto& d : comps) {
 
     // accessors
     double *f_t = this->top->getInternal().data(d);
