@@ -68,7 +68,7 @@ void Convolutions::preintegrate(Material & material,
     pik_vector[j] = std::make_shared<PreintKernel>(material.getKernel(kernel));
 
     double qq = 0.0;
-    for (const auto& d : this->field.getComponents())
+    for (int d=0; d<this->field.getMesh().getDim(); ++d)
       qq += wave_numbers(j,d)*wave_numbers(j,d);
 
     double qj_cs = std::sqrt(qq) * scale_factor;

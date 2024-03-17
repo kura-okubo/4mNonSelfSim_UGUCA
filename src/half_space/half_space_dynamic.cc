@@ -204,7 +204,7 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
   for (int j=0; j<F.getNbFFT(); ++j) { 
 
     // get wave numbers
-    for (const auto& d : F.getComponents())
+    for (int d=0; d<this->mesh.getDim(); ++d)
        wn[d] = wave_numbers(j,d);
     double k = wn[0]; double m = wn[2]; // for readibility below
     double q = std::sqrt(k * k + m * m);
