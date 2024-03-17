@@ -6,19 +6,20 @@
 
 #include <pybind11/pybind11.h>
 
-namespace uguca {
+namespace uguca
+{
 
-namespace wrap {
+  namespace wrap
+  {
 
-  namespace py = pybind11;
+    namespace py = pybind11;
 
-  void wrapMesh(py::module& mod);
-  void wrapHalfSpace(py::module& mod);
-  void wrapInterface(py::module& mod);
-  void wrapIo(py::module& mod);
+    void wrapMesh(py::module &mod);
+    void wrapHalfSpace(py::module &mod);
+    void wrapInterface(py::module &mod);
+    void wrapIo(py::module &mod);
+  }
+
 }
-  
-}
-
 
 #endif

@@ -7,27 +7,26 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
-namespace uguca {
+namespace uguca
+{
 
-namespace wrap {
-namespace py = pybind11;
+  namespace wrap
+  {
+    namespace py = pybind11;
 
-  
-using numpy = py::array_t<double, py::array::c_style | py::array::forecast>;
+    using numpy = py::array_t<double, py::array::c_style | py::array::forecast>;
 
-  
-class NodalFieldComponentNumpy : public NodalFieldComponent {
-public:
-  NodalFieldComponentNumpy(numpy & buffer) : NodalFieldComponent {
-    this->direction = 0;
-    this->field = buffer.ptr();
-  }
-};
+    class NodalFieldBaseNumpy : public NodalField
+    {
+    public:
+      NodalFieldBaseNumpy(numpy &buffer) : NodalField
+      {
+        this->data.wrap(buffer.mutable_data(), buffer.size());
 
+      }
+    };
 
-  
-}// namespace wrap
-
+  } // namespace wrap
 
 }
 
