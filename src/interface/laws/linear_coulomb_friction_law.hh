@@ -69,7 +69,8 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(bool predicting = false);
+  void computeCohesiveForces(NodalField & cohesion,
+			     bool predicting = false);
 
   void computeRegContactPressure(NodalField & cohesion,
 				 NodalField & reg_cont_pres);

@@ -135,9 +135,8 @@ void RateAndStateLaw::init() {
 }
 
 /* -------------------------------------------------------------------------- */
-void RateAndStateLaw::computeCohesiveForces(bool predicting) {
-  
-  NodalField & cohesion = this->interface->getCohesion();
+void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
+					    bool predicting) {
 
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);

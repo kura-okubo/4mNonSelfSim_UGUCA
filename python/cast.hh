@@ -72,7 +72,7 @@ namespace pybind11
           shape[i] = buf.shape()[i];
         }
 
-        value = type(shape[0], buf.mutable_data());
+        value = type(shape[0], buf.data());
 
         // if (dims != 1)
         //   return false;
@@ -86,8 +86,8 @@ namespace pybind11
                              py::return_value_policy policy, py::handle parent)
       {
         parent = policy_switch(policy, parent);
-          
-        py::array a(std::move(field.getDataSizes()),
+
+        py::array a(std::move(field.getDataSize()),
                     field.getInternalData(),
                     parent);
 
