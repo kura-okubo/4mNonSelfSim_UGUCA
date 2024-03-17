@@ -196,7 +196,7 @@ void CustomMesh::initSortCustomNodesMap() {
   this->sort_custom_nodes_map.resize(this->getNbGlobalNodes());
   std::fill(this->sort_custom_nodes_map.begin(), this->sort_custom_nodes_map.end(), 0);
 
-  TwoDVector coords_global_tmp(3,this->getNbLocalNodesAlloc());
+  TwoDVector coords_global_tmp(this->dim,this->getNbLocalNodesAlloc());
   
   // gather all local mesh to root
   for (int d=0; d<this->dim; ++d) {
@@ -240,11 +240,11 @@ void CustomMesh::checkCustomCoords(TwoDVector & coords_global) {
   double dx = this->getDelta(0);
   double tolerance = dx*1e-6;
 
-  TwoDVector coords_global_ref(3, this->getNbGlobalNodes());
+  TwoDVector coords_global_ref(this->dim, this->getNbGlobalNodes());
   this->initSimpleCoords(coords_global_ref);
   
   // declare arrays and alloc memory
-  TwoDVector coords_global_sorted(3, this->getNbGlobalNodes());;
+  TwoDVector coords_global_sorted(this->dim, this->getNbGlobalNodes());;
   
   //----------------------------------------------------
   // sort coords using sorting map

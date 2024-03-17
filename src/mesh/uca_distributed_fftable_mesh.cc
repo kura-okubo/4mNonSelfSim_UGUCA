@@ -72,7 +72,7 @@ void DistributedFFTableMesh::init() {
       throw std::runtime_error("ERROR: number of mpi process needs to be even\n");
     
     // global wave numbers
-    TwoDVector wave_numbers_global(3,this->getNbGlobalFFT());  // local {k,-,m}
+    TwoDVector wave_numbers_global(this->dim,this->getNbGlobalFFT());  // local {k,-,m}
     this->initWaveNumbersGlobal(wave_numbers_global);
 
     // assign the modes to procs

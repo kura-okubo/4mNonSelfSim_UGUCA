@@ -99,8 +99,8 @@ void SimpleMesh::initSimpleCoords(TwoDVector & coords) {
   
   // fill coords for this mesh
   for (int i=0; i<this->nb_nodes_global[0]; ++i) {
-    for (int j=0; j<this->nb_nodes_global[2]; ++j) {
-      int ij = i*this->nb_nodes_global[2] +j;
+    for (int j=0; j< this->nb_nodes_global[2]; ++j) {
+      int ij = i*this->nb_nodes_global[2] + j;
 
       coords(ij,0) = i*dx;
       coords(ij,1) = 0.0; // we are on the xz plane

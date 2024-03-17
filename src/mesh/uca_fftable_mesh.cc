@@ -42,11 +42,11 @@ FFTableMesh::FFTableMesh(double Lx, int Nx) :
   BaseMesh(2, Nx),
   lengths({Lx,0,0}),
   nb_nodes_global({Nx,1,1}),
-  wave_numbers_local(3,0),
+  wave_numbers_local(2,0),
   mode_zero_rank(0),
   mode_zero_index(0) {
 
-  this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1,1,1};
+  this->nb_fft_global = {this->nb_nodes_global[0] / 2 + 1, 1, 1};
 
   this->resize(this->getNbGlobalFFT());
   this->initWaveNumbersGlobal(this->wave_numbers_local);
