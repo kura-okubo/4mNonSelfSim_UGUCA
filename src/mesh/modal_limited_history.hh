@@ -41,8 +41,6 @@
 
 __BEGIN_UGUCA__
 
-//class PreintKernel;
-
 class ModalLimitedHistory {
 
   friend class BaseIO;
@@ -58,12 +56,14 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // at the current value of the history
+  // at the current value of the history (add_count many times)
   inline void addCurrentValue(fftw_complex value);
-
+  inline void addCurrentValue(fftw_complex value, unsigned int add_count);
+  
   // change the current value in the history
   inline void changeCurrentValue(fftw_complex value);
-
+  inline void changeValueAtIndex(fftw_complex value, unsigned int index);
+  
   // fill entire History up to full length with this value
   inline void fillHistory(fftw_complex value);
 
@@ -111,9 +111,6 @@ protected:
   // values (keep in separate vectors for BLAS in preint_kernel convolution)
   std::vector<double> values_real;
   std::vector<double> values_imag;
-
-  // preintegrated kernels that use this limited history
-  //std::vector<std::shared_ptr<PreintKernel>> pi_kernels;
 };
 
 
@@ -140,13 +137,28 @@ inline void ModalLimitedHistory::addCurrentValue(fftw_complex value) {
 }
 
 /* -------------------------------------------------------------------------- */
-inline void ModalLimitedHistory::changeCurrentValue(fftw_complex value) {
-  // no history is kept
-  if (this->getSize() == 0)
-    return;
+inline void ModalLimitedHistory::addCurrentValue(fftw_complex value,
+						 unsigned int add_count) {
+  for (unsigned int _ = 0; _ < add_count; ++_)
+    this->addCurrentValue(value);
+}
 
-  this->values_real[this->index_now] = value[0];
-  this->values_imag[this->index_now] = value[1];
+/* -------------------------------------------------------------------------- */
+inline void ModalLimitedHistory::changeCurrentValue(fftw_complex value) {
+  this->changeValueAtIndex(value, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+inline void ModalLimitedHistory::changeValueAtIndex(fftw_complex value,
+						    unsigned int index) {
+  if (index >= this->getSize()) {
+    std::cerr << "try to change history value beyond existence" << std::endl;
+    throw index;
+  }
+
+  unsigned int i = (this->index_now + index) % this->values_real.size();
+  this->values_real[i] = value[0];
+  this->values_imag[i] = value[1];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -158,7 +170,7 @@ inline void ModalLimitedHistory::fillHistory(fftw_complex value) {
 
 /* -------------------------------------------------------------------------- */
 inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
-  if (index >= this->values_real.size()) {
+  if (index >= this->getSize()) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
   }

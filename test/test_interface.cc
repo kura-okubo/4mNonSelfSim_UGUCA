@@ -67,7 +67,8 @@ public:
   }
   void computeStressFourierCoeff(bool = false,
 				 bool = false,
-				 SolverMethod = _dynamic) {
+				 SolverMethod = _dynamic,
+				 unsigned int = 1) {
     computeStressFourierCoeffCalled = true;
   }
   void computeResidual(NodalField &) {

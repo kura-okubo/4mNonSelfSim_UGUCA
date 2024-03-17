@@ -149,26 +149,28 @@ void HalfSpaceDynamic::initConvolutions() {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 						 bool correcting,
-						 SolverMethod solver_method) {
+						 SolverMethod solver_method,
+						 unsigned int ts_factor) {
   if (solver_method == _dynamic)
-    this->computeStressFourierCoeffDynamic(predicting, correcting);
+    this->computeStressFourierCoeffDynamic(predicting, correcting, ts_factor);
   else
     throw std::runtime_error("HalfSpaceDynamic cannot compute stress for quasi dynamic problem!");
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
-							bool correcting) {
+							bool correcting,
+							unsigned int ts_factor) {
 
   // update history
   if (predicting) {
-    this->disp.addCurrentValueToHistory(this->disp_pc);
+    this->disp.addCurrentValueToHistory(this->disp_pc, ts_factor);
   }
   else {
-    this->disp.addCurrentValueToHistory();
+    this->disp.addCurrentValueToHistory(ts_factor);
   }
   if (correcting) {
-    this->disp.changeCurrentValueOfHistory();
+    this->disp.changeCurrentValueOfHistory(ts_factor);
   }
   
   // compute convolutions

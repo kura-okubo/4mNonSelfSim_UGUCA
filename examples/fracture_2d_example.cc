@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
   // time step
   double duration = data.get<double>("duration");
   double time_step = data.get<double>("tsf") * interface.getStableTimeStep();
-  int nb_time_steps = duration/time_step;
+  int nb_time_steps = duration/time_step / data.getOrUse<int>("step_advances",1);
   interface.setTimeStep(time_step);
 
   // initialization
@@ -142,11 +142,11 @@ int main(int argc, char *argv[]) {
     }
 
     // time integration
-    interface.advanceTimeStep();
+    interface.advanceTimeStep(_quasi_dynamic, data.getOrUse<int>("step_advances",1));
 
     // dump
     if (s % dump_int == 0)
-      interface.dump(s,s*time_step);
+      interface.dump(s,s*time_step*data.getOrUse<int>("step_advances",1));
 
     // dump restart
     if (s % restart_int == 0)

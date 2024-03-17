@@ -1,0 +1,46 @@
+# simulation name
+sim_name = fracture_2d_example
+
+# geometry and discretization
+length = 1.
+nb_elements = 1024
+
+# external loading
+shear_load = 2e6
+normal_load = 1e6
+
+# top material properties
+material top [
+  E = 7e9
+  nu = 0.33
+  rho = 2000
+]
+
+# bot material properties
+material bot [
+  E = 5e9
+  nu = 0.25
+  rho = 1200
+]
+
+# interface properties
+interface cohesion [
+  tauc = 3.5e6
+  dc = 2e-5
+]
+
+# nucleation
+a0 = 0.05
+
+# duration and time stepping
+duration = 2.6e-4
+tsf = 0.1           # time step factor
+step_advances = 4   # number of integrations per step
+
+# dumping
+dump_fields = cohesion,top_disp,bot_disp,tau_max
+nb_dumps = 200
+
+# restart
+restart_name = fracture_2d_example
+nb_restarts = 4

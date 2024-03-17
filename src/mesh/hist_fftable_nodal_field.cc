@@ -47,16 +47,17 @@ HistFFTableNodalField::HistFFTableNodalField(FFTableMesh & mesh,
 }
 
 /* -------------------------------------------------------------------------- */
-void HistFFTableNodalField::addCurrentValueToHistory() {
+void HistFFTableNodalField::addCurrentValueToHistory(unsigned int add_count) {
 
   // hist_storage and fd_storage have same size (by construction)
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
-    this->hist_storage[i].addCurrentValue(this->fd_storage[i]);
+    this->hist_storage[i].addCurrentValue(this->fd_storage[i], add_count);
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void HistFFTableNodalField::addCurrentValueToHistory(FFTableNodalField & other) {
+void HistFFTableNodalField::addCurrentValueToHistory(FFTableNodalField & other,
+						     unsigned int add_count) {
 
   if ((this->getNbFFT() != other.getNbFFT())
       || (this->getNbComponents() != other.getNbComponents()))
@@ -64,16 +65,17 @@ void HistFFTableNodalField::addCurrentValueToHistory(FFTableNodalField & other) 
       
   // hist_storage and fd_storage have same size (by construction)
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
-    this->hist_storage[i].addCurrentValue(other.fd_data(0)[i]);
+    this->hist_storage[i].addCurrentValue(other.fd_data(0)[i], add_count);
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void HistFFTableNodalField::changeCurrentValueOfHistory() {
+void HistFFTableNodalField::changeCurrentValueOfHistory(unsigned int change_count) {
 
   // hist_storage and fd_storage have same size (by construction)
   for (size_t i=0; i<this->hist_storage.size(); ++i) {
-    this->hist_storage[i].changeCurrentValue(this->fd_storage[i]);
+    for (unsigned int j=0; j<change_count; ++j)
+      this->hist_storage[i].changeValueAtIndex(this->fd_storage[i], j);
   }
 }
 

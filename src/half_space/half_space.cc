@@ -127,9 +127,11 @@ void HalfSpace::computeDisplacement(NodalField & disp,
 
 /* -------------------------------------------------------------------------- */
 void HalfSpace::computeInternal(bool predicting, bool correcting,
-				SolverMethod solver_method) {
+				SolverMethod solver_method,
+				unsigned int ts_factor) {
   this->forwardFFT(predicting);
-  this->computeStressFourierCoeff(predicting, correcting, solver_method);
+  this->computeStressFourierCoeff(predicting, correcting,
+				  solver_method, ts_factor);
   this->backwardFFT();
 }
 

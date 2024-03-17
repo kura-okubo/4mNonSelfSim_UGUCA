@@ -70,7 +70,8 @@ void HalfSpaceQuasiDynamic::initConvolutions() {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeStressFourierCoeff(bool predicting,
 						      bool correcting,
-						      SolverMethod sm) {
+						      SolverMethod sm,
+						      unsigned int /*ts_factor*/) {
   if (sm == _quasi_dynamic)
     this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
   else
