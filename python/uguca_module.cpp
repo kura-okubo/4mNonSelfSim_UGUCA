@@ -18,9 +18,9 @@ namespace uguca {
       .export_values();
 
     py::enum_<SpatialDirection>(mod, "SpatialDirection")
-      .value("_x", SpatialDirection::_x)
-      .value("_y", SpatialDirection::_y)
-      .value("_z", SpatialDirection::_z)
+      .value("x", SpatialDirection::_x)
+      .value("y", SpatialDirection::_y)
+      .value("z", SpatialDirection::_z)
       .value("spatial_dir_count", SpatialDirection::_spatial_dir_count)
       .export_values();
 

@@ -36,7 +36,13 @@ namespace uguca
 		void wrapInterface(py::module &mod)
 		{
 
-			py::class_<Interface, std::shared_ptr<Interface>>(mod, "Interface");
+			py::class_<Interface, std::shared_ptr<Interface>>(mod, "Interface")
+				.def("getLoad",
+					 &Interface::getLoad,
+					 py::return_value_policy::reference)
+				.def("getCohesion",
+					 &Interface::getCohesion,
+					 py::return_value_policy::reference);
 
 			py::class_<BimatInterface,
 					   std::shared_ptr<BimatInterface>, Interface>(mod, "BimatInterface")
@@ -65,10 +71,7 @@ namespace uguca
 				.def("dump", [](BimatInterface &self, unsigned int step, double time)
 					 { self.dump(step, time); })
 				.def("advanceTimeStep",
-					 &BimatInterface::advanceTimeStep)
-				.def("getLoad",
-					 &BimatInterface::getLoad,
-					 py::return_value_policy::reference);
+					 &BimatInterface::advanceTimeStep);
 
 			py::class_<UnimatShearInterface,
 					   std::shared_ptr<UnimatShearInterface>, Interface>(mod,

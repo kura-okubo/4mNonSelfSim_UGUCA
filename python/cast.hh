@@ -4,6 +4,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <iostream>
 
 #include "nodal_field.hh"
 
@@ -87,6 +88,11 @@ namespace pybind11
       {
         parent = policy_switch(policy, parent);
 
+        std::cout << field.getDataSize().size() << std::endl;
+    
+        std::cout << field.getDataSize()[0] << std::endl;
+        std::cout << field.getDataSize()[1] << std::endl;
+    
         py::array a(std::move(field.getDataSize()),
                     field.getInternalData(),
                     parent);

@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../../build/python/')
 import uguca as ug
 import numpy as np
 
@@ -6,7 +8,7 @@ nb_elements = 1024
 
 mesh = ug.SimpleMesh(Lx=length, Nx=nb_elements)
 
-coords_x = mesh.getLocalCoords(0)
+#coords_x = mesh.getLocalCoords(0)
 
 law = ug.BarrasLaw(mesh, 3.5e6, 2e-5)
 
@@ -14,12 +16,14 @@ top_mat = ug.Material(7e9, 0.33, 2000)
 top_mat.readPrecomputedKernels();
 
 bot_mat = ug.Material(5e9, 0.25, 1200)
-bot_mat.readPrecomputedKernels();
+bot_mat.readPrecomputedKernels()
 
-interface = ug.BimatInterface(mesh, top_mat, bot_mat, law)
+interface = ug.BimatInterface(mesh, {ug.x},  top_mat, bot_mat, law)
 
 loads = interface.getLoad()
-loads.component(0)[:] = 2e6
+print(loads)
+
+'''loads.component(0)[:] = 2e6
 loads.component(1)[:] = 1e6
 
 total_duration = 2.6e-4
@@ -47,4 +51,4 @@ for s in range(nb_time_steps):
 
     if s%10 == 0:
         print(s)
-        interface.dump(s, s*time_step)
+        interface.dump(s, s*time_step)'''

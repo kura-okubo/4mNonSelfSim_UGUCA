@@ -107,9 +107,9 @@ public:
     std::vector<int> sizes;
     for (unsigned int i = 0; i < this->start.size() - 1; ++i)
     {
-      sizes.push_back(this->start[i + 1] - this->start[i]);
+      sizes.push_back(this->start[i+1] - this->start[i]);
     }
-    sizes.push_back(this->storage.size() - this->start[this->storage.size() - 1]);
+    sizes.push_back(this->storage.size() - this->start.back());
 
     return sizes;
   }
