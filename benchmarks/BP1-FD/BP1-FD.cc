@@ -118,7 +118,8 @@ int main(int argc, char *argv[]) {
   double sigma_n = 50.0e6;
   double V_init = 1.0e-9;
   double V_p = 1.0e-9;
-  double theta_init = 1.606238999213454e9;
+  double tau0 = sigma_n * a_max * std::asinh(V_init / 2.0 / V0 * std::exp((f0+b0*std::log(V0/V_init))/a_max));
+  double theta_init = Dc / V0 * std::exp(a_max / b0 * std::log(2.0 * V0 / V_init * std::sinh(tau0 / a_max / sigma_n) - f0 / b0));
   double H = 15e3;
   double h = 3e3;
   double Wf = 40e3;
@@ -128,9 +129,8 @@ int main(int argc, char *argv[]) {
   SimpleMesh mesh(length_x, nb_nodes_x);
 
   // constitutive interface law
-  SpatialDirection slip_dir = _z;
   RateAndStateLaw law(mesh, a_max, b0, Dc, V0, f0, theta_init,
-                      RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0, 0.0, slip_dir);
+                      RateAndStateLaw::EvolutionLaw::AgingLaw, n_pc > 0, 0.0, _z);
   NodalField & theta = law.getTheta();
   NodalField & a = law.getA();
   NodalField & b = law.getB();
@@ -159,32 +159,30 @@ int main(int argc, char *argv[]) {
   // init external load
 
   NodalField & external = interface.getLoad();
-  double tau0 = sigma_n * a_max * std::asinh(V_init / V0 / 2.0 * std::exp((f0 + b0 * std::log(V0 / V_init))/a_max));
-  external.setAllValuesTo(tau0, slip_dir);
+  external.setAllValuesTo(tau0, _z);
 
   // impose a constant contact pressure
   NodalField & sigma = law.getConstantPressure();
-  sigma.setAllValuesTo(sigma_n,1);
+  sigma.setAllValuesTo(sigma_n, _y);
 
   // init velocity
   HalfSpace& top = interface.getTop();
   NodalField& velo_top = top.getVelo();
-  velo_top.setAllValuesTo(V_init / 2, 2);
+  velo_top.setAllValuesTo(V_init / 2, _z);
 
   const TwoDVector &  coords = mesh.getLocalCoords();
 
-  // init a
   for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
-    double x = std::abs(coords(i,0) - length_x / 2);
+    double x = std::abs(coords(i, _x) - length_x / domain_factor);
+    // init a
     if (x < H) {
       a(i) = a0;
     } else if (x < H + h) {
       a(i) = a0 + (a_max - a0) * (x - H) / h;
+    } else {
+      a(i) = a_max;
     }
-  }
-
-  // init theta
-  for (int  i = 0; i < mesh.getNbLocalNodes(); ++i) {
+    // init theta
     theta(i) = Dc / V0 * std::exp(a(i) / b(i) * std::log(2.0 * V0 / V_init * std::sinh(tau0 / a(i) / sigma_n)) - f0 / b(i));
   }
 
@@ -192,20 +190,17 @@ int main(int argc, char *argv[]) {
   double time_step = time_step_factor * interface.getStableTimeStep();
   interface.setTimeStep(time_step);
   unsigned nb_time_steps = std::ceil(duration / time_step);
-
   // init interface
   interface.initPredictorCorrector(n_pc);
   law.init();
   interface.init(true);
-
   // ---------------------------------------------------------------------------
   // dumping
   if (world_rank == 0) std::cout << "dump int = " << dump_int << std::endl;
 
   std::ostringstream bname_out;
   bname_out << std::fixed << std::setprecision(2)
-            << "BP1-FD_Nx" << nb_nodes_x
-            << "_Nx" << nb_nodes_x
+            << "BP1-FD_N" << nb_nodes_x
             << "_s" << domain_factor
             << "_tf" << time_step_factor
             << "_npc" << n_pc;
@@ -213,17 +208,18 @@ int main(int argc, char *argv[]) {
 
   if (world_rank == 0) std::cout << bname << std::endl;
 
-  interface.initDump(bname, ".", Dumper::Format::Binary);
+  // interface.initDump(bname, ".", Dumper::Format::Binary);
+  interface.initDump(bname, ".", Dumper::Format::CSV);
 
   interface.registerDumpField("cohesion");
   interface.registerDumpField("top_disp");
   interface.registerDumpField("top_velo");
   interface.registerDumpField("theta");
 
-  // interface.registerDumpField("iterations");
-  // interface.registerDumpField("rel_error");
-  // interface.registerDumpField("a");
-  // interface.registerDumpField("b");
+  interface.registerDumpField("iterations");
+  interface.registerDumpField("rel_error");
+  interface.registerDumpField("a");
+  interface.registerDumpField("b");
 
   interface.dump(0, 0);
   unsigned s_dump = dump_int / time_step + 1;
@@ -244,16 +240,15 @@ int main(int argc, char *argv[]) {
       int nb_nodes_x = mesh.getNbGlobalNodes(0);
       for (int i = 1; i < nb_nodes_x / 2; ++i) {
         // plate rate
-        double x = std::abs(coords(i, 0) - length_x / domain_factor);
+        double x = std::abs(coords(i, _x) - length_x / domain_factor);
         if (x > Wf) {
-          velo_top(i,2) = V_p;
+          velo_top(i, _z) = V_p;
         }
         // free surface
-        u_top(nb_nodes_x - i, 2) = u_top(i, 2);
-        velo_top(nb_nodes_x - i, 2) = velo_top(i, 2);
+        u_top(nb_nodes_x - i, _z) = u_top(i, _z);
+        velo_top(nb_nodes_x - i, _z) = velo_top(i, _z);
       }
     }
-
 
     // time integration
     interface.advanceTimeStep();
