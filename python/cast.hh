@@ -72,7 +72,7 @@ namespace pybind11
           shape[i] = buf.shape()[i];
         }
 
-        value = type(shape[0], buf.data());
+        //value = type(shape[0], buf.data());
 
         // if (dims != 1)
         //   return false;

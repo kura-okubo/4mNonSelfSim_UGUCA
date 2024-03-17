@@ -14,8 +14,16 @@ namespace uguca {
       .value("static", SolverMethod::_static)
       .value("quasi_dynamic", SolverMethod::_quasi_dynamic)
       .value("dynamic", SolverMethod::_dynamic)
-      .value("hybrid", SolverMethod::_hybrid)
+      .value("apaptive", SolverMethod::_adaptive)
       .export_values();
+
+    py::enum_<SpatialDirection>(mod, "SpatialDirection")
+      .value("_x", SpatialDirection::_x)
+      .value("_y", SpatialDirection::_y)
+      .value("_z", SpatialDirection::_z)
+      .value("spatial_dir_count", SpatialDirection::_spatial_dir_count)
+      .export_values();
+
 
     wrap::wrapMesh(mod);
     wrap::wrapHalfSpace(mod);
