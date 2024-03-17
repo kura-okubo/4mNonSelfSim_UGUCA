@@ -28,5 +28,5 @@ duration = 4.5e-4
 tsf = 0.3 # time step factor
 
 # dumping
-dump_fields = cohesion_0,cohesion_1,cohesion_2,top_disp_0,top_disp_1,top_disp_2
+dump_fields = cohesion,top_disp
 nb_dumps = 60

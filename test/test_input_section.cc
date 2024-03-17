@@ -129,6 +129,31 @@ int main() {
     std::cerr << "should have caught exception for negative value -> unsigned int" << std::endl;
     return 1; // failure
   }
+
+  // check exception for missing value
+  caught_exception = true;
+  std::string incorrect_key = "not-in-there";
+  try {
+    is.get<double>(incorrect_key);
+    caught_exception = false;
+  }
+  catch (std::invalid_argument &e) {
+    std::cout << "caught exception -> success" << std::endl;
+  }
+  if (!caught_exception) {
+    std::cerr << "should have caught exception for missing entry" << std::endl;
+    return 1; // failure
+  }
+
+  // check alternative value
+  std::string astring = "tabsles";
+  s = is.get<std::string>(incorrect_key, astring);
+  std::cout << s << std::endl;
+  if (s != astring) {
+    std::cerr << "found: " << s << " but should have: " << astring << std::endl;
+    return 1; // failure
+  }
+  
   std::cout << "'get' method works -> success" << std::endl;
 
   std::cout << "check 'getData' method" << std::endl;

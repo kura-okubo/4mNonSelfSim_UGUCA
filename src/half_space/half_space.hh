@@ -35,6 +35,7 @@
 #include "material.hh"
 #include "nodal_field.hh"
 #include "fftable_nodal_field.hh"
+#include "hist_fftable_nodal_field.hh"
 #include "uca_fftable_mesh.hh"
 #include "uca_dumper.hh"
 #include "uca_restart.hh"
@@ -48,14 +49,17 @@ class HalfSpace {
   /* ------------------------------------------------------------------------ */
 public:
   // side factor top=1 bot=-1
-  HalfSpace(FFTableMesh & mesh, int side_factor,
+  HalfSpace(Material & material, FFTableMesh & mesh, int side_factor,
+	    SpatialDirectionSet components,
 	    const std::string & name = "half_space");
 
   virtual ~HalfSpace();
 
   // allocate HalfSpace of type
-  static HalfSpace * newHalfSpace(FFTableMesh & mesh,
+  static HalfSpace * newHalfSpace(Material & material,
+				  FFTableMesh & mesh,
 				  int side_factor,
+				  SpatialDirectionSet components,
 				  const std::string & name,
 				  const SolverMethod & method);
   
@@ -113,11 +117,8 @@ private:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // set a material to half space
-  void setMaterial(Material *material) { this->material = material; }
-
   // get material of half space
-  const Material &getMaterial() const { return (*this->material); }
+  const Material& getMaterial() const { return this->material; }
 
   // set time step
   virtual void setTimeStep(double time_step) { this->time_step = time_step; }
@@ -155,6 +156,9 @@ protected:
   // name
   std::string name;
 
+  // material properties
+  Material & material;
+
   // mesh
   FFTableMesh & mesh;
 
@@ -165,14 +169,12 @@ protected:
   int side_factor;
 
   // displacement 0 x "in-plane shear" ; 1 y "normal"; 2 z "out-of-plane shear"
-  FFTableNodalField disp;
+  // with limited history
+  HistFFTableNodalField disp;
 
   // velocity
   NodalField velo;
   
-  // material properties
-  Material * material;
-
   // tractions due to deformation
   FFTableNodalField internal;
 

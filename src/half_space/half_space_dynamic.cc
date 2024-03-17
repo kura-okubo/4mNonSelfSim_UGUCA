@@ -38,10 +38,13 @@
 __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
-HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
+HalfSpaceDynamic::HalfSpaceDynamic(Material & material,
+				   FFTableMesh & mesh,
 				   int side_factor,
+				   SpatialDirectionSet components,
 				   const std::string & name) :
-  HalfSpaceQuasiDynamic(mesh, side_factor, name), previously_dynamic(true) {
+  HalfSpace(material, mesh, side_factor, components, name),
+  convols(this->disp) {
   
 #ifdef UCA_VERBOSE
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
@@ -49,43 +52,19 @@ HalfSpaceDynamic::HalfSpaceDynamic(FFTableMesh & mesh,
 	    << prank << "): " << this->name
 	    << " : " << this->mesh.getNbLocalFFT() << std::endl;
 #endif // UCA_VERBOSE
-  
-  // allocate displacement history
-  this->U_r.resize(this->mesh.getDim());
-  this->U_i.resize(this->mesh.getDim());
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    this->U_r[d].resize(this->mesh.getNbLocalFFT());
-    this->U_i[d].resize(this->mesh.getNbLocalFFT());
-  }
 }
 
 /* -------------------------------------------------------------------------- */
-HalfSpaceDynamic::~HalfSpaceDynamic() {
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-  
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-
-      // ignore mode 0
-      if ((prank == m0_rank) && (j == m0_index)) continue;
-
-      delete this->U_r[d][j];
-      delete this->U_i[d][j];
-    }
-  }
-}
+HalfSpaceDynamic::~HalfSpaceDynamic() {}
 
 /* -------------------------------------------------------------------------- */
 double HalfSpaceDynamic::getStableTimeStep() {
-  double delta_x = this->mesh.getDeltaX();
-  double delta_z = this->mesh.getDeltaZ();
+  double delta_x = this->mesh.getDelta(0);
+  double delta_z = this->mesh.getDelta(2);
 
   if (this->mesh.getDim()==2)
     delta_z = delta_x;
-  return std::min(delta_x,delta_z) / this->material->getCs();
+  return std::min(delta_x,delta_z) / this->material.getCs();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -94,258 +73,216 @@ void HalfSpaceDynamic::setTimeStep(double time_step) {
       ((time_step/this->getStableTimeStep()>0.4) && (this->mesh.getDim()==2)))
     throw std::runtime_error("Error: time_step_factor is too large: (<0.4 for 2D and <0.35 for 3D)\n");
   
-  HalfSpaceQuasiDynamic::setTimeStep(time_step);
+  HalfSpace::setTimeStep(time_step);
+}
+
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::preintegrateKernels() {
+
+  // for x and y components
+  if (this->disp.getComponents().count(_x) &&
+      this->disp.getComponents().count(_y)) {
+    this->convols.preintegrate(this->material, Krnl::H00,
+			       this->material.getCs(), this->time_step);
+    this->convols.preintegrate(this->material, Krnl::H01,
+			       this->material.getCs(), this->time_step);
+    this->convols.preintegrate(this->material, Krnl::H11,
+			       this->material.getCs(), this->time_step);
+  }
+
+  // for z components
+  if (this->disp.getComponents().count(_z)) {
+    this->convols.preintegrate(this->material, Krnl::H22,
+			       this->material.getCs(), this->time_step);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::initConvolutions() {
 
-  HalfSpaceQuasiDynamic::initConvolutions();
+  this->preintegrateKernels();
 
+  // in-plane problem
+  if (this->disp.getComponents().count(_x) &&
+      this->disp.getComponents().count(_y)) {
+    this->convols.init(std::make_pair(Krnl::H00,0)); // H00-U0
+    this->convols.init(std::make_pair(Krnl::H01,0)); // H01-U0
+    this->convols.init(std::make_pair(Krnl::H11,1)); // H11-U1
+    this->convols.init(std::make_pair(Krnl::H01,1)); // H01-U1
+  }
+
+  // out-of-plane problem
+  if (this->disp.getComponents().count(_z)) {
+    this->convols.init(std::make_pair(Krnl::H22,2)); // H22-U2
+  }
+
+  // 3D problem
+  if (this->disp.getComponents().count(_x) &&
+      this->disp.getComponents().count(_y) &&
+      this->disp.getComponents().count(_z)) {
+    this->convols.init(std::make_pair(Krnl::H22,0)); // H22-U0
+    this->convols.init(std::make_pair(Krnl::H00,2)); // H00-U2
+    this->convols.init(std::make_pair(Krnl::H01,2)); // H01-U2
+  }    
+
+  // history of mode 0 needs to be of length zero
+  // otherwise convolution fails
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
-
-  int total_work=0;
-  
-  // history for q1 is longest q = j*q1
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { //parallel loop
-    // ignore mode 0
-
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    std::vector<int> nb_hist={0,0,0};
-
-    nb_hist[0] = std::max(this->H00_pi[j]->getSize(),
-			  this->H01_pi[j]->getSize());
-    nb_hist[1] = std::max(this->H11_pi[j]->getSize(),
-			  this->H01_pi[j]->getSize());
-    if (this->mesh.getDim()==3) {
-      nb_hist[0] = std::max(std::max(this->H00_pi[j]->getSize(),
-				     this->H01_pi[j]->getSize()),
-			    this->H22_pi[j]->getSize());
-      nb_hist[2] = nb_hist[0];
-    }
-    for (int d=0; d<this->mesh.getDim(); ++d) {
-      this->U_r[d][j] = new LimitedHistory(nb_hist[d]);
-      this->U_i[d][j] = new LimitedHistory(nb_hist[d]);
-    }
-    
-    for (int d=0; d<this->mesh.getDim(); ++d)
-      total_work += nb_hist[d];
+  if (prank == m0_rank) {
+    for (const auto& d : this->disp.getComponents())
+      this->disp.hist(m0_index,d).resize(0);
   }
+  
+#ifdef UCA_VERBOSE
+  int total_work=0;
+  for (int j=0; j<this->disp.getNbFFT(); ++j) { //parallel loop
+    for (const auto& d : this->disp.getComponents())
+      total_work += this->disp.hist(j,d).getSize();
+  }
+  int world_rank = StaticCommunicatorMPI::getInstance()->whoAmI();
+  printf("Rank %d has total work %d \n",world_rank,total_work);
+#endif /* UCA_VERBOSE */
 }
+
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 						 bool correcting,
 						 bool dynamic) {
-  if (!dynamic) {
-    this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
-    this->previously_dynamic = false;
-  }
-  else {
-    if (!this->previously_dynamic)
-      this->setSteadyState(predicting);
+  if (dynamic)
     this->computeStressFourierCoeffDynamic(predicting, correcting);
-    this->previously_dynamic = true;
-  }
+  else
+    throw std::runtime_error("HalfSpaceDynamic cannot compute stress for quasi dynamic problem!");
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
 							bool correcting) {
 
+  // update history
+  if (predicting) {
+    this->disp.addCurrentValueToHistory(this->disp_pc);
+  }
+  else {
+    this->disp.addCurrentValueToHistory();
+  }
+  if (correcting) {
+    this->disp.changeCurrentValueOfHistory();
+  }
+  
+  // compute convolutions
+  this->convols.convolve();
+    
+  // compute F
   FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
+  this->computeF(this->internal, _disp, this->convols);
+}
 
+/* -------------------------------------------------------------------------- */
+void HalfSpaceDynamic::computeF(FFTableNodalField & F,
+				const FFTableNodalField & U,
+				const Convolutions & cnvls) {
+
+  // parallel information
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
   int m0_rank = this->mesh.getMode0Rank();
   int m0_index = this->mesh.getMode0Index();
 
-  double ** wave_numbers = this->mesh.getLocalWaveNumbers();
+  // material properties
+  double mu = this->material.getShearModulus();
+  double eta = this->material.getCp() / this->material.getCs();
 
-  // access to fourier coefficients of stresses
-  fftw_complex * internal_fd[3];
-  for (int d = 0; d < this->mesh.getDim(); ++d)
-    internal_fd[d] = this->internal.fd_storage(d);
+  // wave numbers 
+  const TwoDVector & wave_numbers = this->mesh.getLocalWaveNumbers();
+  std::vector<double> wn(_spatial_dir_count,0); // to set those zero that do not exist
+  
+  // imaginary number i
+  std::complex<double> imag = {0., 1.};
 
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
+  // parallel loop over km modes
+  for (int j=0; j<F.getNbFFT(); ++j) { 
 
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-    
-    std::vector<std::complex<double>> U;
-    U.resize(this->mesh.getDim());
+    // get wave numbers
+    for (const auto& d : F.getComponents())
+       wn[d] = wave_numbers(j,d);
+    double k = wn[0]; double m = wn[2]; // for readibility below
+    double q = std::sqrt(k * k + m * m);
 
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
-      U[d] = {_disp.fd(d,j)[0], _disp.fd(d,j)[1]};
+    // loop over components
+    for (const auto& d : F.getComponents()) {
 
-      // store current displacement in history
-      if (correcting) {
-        this->U_r[d][j]->changeCurrentValue(std::real(U[d]));
-        this->U_i[d][j]->changeCurrentValue(std::imag(U[d]));
-      } else {
-        this->U_r[d][j]->addCurrentValue(std::real(U[d]));
-        this->U_i[d][j]->addCurrentValue(std::imag(U[d]));
+      std::complex<double> F_tmp = {0,0};
+
+      // mode 0
+      if ((prank == m0_rank) && (j == m0_index)) {
+	// do nothing: mode 0 should have F = (0,0)
       }
-    }
 
-    int nb_conv = (int)std::pow(2.0, this->mesh.getDim());
+      // X component
+      else if (d == 0) {
+	const VecComplex & c_H00_U0 = cnvls.getResult(std::make_pair(Krnl::H00,0));
+	const VecComplex & c_H00_U2 = cnvls.getResult(std::make_pair(Krnl::H00,2));
+	const VecComplex & c_H01_U1 = cnvls.getResult(std::make_pair(Krnl::H01,1));
+	const VecComplex & c_H22_U0 = cnvls.getResult(std::make_pair(Krnl::H22,0));
+	const VecComplex & c_H22_U2 = cnvls.getResult(std::make_pair(Krnl::H22,2));
+	  
+	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
+	F_tmp += imag * mu * k * c_H01_U1[j];
+	F_tmp -= this->side_factor * mu *
+	  ((c_H00_U0[j] * ((k * k) / q) + c_H00_U2[j] * ((k * m) / q)) +
+	   (c_H22_U0[j] * ((m * m) / q) - c_H22_U2[j] * ((k * m) / q)));
+      }
+      
+      // Y component
+      else if (d == 1) {
+	const VecComplex & c_H01_U0 = cnvls.getResult(std::make_pair(Krnl::H01,0));
+	const VecComplex & c_H01_U2 = cnvls.getResult(std::make_pair(Krnl::H01,2));
+	const VecComplex & c_H11_U1 = cnvls.getResult(std::make_pair(Krnl::H11,1));
+	
+	F_tmp = -imag * mu * (2-eta) * (k * U.fd_or_zero(j,0) + m * U.fd_or_zero(j,2));
+	F_tmp -= mu * imag * (c_H01_U0[j] * k + c_H01_U2[j] * m);
+	F_tmp -= this->side_factor * mu * q * c_H11_U1[j];
+      }
+      
+      // Z component
+      else if (d == 2) {
+	const VecComplex & c_H00_U0 = cnvls.getResult(std::make_pair(Krnl::H00,0));
+	const VecComplex & c_H00_U2 = cnvls.getResult(std::make_pair(Krnl::H00,2));
+	const VecComplex & c_H01_U1 = cnvls.getResult(std::make_pair(Krnl::H01,1));
+	const VecComplex & c_H22_U0 = cnvls.getResult(std::make_pair(Krnl::H22,0));
+	const VecComplex & c_H22_U2 = cnvls.getResult(std::make_pair(Krnl::H22,2));
+	
+	F_tmp = imag * mu * (2-eta) * m * U.fd_or_zero(j,1);
+	F_tmp += imag * mu * m * c_H01_U1[j];
+	F_tmp -= this->side_factor * mu *
+	  ((c_H00_U0[j] * ((k * m) / q) + c_H00_U2[j] * ((m * m) / q)) +
+	   (-c_H22_U0[j] * ((k * m) / q) + c_H22_U2[j] * ((k * k) / q)));
+      }
+      
+      else {
+	throw std::runtime_error("computeF got component (not implemented)");
+      }
 
-    std::vector<std::complex<double>> conv;
-    conv.resize(nb_conv);
-
-    std::vector<PreintKernel *> krnl = {
-      this->H00_pi[j],
-      this->H01_pi[j],
-      this->H01_pi[j],
-      this->H11_pi[j]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<PreintKernel *> krnl3d = {
-	this->H00_pi[j],
-	this->H01_pi[j],
-	this->H22_pi[j],
-	this->H22_pi[j]};
-
-      krnl.insert(krnl.end(), krnl3d.begin(), krnl3d.end());
-    }
-
-    std::vector<LimitedHistory *> U_real = {
-      this->U_r[0][j],
-      this->U_r[0][j],
-      this->U_r[1][j],
-      this->U_r[1][j]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<LimitedHistory *> U_real3d = {
-	this->U_r[2][j],
-	this->U_r[2][j],
-	this->U_r[0][j],
-	this->U_r[2][j]};
-
-      U_real.insert(U_real.end(), U_real3d.begin(), U_real3d.end());
-    }
-
-    std::vector<LimitedHistory *> U_imag = {
-      this->U_i[0][j],
-      this->U_i[0][j],
-      this->U_i[1][j],
-      this->U_i[1][j]};
-
-    if (this->mesh.getDim() == 3) {  // add 3d part
-      std::vector<LimitedHistory *> U_imag3d = {
-	this->U_i[2][j],
-	this->U_i[2][j],
-	this->U_i[0][j],
-	this->U_i[2][j]};
-
-      U_imag.insert(U_imag.end(), U_imag3d.begin(), U_imag3d.end());
-    }
-
-#ifdef UCA_USE_OPENMP
-#pragma omp parallel for
-#endif
-    for (int n = 0; n < nb_conv; ++n) {
-      conv[n] = krnl[n]->convolve(U_real[n], U_imag[n]);
-    }
-    // convolutions for both 2d and 3d
-    std::complex<double> conv_H00_U0_j = conv[0];
-    std::complex<double> conv_H01_U0_j = conv[1];
-    std::complex<double> conv_H01_U1_j = conv[2];
-    std::complex<double> conv_H11_U1_j = conv[3];
-
-    std::vector<std::complex<double>> F;
-    F.resize(this->mesh.getDim());
-    if (this->mesh.getDim() == 2) {
-      double q = wave_numbers[0][j];
-      this->computeF2D(F,
-		       q,
-		       U,
-		       conv_H00_U0_j,
-		       conv_H01_U0_j,
-		       conv_H01_U1_j,
-		       conv_H11_U1_j);
-    } else {
-      // convolutions for 3d only
-      std::complex<double> conv_H00_U2_j = conv[4];
-      std::complex<double> conv_H01_U2_j = conv[5];
-      std::complex<double> conv_H22_U0_j = conv[6];
-      std::complex<double> conv_H22_U2_j = conv[7];
-      // q = {k,m} wave number in x,y direction
-
-      double k = wave_numbers[0][j];
-      double m = wave_numbers[2][j];
-      this->computeF3D(F,k,m,
-		       U,
-		       conv_H00_U0_j,
-		       conv_H00_U2_j,
-		       conv_H01_U0_j,
-		       conv_H01_U2_j,
-		       conv_H01_U1_j,
-		       conv_H11_U1_j,
-		       conv_H22_U0_j,
-		       conv_H22_U2_j);  
-    }
-    // set values to internal force
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
-      internal_fd[d][j][0] = std::real(F[d]);  // real part
-      internal_fd[d][j][1] = std::imag(F[d]);  // imag part
-    }
-  }
-
-  // correct mode 0
-  if (prank == m0_rank) {
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
-      internal_fd[d][m0_index][0] = 0.;  // real part
-      internal_fd[d][m0_index][1] = 0.;  // imag part
+      // std::complex<double> -> fftw_complex
+      F.fd(j,d)[0] = std::real(F_tmp);
+      F.fd(j,d)[1] = std::imag(F_tmp);
     }
   }
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::registerToRestart(Restart & restart) {
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-  
-  for (int d=0; d<this->mesh.getDim(); ++d) {
-    for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) {
-
-      // ignore mode 0
-      if ((prank == m0_rank) && (j == m0_index)) continue;
-
-      restart.registerIO(this->name+"_Ur_"+std::to_string(d)+"_"+std::to_string(j),
-			 *(this->U_r[d][j]));
-      restart.registerIO(this->name+"_Ui_"+std::to_string(d)+"_"+std::to_string(j),
-			 *(this->U_i[d][j]));
-    }
-  }
-
+  restart.registerIO(this->name+"_U",this->disp);
   HalfSpace::registerToRestart(restart);
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::setSteadyState(bool predicting) {
-
-  FFTableNodalField & _disp = predicting ? this->disp_pc : this->disp;
-
-  int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  int m0_rank = this->mesh.getMode0Rank();
-  int m0_index = this->mesh.getMode0Index();
-
-  for (int j=0; j<this->mesh.getNbLocalFFT(); ++j) { // parallel loop over km modes
-    
-    // ignore mode 0
-    if ((prank == m0_rank) && (j == m0_index)) continue;
-
-    for (int d = 0; d < this->mesh.getDim(); ++d) {
-
-      this->U_r[d][j]->setSteadyState(_disp.fd(d,j)[0]);
-      this->U_i[d][j]->setSteadyState(_disp.fd(d,j)[1]);
-      
-    }
-  }
+  if (predicting)
+    this->disp.fillHistoryWithCurrentValue(this->disp_pc);
+  else
+    this->disp.fillHistoryWithCurrentValue();
 }
 
 __END_UGUCA__

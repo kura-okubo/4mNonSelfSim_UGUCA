@@ -44,12 +44,12 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
 						   double char_reg_time,
 						   const std::string & name) :
   InterfaceLaw(mesh,name),
-  reg_contact_pressure(mesh,name+"_reg_cont_pres"),
-  mu_s(mesh,name+"_mu_s"),
-  mu_k(mesh,name+"_mu_k"),
-  d_c(mesh,name+"_d_c"),
-  char_time(mesh,name+"_char_time"),
-  reg_cont_pres_tmp(mesh,name+"_reg_cont_pres_tmp")
+  reg_contact_pressure(mesh),
+  mu_s(mesh),
+  mu_k(mesh),
+  d_c(mesh),
+  char_time(mesh),
+  reg_cont_pres_tmp(mesh)
 {
   if (d_c_default < 1e-12) {
     std::cerr << "d_c cannot be zero, and it is currently: " << d_c_default << std::endl;
@@ -57,11 +57,21 @@ LinearCoulombFrictionLaw::LinearCoulombFrictionLaw(BaseMesh & mesh,
   }
 
   this->initialized = false;
-  this->reg_contact_pressure.setAllValuesTo(0. );
+
+  this->reg_contact_pressure.setAllValuesTo(0.);
+  this->reg_contact_pressure.setName(name+"_reg_cont_pres");
+  
   this->mu_s.setAllValuesTo(mu_s_default);
+  this->mu_s.setName(name+"_mus_s");
+  
   this->mu_k.setAllValuesTo(mu_k_default);
+  this->mu_k.setName(name+"_mu_k");
+  
   this->d_c.setAllValuesTo(d_c_default);
+  this->d_c.setName(name+"_d_c");
+  
   this->char_time.setAllValuesTo(char_reg_time);
+  this->char_time.setName(name+"_chart_time");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -71,115 +81,98 @@ void LinearCoulombFrictionLaw::computeCohesiveForces(bool predicting) {
   NodalField & cohesion = this->interface->getCohesion();
 
   // find forces needed to close normal gap
-  NodalFieldComponent & coh1 = cohesion.component(1);
-  this->interface->closingNormalGapForce(coh1, predicting);
+  this->interface->closingNormalGapForce(cohesion, predicting);
 
   // find force needed to maintain shear gap
   this->interface->maintainShearGapForce(cohesion);
 
   // get norm of shear cohesion
-  NodalFieldComponent shear_trac_norm(this->mesh);
+  NodalField shear_trac_norm(this->mesh);
   cohesion.computeNorm(shear_trac_norm, 1);
-  double * tau_shear = shear_trac_norm.storage();
-
+  
   // find current gap
-  //NodalField gap = this->interface->getBufferField();
-  NodalField gap(this->mesh);
+  NodalField gap(this->mesh, cohesion.getComponents());
   this->interface->computeGap(gap, predicting);
 
   // compute norm of shear gap
-  NodalFieldComponent shear_gap_norm(this->mesh);
+  NodalField shear_gap_norm(this->mesh);
   gap.computeNorm(shear_gap_norm, 1);
-  double * shear_gap = shear_gap_norm.storage();
 
-  // interface properties
-  double * mus = this->mu_s.storage();
-  double * muk = this->mu_k.storage();
-  double * dc  = this->d_c.storage();
-
-  double * p_coh1 = coh1.storage();
-  
   // initialize regularized contact pressure
   if (!this->initialized) {
     for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
-      this->reg_contact_pressure(n) = p_coh1[n];
+      this->reg_contact_pressure(n) = cohesion(n,1);
     }
     this->initialized = true;
   }
-
+  
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
   for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
     // avoid penetration "at any cost"
     // apply no normal cohesive force
-    p_coh1[n] = std::min(p_coh1[n], 0.);
+    cohesion(n,1) = std::min(cohesion(n,1), 0.);
   }
 
   // regularized contact pressure
-  double * reg_sig = NULL;
+  NodalField * reg_sig = NULL;
   if (predicting) {
     for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n)
       this->reg_cont_pres_tmp(n) = this->reg_contact_pressure(n);
-    this->computeRegContactPressure(cohesion.component(1),
-				    this->reg_cont_pres_tmp);
-    reg_sig = this->reg_cont_pres_tmp.storage();
+    this->computeRegContactPressure(cohesion, this->reg_cont_pres_tmp);
+    reg_sig = &(this->reg_cont_pres_tmp);
   }
   else {
-    this->computeRegContactPressure(cohesion.component(1),
-				    this->reg_contact_pressure);
-    reg_sig = this->reg_contact_pressure.storage();
+    this->computeRegContactPressure(cohesion, this->reg_contact_pressure);
+    reg_sig = &(this->reg_contact_pressure);
   }
 
   // to be filled
-  NodalFieldComponent alpha_field(this->mesh);
-  double * alpha = alpha_field.storage();
+  NodalField alpha(this->mesh);
 
   for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
 
     // compute friction coefficient
-    double dmu = (1 - shear_gap[n] / dc[n]) * (mus[n] - muk[n]);
-    double mu = std::max(muk[n], muk[n] + dmu);
+    double dmu = (1 - shear_gap_norm(n) / d_c(n)) * (mu_s(n) - mu_k(n));
+    double mu = std::max(mu_k(n), mu_k(n) + dmu);
 
     // maximal shear cohesive force given by strength.
     // keep orientation of shear force
-    double strength = std::abs(mu * reg_sig[n]);
+    double strength = std::abs(mu * (*reg_sig)(n));
 
     // maximal shear cohesive force given by strength.
     // keep orientation of shear force
-    alpha[n] = std::min(1.,std::abs(strength / tau_shear[n]));
+    alpha(n) = std::min(1.,std::abs(strength / shear_trac_norm(n)));
   }
 
   // only in shear direction
-  for (int d=0; d<cohesion.getDim(); ++d) {
+  for (const auto& d : cohesion.getComponents()) {
     if (d==1) // ignore normal direction
       continue;
-    cohesion.multiplyByScalar(d,alpha_field);
+    cohesion.multiplyByScalarField(alpha,d);
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearCoulombFrictionLaw::computeRegContactPressure(NodalFieldComponent & cohesion_1,
-							 NodalFieldComponent & reg_cont_pres) {
+void LinearCoulombFrictionLaw::computeRegContactPressure(NodalField & cohesion,
+							 NodalField & reg_cont_pres) {
 
   double dt = this->interface->getTimeStep();
-
-  double * reg_sig = reg_cont_pres.storage();
-  double * coh1 = cohesion_1.storage();
-  double * tc  = this->char_time.storage();
 
   for (int n=0; n<this->mesh.getNbLocalNodes(); ++n) {
 
     // regularized
-    if (tc[n] > 0) {
+    if (this->char_time(n) > 0) {
       // interface opened -> no history to preserve
-      if (std::abs(coh1[n]) < 1e-12)
-	reg_sig[n] = 0.;
+      if (std::abs(cohesion(n,1)) < 1e-12)
+	reg_cont_pres(n) = 0.;
       else
-	reg_sig[n] = (reg_sig[n] + dt / tc[n] * coh1[n]) / (1 + dt / tc[n]);
+	reg_cont_pres(n) = (reg_cont_pres(n) + dt / this->char_time(n) * cohesion(n,1))
+	  / (1 + dt / this->char_time(n));
     }
     // not regularized
     else {
-      reg_sig[n] = coh1[n];
+      reg_cont_pres(n) = cohesion(n,1);
     }
   }
 }

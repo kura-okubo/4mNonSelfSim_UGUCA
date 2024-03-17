@@ -46,20 +46,23 @@ int main(){
   
   std::cout << "check initialization and getSize" << std::endl;
 
-  NodalField nf1(mesh);
+  NodalField nf1(mesh, {_x,_y});
   if (nf1.getNbNodes() != sz) {
     std::cerr << "wrong size" << std::endl;
+    return 1; // failure
+  }
+  if (nf1.getNbComponents() != dim) {
+    std::cerr << "wrong dim" << std::endl;
     return 1; // failure
   }
   std::cout << "size correct -> success" << std::endl;
 
   std::cout << "check zeros" << std::endl;
   nf1.zeros();
-  for (int d=0; d<nf1.getDim(); ++d) {
-    double * nf1p = nf1.storage(d);
+  for (const auto& d : nf1.getComponents()) {
     for (int i=0; i<nf1.getNbNodes(); ++i) {
-      if (nf1p[i] != 0) {
-	std::cerr << "should be zero: " << nf1p[i] << std::endl;
+      if (nf1(i,d) != 0) {
+	std::cerr << "should be zero: " << nf1(i,d) << std::endl;
 	return 1; // failure
       }
     }
@@ -69,11 +72,22 @@ int main(){
   std::cout << "check setAllValuesTo" << std::endl;
   double vl=3.5;
   nf1.setAllValuesTo(vl);
-  for (int d=0; d<nf1.getDim(); ++d) {
-    double * nf1p = nf1.storage(d);
+  for (const auto& d : nf1.getComponents()) {
     for (int i=0; i<nf1.getNbNodes(); ++i) {
-      if (nf1p[i] != vl) {
-	std::cerr << "should be " << vl << ": " << nf1p[i] << std::endl;
+      if (nf1(i,d) != vl) {
+	std::cerr << "should be " << vl << ": " << nf1(i,d) << std::endl;
+	return 1; // failure
+      }
+    }
+  }
+
+  std::vector<double> vls = {5.6,7.5};
+  nf1.setAllValuesTo(vls[0],0);
+  nf1.setAllValuesTo(vls[1],1);
+  for (const auto& d : nf1.getComponents()) {
+    for (int i=0; i<nf1.getNbNodes(); ++i) {
+      if (nf1(i,d) != vls[d]) {
+	std::cerr << "should be " << vls[d] << ": " << nf1(i,d) << std::endl;
 	return 1; // failure
       }
     }
@@ -81,25 +95,38 @@ int main(){
   std::cout << "setAllValuesTo correct -> success" << std::endl;
 
   // set non-uniform values to check
-  double * nf1p = nf1.storage(0);    
   double fct = 2.;
-  for (int i=0; i<nf1.getNbNodes(); ++i)
-    nf1p[i] = i*fct;
+  for (const auto& d : nf1.getComponents()) {
+    for (int i=0; i<nf1.getNbNodes(); ++i) {
+      double vv = i*fct + d*100;
+      nf1(i,d) = vv;
+      std::cout << "nfc(" << i << "," << d << ")="
+		<< vv << std::endl;
+    }
+  }
 
   std::cout << "check accessing data" << std::endl;
-  NodalFieldComponent & nfc1 = nf1.component(0);
-  for (int i=0; i<nfc1.getNbNodes(); ++i) {
-    if ((nfc1.at(i) != i*fct) || (nfc1.at(i) != i*fct)) {
-      std::cerr << "data access failed" << std::endl;
-      return 1; // failure
+  for (const auto& d : nf1.getComponents()) {
+    for (int i=0; i<nf1.getNbNodes(); ++i) {
+      if (nf1(i,d) != i*fct + d*100) {
+	std::cerr << "() operator failed" << std::endl;
+	return 1; // failure
+      }
+    }
+  }
+
+  for (const auto& d : nf1.getComponents()) {
+    for (int i=0; i<nf1.getNbNodes(); ++i) {
+      if (nf1.data(d)[i] != i*fct + d*100) {
+	std::cerr << "data access failed" << std::endl;
+	return 1; // failure
+      }
     }
   }
   std::cout << "data accessing correct -> success" << std::endl;
 
-  // set check free
-  nf1.free();
 
-
+  
   // Check NodalField::computeNorm
   // --------------------------------------------------------------
   std::cout << "check NodalField::computeNorm" << std::endl;
@@ -110,17 +137,17 @@ int main(){
   int Nz = 2;
   FFTableMesh mesh3d(Lx, Nx, Lz, Nz);
   
-  NodalFieldComponent ans(mesh3d);
-  NodalField field(mesh3d);
-  field.component(0).setAllValuesTo(1);
-  field.component(1).setAllValuesTo(2);
-  field.component(2).setAllValuesTo(3);
+  NodalField ans(mesh3d);
+  NodalField field(mesh3d, {_x,_y,_z});
+  field.setAllValuesTo(1,0);
+  field.setAllValuesTo(2,1);
+  field.setAllValuesTo(3,2);
   bool checks_out = true;
   double tol = 1e-16;
   double ref_ans = std::sqrt(1 * 1 + 2 * 2 + 3 * 3);
   field.computeNorm(ans);
   for (int i = 0; i < mesh3d.getNbLocalNodes(); ++i) {
-    if (std::abs(ans.at(i) - ref_ans) > tol) {
+    if (std::abs(ans(i) - ref_ans) > tol) {
       checks_out = false;
       break;
     }
@@ -128,7 +155,7 @@ int main(){
   ref_ans = std::sqrt(1 * 1 + 3 * 3);
   field.computeNorm(ans, 1);
   for (int i = 0; i < mesh3d.getNbLocalNodes(); ++i) {
-    if (std::abs(ans.at(i) - ref_ans) > tol) {
+    if (std::abs(ans(i) - ref_ans) > tol) {
       checks_out = false;
       break;
     }
@@ -148,10 +175,10 @@ int main(){
   tol = 1e-16;
   ref_ans = 0;
   ans.setAllValuesTo(0);
-  field.multiplyByScalar(ans);
-  for (int j = 0; j < field.getDim(); ++j) {
+  field.multiplyByScalarField(ans);
+  for (const auto& d : nf1.getComponents()) {
     for (int i = 0; i < mesh3d.getNbLocalNodes(); ++i) {
-      if (std::abs(field.component(j).at(i) - ref_ans) > tol) {
+      if (std::abs(field(i,d) - ref_ans) > tol) {
         checks_out = false;
         break;
       }

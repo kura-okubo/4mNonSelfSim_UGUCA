@@ -21,11 +21,16 @@ for line in lines:
 
 # get field data
 Vdata = []
-with open(exname+"-DataFiles/cohesion_0.out",'r') as fl:
+with open(exname+"-DataFiles/cohesion.out",'r') as fl:
     lines = fl.readlines()
 for line in lines:
     Vdata.append([float(i) for i in line.strip().split()])
 Vdata = np.array(Vdata)
+
+# get components
+nb_nodes = (int)(Vdata.shape[1]/2)
+Vdata = Vdata[:,:nb_nodes]
+
 
 # plot
 fig = plt.figure()

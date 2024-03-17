@@ -39,13 +39,10 @@ using namespace uguca;
 
 class TestMesh : public FFTableMesh {
 public:
-  TestMesh(double Lx, int Nx, bool init) : FFTableMesh(Lx,Nx,init) {}
+  TestMesh(double Lx, int Nx) : FFTableMesh(Lx,Nx) {}
   TestMesh(double Lx, int Nx,
-	   double Lz, int Nz, bool init) : FFTableMesh(Lx,Nx,Lz,Nz,init) {}
-  void initSpectralSpace() { FFTableMesh::initSpectralSpace(); }
-  void allocateSpectralSpace() { FFTableMesh::allocateSpectralSpace(); }
-  void freeSpectralSpace() { FFTableMesh::freeSpectralSpace(); }
-  void initWaveNumbersGlobal(double ** wn) {
+	   double Lz, int Nz) : FFTableMesh(Lx,Nx,Lz,Nz) {}
+  void initWaveNumbersGlobal(TwoDVector & wn) {
     FFTableMesh::initWaveNumbersGlobal(wn);
   }
 };
@@ -63,14 +60,11 @@ int main(){
   
   // construct 2D mesh
   printf("==============\n2D mesh\n==============\n");
-  TestMesh mesh2d(length_x,nb_nodes_x,false); // do not initialize
+  TestMesh mesh2d(length_x,nb_nodes_x); // do not initialize
 
   std::cout << "test 2d fft data" << std::endl;
 
-  // instead of calling .init() we do it step-wise
-  mesh2d.initSpectralSpace();
-
-  itest = mesh2d.getNbGlobalFFTX();
+  itest = mesh2d.getNbGlobalFFT(0);
   isol  = nb_nodes_x / 2 + 1;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -78,7 +72,7 @@ int main(){
     return 1; // failure
   }
   
-  itest = mesh2d.getNbGlobalFFTZ();
+  itest = mesh2d.getNbGlobalFFT(2);
   isol  = 1;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -104,38 +98,12 @@ int main(){
 
   std::cout << "2d fft data success!" << std::endl;
   
-  std::cout << "test 2d allocate" << std::endl;
-
-  mesh2d.allocateSpectralSpace();
-  
-  bool caught_exception = true;
-  try {
-    // should not allocate a second time
-    mesh2d.allocateSpectralSpace();
-    caught_exception = false;
-  }
-  catch (std::runtime_error &e) {
-    std::cout << "caught exception -> success" << std::endl;
-  }
-  if (!caught_exception) {
-    std::cerr << "double allocate failed" << std::endl;
-    return 1; // failure
-  }
-  
-  std::cout << "test 2d allocate success!" << std::endl;
-
   std::cout << "test 2d check wave numbers global" << std::endl;
 
   // vector to fill with wave numbers
   int dim = mesh2d.getDim();
   int size = mesh2d.getNbLocalFFT();
-  double * vec[3];
-  for (int d=0; d<dim; ++d) {
-    vec[d] = new double [size];
-    for (int n=0; n<size; ++n) {
-      vec[d][n] = -1.; // initialize to negative value
-    }
-  }
+  TwoDVector vec(3,size);
 
   // solution
   double * sol2D[2];
@@ -155,11 +123,11 @@ int main(){
   // test
   for (int d=0; d<mesh2d.getDim(); ++d) {
     for (int i=0; i<mesh2d.getNbLocalFFT(); ++i) {
-      std::cout << vec[d][i] << " ";
-      if (std::abs(vec[d][i] - sol2D[d][i]) > 1e-4) {
-	std::cerr << std::endl << std::abs(vec[d][i] - sol2D[d][i]) << std::endl;
+      std::cout << vec(i,d) << " ";
+      if (std::abs(vec(i,d) - sol2D[d][i]) > 1e-4) {
+	std::cerr << std::endl << std::abs(vec(i,d) - sol2D[d][i]) << std::endl;
 	std::cerr << std::endl << "(" << d << "," << i << ") = "
-		  << vec[d][i] << " (should be = "
+		  << vec(i,d) << " (should be = "
 		  << sol2D[d][i] << ")" << std::endl;
 	return 1; // failure
       }
@@ -169,31 +137,15 @@ int main(){
   
   std::cout << "test 2d check wave numbers global success!" << std::endl;
   
-  std::cout << "test 2d free" << std::endl;
-  
-  mesh2d.freeSpectralSpace();
-  mesh2d.freeSpectralSpace(); // should do just nothing
-
-  std::cout << "test 2d free success!" << std::endl;
-
-  // forwardFFT and backwardFFT
-  // are tested by test_fftable_nodal_field_component.cc
-
-  for (int d=0; d<dim; ++d) {
-    delete[] vec[d];
-  }
 
   // construct 3D mesh
   printf("==============\n3D mesh\n==============\n");
   TestMesh mesh3d(length_x,nb_nodes_x,
-		  length_z,nb_nodes_z, false); // do not initialize
+		  length_z,nb_nodes_z); // do not initialize
 
   std::cout << "test 3d fft data" << std::endl;
   
-  // instead of calling .init() we do it step-wise
-  mesh3d.initSpectralSpace();
-
-  itest = mesh3d.getNbGlobalFFTX();
+  itest = mesh3d.getNbGlobalFFT(0);
   isol  = nb_nodes_x;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -201,7 +153,7 @@ int main(){
     return 1; // failure
   }
   
-  itest = mesh3d.getNbGlobalFFTZ();
+  itest = mesh3d.getNbGlobalFFT(2);
   isol  = nb_nodes_z / 2 + 1;
   if (itest != isol) {
     std::cerr << isol << " " << itest << std::endl;
@@ -227,37 +179,12 @@ int main(){
 
   std::cout << "3d fft data success!" << std::endl;
   
-  std::cout << "test 3d allocate" << std::endl;
-
-  mesh3d.allocateSpectralSpace();
-  
-  caught_exception = true;
-  try {
-    // should not allocate a second time
-    mesh3d.allocateSpectralSpace();
-    caught_exception = false;
-  }
-  catch (std::runtime_error &e) {
-    std::cout << "caught exception -> success" << std::endl;
-  }
-  if (!caught_exception) {
-    std::cerr << "double allocate failed" << std::endl;
-    return 1; // failure
-  }
-  
-  std::cout << "test 3d allocate success!" << std::endl;
-
   std::cout << "test 3d check wave numbers global" << std::endl;
 
   // vector to fill with wave numbers
   dim = mesh3d.getDim();
   size = mesh3d.getNbLocalFFT();
-  for (int d=0; d<dim; ++d) {
-    vec[d] = new double [size];
-    for (int n=0; n<size; ++n) {
-      vec[d][n] = -1.; // initialize to negative value
-    }
-  }
+  TwoDVector vec3d(dim,size);
 
   // solution
   std::vector<std::vector<double> > sol3D(3);
@@ -266,27 +193,27 @@ int main(){
   }
 
   double m1 = 2*M_PI / length_z;
-  int f_ny_x = mesh3d.getNbGlobalFFTX()/2+1;
-  for (int i=0;  i<mesh3d.getNbGlobalFFTX(); ++i) {
-    for (int j=0;  j<mesh3d.getNbGlobalFFTZ(); ++j) {
-      int ij = i*mesh3d.getNbGlobalFFTZ() + j;
-      sol3D[0][ij] = k1*(i - (i/f_ny_x)*mesh3d.getNbGlobalFFTX());
+  int f_ny_x = mesh3d.getNbGlobalFFT(0)/2+1;
+  for (int i=0;  i<mesh3d.getNbGlobalFFT(0); ++i) {
+    for (int j=0;  j<mesh3d.getNbGlobalFFT(2); ++j) {
+      int ij = i*mesh3d.getNbGlobalFFT(2) + j;
+      sol3D[0][ij] = k1*(i - (i/f_ny_x)*mesh3d.getNbGlobalFFT(0));
       sol3D[1][ij] = 0.;
       sol3D[2][ij] = m1*j;
     }
   }
   
   // fill vector with wave numbers (global=local)
-  mesh3d.initWaveNumbersGlobal(vec);
+  mesh3d.initWaveNumbersGlobal(vec3d);
 
   // test
   for (int d=0; d<mesh3d.getDim(); ++d) {
     for (int i=0; i<mesh3d.getNbLocalFFT(); ++i) {
-      std::cout << vec[d][i] << " ";
-      if (std::abs(vec[d][i] - sol3D[d][i]) > 1e-4) {
-	std::cerr << std::endl << std::abs(vec[d][i] - sol3D[d][i]) << std::endl;
+      std::cout << vec3d(i,d) << " ";
+      if (std::abs(vec3d(i,d) - sol3D[d][i]) > 1e-4) {
+	std::cerr << std::endl << std::abs(vec3d(i,d) - sol3D[d][i]) << std::endl;
 	std::cerr << std::endl << "(" << d << "," << i << ") = "
-		  << vec[d][i] << " (should be = "
+		  << vec3d(i,d) << " (should be = "
 		  << sol3D[d][i] << ")" << std::endl;
 	return 1; // failure
       }
@@ -295,21 +222,6 @@ int main(){
   }
   
   std::cout << "test 3d check wave numbers global success!" << std::endl;
-  
-  std::cout << "test 3d free" << std::endl;
-  
-  mesh3d.freeSpectralSpace();
-  mesh3d.freeSpectralSpace(); // should do just nothing
-
-  std::cout << "test 3d free success!" << std::endl;
-
-  // forwardFFT and backwardFFT
-  // are tested by test_fftable_nodal_field_component.cc
-
-  for (int d=0; d<dim; ++d) {
-    delete[] vec[d];
-  }
-    
   std::cout << "all checks passed -> overall success" << std::endl;
 
   return 0;

@@ -1,14 +1,12 @@
 /**
- * @file   fftable_nodal_field_component.hh
+ * @file   convolutions.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
- * @author Gabriele Albertini <ga288@cornell.edu>
- * @author Chun-Yu Ke <ck659@cornell.edu>
  *
- * @date creation: Fri Feb 5 2021
- * @date last modification: Fri Feb 5 2021
+ * @date creation: Thu Jul 14 2022
+ * @date last modification: Thu Jul 14 2022
  *
- * @brief  TODO
+ * @brief  Contains PreintKernels for each type of kernel and each mode
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -28,90 +26,90 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
-/* -------------------------------------------------------------------------- */
-#ifndef __FFTABLE_NODAL_FIELD_COMPONENT_H__
-#define __FFTABLE_NODAL_FIELD_COMPONENT_H__
+#ifndef __CONVOLUTIONS_H__
+#define __CONVOLUTIONS_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
-#include "nodal_field_component.hh"
-#include "uca_fftable_mesh.hh"
+#include "material.hh"
+#include "hist_fftable_nodal_field.hh"
+#include "preint_kernel.hh"
 
-/* -------------------------------------------------------------------------- */
+#include <map>
+#include <memory>
 
 __BEGIN_UGUCA__
-/* **
- * MPI:
- * use default FFTW MPI datastructure N0x(N1/2+1)*2
- * note integer division rounds down
- *
- * Serial:
- * use default FFTW datastructure N0xN1
- */
-class FFTableNodalFieldComponent : public NodalFieldComponent {
 
-  friend class FFTableMesh;
+class Convolutions {
+
+  /* ------------------------------------------------------------------------ */
+  /* Typedefs                                                                 */
+  /* ------------------------------------------------------------------------ */
+protected:
+  typedef std::vector<std::shared_ptr<PreintKernel>> PIKernelVector;
+  typedef std::map<Krnl,PIKernelVector> PIKernelMap;
+  typedef std::pair<Krnl,unsigned int> ConvPair;
+  typedef std::map<ConvPair,VecComplex> ConvMap;
+  
   
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
+  Convolutions(HistFFTableNodalField & field);
 
-  FFTableNodalFieldComponent(FFTableMesh & mesh, int direction=0,
-			     const std::string & name = "unnamed");
-  virtual ~FFTableNodalFieldComponent();
-
-private:
-  // private copy constructor: NodalFieldComponent cannot be copied (for now to debug)
-  FFTableNodalFieldComponent(FFTableNodalFieldComponent & to_copy);
+  virtual ~Convolutions();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void init(FFTableMesh & mesh);
-  void free();
-  void update();
   
-  void forwardFFT();
-  void backwardFFT();
+  // preintegrate kernels
+  void preintegrate(Material & material, Krnl kernel,
+		    double scale_factor, double time_step);
 
+  // initialize a convolution computation
+  void init(ConvPair conv);
+
+  // compute convolution results
+  void convolve();
+
+  // compute convolution results for steady state (i.e. U constant)
+  void convolveSteadyState();
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // get number of nodes
-  int getNbFFT() const { return ((FFTableMesh *)this->mesh)->getNbLocalFFT(); }
 
-  // get fftw plan id
-  inline int getFFTWPlanId() { return this->fftw_plan_id; }
+  /// returns the convolution result if it exists, otherwise vector of zeros
+  const VecComplex & getResult(ConvPair pair) const;
   
-  // get one value of frequency domain
-  inline fftw_complex & fd(int f);
-
-  // get access directly to frequency domain
-  // WARNING: convert it to double (assuming that fftw_complex is double[2])
-  inline fftw_complex * fd_storage() { return this->fd_field; }
-
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 private:
 
-  // values in frequency domain in complex form
-  fftw_complex * fd_field;
+  // field to convolve on
+  HistFFTableNodalField & field;
+  
+  // preintegrated kernels [kernel][mode]
+  // e.g., pi_kernels[Krnl::H00][1]
+  PIKernelMap pi_kernels;
+  
+  /// convolution results
+  ConvMap results;
 
-  // fftw plan id (given by mesh)
-  int fftw_plan_id;
+  /// result for when there is no result for a given convolution pair
+  VecComplex complex_zeros;
 };
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline fftw_complex & FFTableNodalFieldComponent::fd(int f) {
-  return this->fd_field[f];
-}
-
 
 __END_UGUCA__
 
-#endif /* __FFTABLE_NODAL_FIELD_COMPONENT_H__ */
+//#include "convolutions_impl.cc"
+
+#endif /* __CONVOLUTIONS_H__ */

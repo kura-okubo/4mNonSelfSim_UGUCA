@@ -51,19 +51,19 @@ int main(){
 
   std::cout << "check constructor" << std::endl;
   BarrasLaw law(mesh, tauc, dc);
-  DefRigInterface interface(mesh, material, law);
+  DefRigInterface interface(mesh, {_x,_y}, material, law);
   interface.setTimeStep(1e-8);
   std::cout << "constructor correct -> success" << std::endl;
 
   std::cout << "check data" << std::endl;
-  NodalFieldComponent & TauMax_tmp = law.getTauMax();
-  if (std::abs(TauMax_tmp.at(0) - tauc) / tauc > 1e-5){
-    std::cout << "wrong tau_max: " << TauMax_tmp.at(0) << std::endl;
+  NodalField & TauMax_tmp = law.getTauMax();
+  if (std::abs(TauMax_tmp(0) - tauc) / tauc > 1e-5){
+    std::cout << "wrong tau_max: " << TauMax_tmp(0) << std::endl;
     return 1; // failure
   }
-  NodalFieldComponent & Dc_tmp = law.getDc();
-  if (std::abs(Dc_tmp.at(0) - dc) / dc > 1e-5){
-    std::cout << "wrong d_c: " << Dc_tmp.at(0) << std::endl;
+  NodalField & Dc_tmp = law.getDc();
+  if (std::abs(Dc_tmp(0) - dc) / dc > 1e-5){
+    std::cout << "wrong d_c: " << Dc_tmp(0) << std::endl;
     return 1; // failure
   }
   std::cout << "data correct -> success" << std::endl;
@@ -71,115 +71,111 @@ int main(){
   std::cout << "check computeCohesiveForces" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh);
-  NodalFieldComponent & coh0 = cohesion.component(0);
-  NodalFieldComponent & coh1 = cohesion.component(1);
+  NodalField cohesion(mesh, {_x,_y});
 
   // access to various properties needed to apply values
-  NodalFieldComponent & tau0 = interface.getLoad().component(0);
-  NodalFieldComponent & sig0 = interface.getLoad().component(1);
-  NodalFieldComponent & u0 = interface.getTop().getDisp().component(0);
-  NodalFieldComponent & u1 = interface.getTop().getDisp().component(1);
+  NodalField & load = interface.getLoad();
+  NodalField & disp = interface.getTop().getDisp();
 
   // check shear: tau0 < tauc & u=0
   double tau0v = 0.9*tauc;
   double sig0v = 0;
-  tau0.setAllValuesTo(tau0v);
-  sig0.setAllValuesTo(sig0v);
+  load.setAllValuesTo(tau0v,0);
+  load.setAllValuesTo(sig0v,1);
   double u0v = 0.;
   double u1v = 0.;
-  u0.setAllValuesTo(u0v);
-  u1.setAllValuesTo(u1v);
+  disp.setAllValuesTo(u0v,0);
+  disp.setAllValuesTo(u1v,1);
   double val = tau0v;
-  law.computeCohesiveForces(false);
-  if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0)) {
-    std::cout << "shear failed (" << val << "): " << coh0.at(0) << std::endl;
+  law.computeCohesiveForces(cohesion, false);
+  if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
+    std::cout << "shear failed (" << val << "): " << cohesion(0,0) << std::endl;
     return 1; // failure
   }
 
   // check normal: 0 < sig0 < tauc & u=0
   tau0v = 0.;
   sig0v = 0.9*tauc;
-  tau0.setAllValuesTo(tau0v);
-  sig0.setAllValuesTo(sig0v);
+  load.setAllValuesTo(tau0v,0);
+  load.setAllValuesTo(sig0v,1);
   u0v = 0.;
   u1v = 0.;
-  u0.setAllValuesTo(u0v);
-  u1.setAllValuesTo(u1v);
+  disp.setAllValuesTo(u0v,0);
+  disp.setAllValuesTo(u1v,1);
   val = sig0v;
-  law.computeCohesiveForces(false);
-  if ((std::abs(coh1.at(0) - val) / val > 1e-5) || (coh1.at(0) * sig0v < 0)) {
-    std::cout << "normal failed (" << val << "): " << coh1.at(0) << std::endl;
+  law.computeCohesiveForces(cohesion, false);
+  if ((std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
+    std::cout << "normal failed (" << val << "): " << cohesion(0,1) << std::endl;
     return 1; // failure
   }
 
   // check contact: sig0 < 0 & u=0
   tau0v = 0.;
   sig0v = -1.5*tauc;
-  tau0.setAllValuesTo(tau0v);
-  sig0.setAllValuesTo(sig0v);
+  load.setAllValuesTo(tau0v,0);
+  load.setAllValuesTo(sig0v,1);
   u0v = 0.;
   u1v = 0.;
-  u0.setAllValuesTo(u0v);
-  u1.setAllValuesTo(u1v);
+  disp.setAllValuesTo(u0v,0);
+  disp.setAllValuesTo(u1v,1);
   val = sig0v;
-  law.computeCohesiveForces(false);
-  if ((std::abs(coh1.at(0) - val) / val > 1e-5) || (coh1.at(0) * sig0v < 0)) {
-    std::cout << "contact failed (" << val << "): " << coh1.at(0) << std::endl;
+  law.computeCohesiveForces(cohesion, false);
+  if ((std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
+    std::cout << "contact failed (" << val << "): " << cohesion(0,1) << std::endl;
     return 1; // failure
   }
 
   // check decohesion: tau0 > tauc & sig0 > tauc & u=0
   tau0v = 1.2*tauc;
   sig0v = 1.5*tauc;
-  tau0.setAllValuesTo(tau0v);
-  sig0.setAllValuesTo(sig0v);
+  load.setAllValuesTo(tau0v,0);
+  load.setAllValuesTo(sig0v,1);
   u0v = 0.;
   u1v = 0.;
-  u0.setAllValuesTo(u0v);
-  u1.setAllValuesTo(u1v);
+  disp.setAllValuesTo(u0v,0);
+  disp.setAllValuesTo(u1v,1);
   val = tauc;
-  law.computeCohesiveForces(false);
-  if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0) ||
-      (std::abs(coh1.at(0) - val) / val > 1e-5) || (coh1.at(0) * sig0v < 0)) {
+  law.computeCohesiveForces(cohesion, false);
+  if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0) ||
+      (std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "decohesion failed (" << val << "): "
-	      << coh0.at(0) << "," << coh1.at(0) << std::endl;
+	      << cohesion(0,0) << "," << cohesion(0,1) << std::endl;
     return 1; // failure
   }
 
   // check weakening: tau0 > tauc & sig0 > tauc & u < dc
   tau0v = 1.2*tauc;
   sig0v = 1.5*tauc;
-  tau0.setAllValuesTo(tau0v);
-  sig0.setAllValuesTo(sig0v);
+  load.setAllValuesTo(tau0v,0);
+  load.setAllValuesTo(sig0v,1);
   u0v = 0.1*dc;
   u1v = 0.1*dc;
-  u0.setAllValuesTo(u0v);
-  u1.setAllValuesTo(u1v);
+  disp.setAllValuesTo(u0v,0);
+  disp.setAllValuesTo(u1v,1);
   val = tauc * (1 - std::sqrt(u0v*u0v+u1v*u1v)/dc);
-  law.computeCohesiveForces(false);
-  if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0) ||
-      (std::abs(coh1.at(0) - val) / val > 1e-5) || (coh1.at(0) * sig0v < 0)) {
+  law.computeCohesiveForces(cohesion, false);
+  if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0) ||
+      (std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "weakening failed (" << val << "): "
-	      << coh0.at(0) << "," << coh1.at(0) << std::endl;
+	      << cohesion(0,0) << "," << cohesion(0,1) << std::endl;
     return 1; // failure
   }
 
   // check open: tau0 > tauc & sig0 > tauc & u > dc
   tau0v = 1.2*tauc;
   sig0v = 1.5*tauc;
-  tau0.setAllValuesTo(tau0v);
-  sig0.setAllValuesTo(sig0v);
+  load.setAllValuesTo(tau0v,0);
+  load.setAllValuesTo(sig0v,1);
   u0v = 0.9*dc;
   u1v = 0.9*dc;
-  u0.setAllValuesTo(u0v);
-  u1.setAllValuesTo(u1v);
+  disp.setAllValuesTo(u0v,0);
+  disp.setAllValuesTo(u1v,1);
   val = 0.;
-  law.computeCohesiveForces(false);
-  if ((std::abs(coh0.at(0) - val) / val > 1e-5) || (coh0.at(0) * tau0v < 0) ||
-      (std::abs(coh1.at(0) - val) / val > 1e-5) || (coh1.at(0) * sig0v < 0)) {
+  law.computeCohesiveForces(cohesion, false);
+  if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0) ||
+      (std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "open failed (" << val << "): "
-	      << coh0.at(0) << "," << coh1.at(0) << std::endl;
+	      << cohesion(0,0) << "," << cohesion(0,1) << std::endl;
     return 1; // failure
   }
 

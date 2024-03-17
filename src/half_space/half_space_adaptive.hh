@@ -1,5 +1,5 @@
 /**
- * @file   precomputed_kernel.hh
+ * @file   half_space_adaptive.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -28,73 +28,65 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
+#ifndef __HALF_SPACE_ADAPTIVE_H__
+#define __HALF_SPACE_ADAPTIVE_H__
 /* -------------------------------------------------------------------------- */
-#ifndef __PRECOMPUTED_KERNEL_H__
-#define __PRECOMPUTED_KERNEL_H__
-/* -------------------------------------------------------------------------- */
-#include "uca_common.hh"
-#include "kernel.hh"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
+#include "half_space_quasi_dynamic.hh"
 
 __BEGIN_UGUCA__
 
-class PrecomputedKernel : public Kernel {
+/* -------------------------------------------------------------------------- */
+class HalfSpaceAdaptive : public HalfSpaceQuasiDynamic {
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  PrecomputedKernel(const std::string & fname);
-  virtual ~PrecomputedKernel();
+  HalfSpaceAdaptive(Material & material, FFTableMesh & mesh, int side_factor,
+			SpatialDirectionSet components,
+			const std::string & name = "half_space");
+
+  virtual ~HalfSpaceAdaptive();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  // read kernel from file generated before with fortran script
-  void readKernelFromFile(const std::string & fname);
+  // init convolutions
+  virtual void initConvolutions();
+
+  // restart
+  virtual void registerToRestart(Restart & restart);
+  
+  // set to steady state
+  virtual void setSteadyState(bool predicting = false);
+
+protected:
+  virtual void computeStressFourierCoeff(bool predicting = false,
+					 bool correcting = false,
+					 bool dynamic = false);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  // get value of Kernel at given T (by interpolation)
-  virtual double at(double T) const;
+  // set time step
+  virtual void setTimeStep(double time_step);
 
-  // get T for truncation
-  virtual double getTruncation() const { return this->trunc; };
+  // get stable time step
+  virtual double getStableTimeStep();
 
-  // get number of nodes
-  unsigned int getSize() const { return this->values.size(); };
-
-  // get delta t
-  double getDt() const { return this->delta_t; };
-
-  // get direct access to values (only used to testing)
-  std::vector<double> & getValues() { return this->values; };
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
-  // nodal field
-  std::vector<double> values;
 
-  // truncation of kernel
-  double trunc;
-
-  // delta time of kernel entries
-  double delta_t;
-
+  // keeps information if previous step was dynamic
+  bool previously_dynamic;
 };
-
-
-/* -------------------------------------------------------------------------- */
-/* inline functions                                                           */
-/* -------------------------------------------------------------------------- */
 
 __END_UGUCA__
 
-#endif /* __PRECOMPUTED_KERNEL_H__ */
+//#include "half_space_adaptive_impl.cc"
+
+#endif /* __HALF_SPACE_ADAPTIVE_H__ */

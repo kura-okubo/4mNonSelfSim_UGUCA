@@ -1,5 +1,5 @@
 /**
- * @file   limited_history.hh
+ * @file   modal_limited_history.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
@@ -29,111 +29,144 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* -------------------------------------------------------------------------- */
-#ifndef __LIMITED_HISTORY_H__
-#define __LIMITED_HISTORY_H__
+#ifndef __MODAL_LIMITED_HISTORY_H__
+#define __MODAL_LIMITED_HISTORY_H__
 /* -------------------------------------------------------------------------- */
 #include "uca_common.hh"
+#include "uca_fftable_mesh.hh"
+
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 __BEGIN_UGUCA__
 
-class LimitedHistory {
+//class PreintKernel;
+
+class ModalLimitedHistory {
+
+  friend class BaseIO;
+
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-  LimitedHistory(unsigned int size);
-  virtual ~LimitedHistory();
+  ModalLimitedHistory();
+  virtual ~ModalLimitedHistory() {};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
   // at the current value of the history
-  inline void addCurrentValue(double value);
-  inline void changeCurrentValue(double value);
+  inline void addCurrentValue(fftw_complex value);
 
-  inline void setSteadyState(double value);
+  // change the current value in the history
+  inline void changeCurrentValue(fftw_complex value);
+
+  // fill entire History up to full length with this value
+  inline void fillHistory(fftw_complex value);
+
+  // increase size to this (keep same if this is smaller than actual size)
+  void extend(unsigned int new_size);
   
   // get history value at index with index=0 : now
-  inline double at(unsigned int index) const;
+  inline std::complex<double> at(unsigned int index) const;
 
+  // resize both internal vectors to new size
+  void resize(unsigned int new_size);
+  
+  // register preintegrated kernel
+  //void registerKernel(std::shared_ptr<PreintKernel> pi_kernel);
+
+private:
+  // needed because two internal vectors and index can't be updated both times
+  void resize(std::vector<double> & vec,
+	      unsigned int new_size,
+	      bool update_index);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  unsigned int getSize() const { return this->size; };
-  unsigned int getNbHistoryPoints() const { return std::min(this->nb_history_points,
-							    this->size); };
+  unsigned int getSize() const { return this->values_real.size(); };
+  unsigned int getNbHistoryPoints() const {
+    return std::min(this->nb_history_points,
+		    this->values_real.size());
+  };
   unsigned int getIndexNow() const {return this->index_now; }
-  double * getValues() const {return this->values; }
+  const double * real() const { return this->values_real.data(); }
+  const double * imag() const { return this->values_imag.data(); }
 
-  // for restart
-  void setNbHistoryPoints(int hp) { this->nb_history_points = hp; }
-  void setIndexNow(int idx) { this->index_now = idx; }
-  
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
 protected:
   // number of accumulated history points
-  unsigned int nb_history_points;
-
-  // number of history entries
-  unsigned int size;
+  std::vector<double>::size_type nb_history_points;
 
   // index pointing to the newest entry
   unsigned int index_now;
 
-  // values
-  double * values;
+  // values (keep in separate vectors for BLAS in preint_kernel convolution)
+  std::vector<double> values_real;
+  std::vector<double> values_imag;
+
+  // preintegrated kernels that use this limited history
+  //std::vector<std::shared_ptr<PreintKernel>> pi_kernels;
 };
 
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::addCurrentValue(double value) {
+inline void ModalLimitedHistory::addCurrentValue(fftw_complex value) {
 
+  // no history is kept
+  if (this->getSize() == 0)
+    return;
+  
   if (this->index_now == 0)
-    this->index_now = this->size;
+    this->index_now = this->values_real.size();
 
   this->index_now -= 1;
 
-  this->values[this->index_now] = value;
-
+  this->values_real[this->index_now] = value[0];
+  this->values_imag[this->index_now] = value[1];
+  
   // increase the counter of history points
   this->nb_history_points = std::min(this->nb_history_points + 1,
-				     this->size);
+				     this->values_real.size());
 }
 
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::changeCurrentValue(double value) {
-  this->values[this->index_now] = value;
+inline void ModalLimitedHistory::changeCurrentValue(fftw_complex value) {
+  // no history is kept
+  if (this->getSize() == 0)
+    return;
+
+  this->values_real[this->index_now] = value[0];
+  this->values_imag[this->index_now] = value[1];
 }
 
 /* -------------------------------------------------------------------------- */
-inline void LimitedHistory::setSteadyState(double value) {
-  this->nb_history_points = this->size;
-  double * v_p = this->values;
-  for (unsigned int i=0; i<this->size; ++i){
-    *v_p = value;
-    ++v_p;
-  }
+inline void ModalLimitedHistory::fillHistory(fftw_complex value) {
+  this->nb_history_points = this->values_real.size();
+  std::fill(this->values_real.begin(), this->values_real.end(), value[0]);
+  std::fill(this->values_imag.begin(), this->values_imag.end(), value[1]);
 }
 
 /* -------------------------------------------------------------------------- */
-inline double LimitedHistory::at(unsigned int index) const {
-  if (index >= this->size) {
+inline std::complex<double> ModalLimitedHistory::at(unsigned int index) const {
+  if (index >= this->values_real.size()) {
     std::cerr << "try to access history value beyond existence" << std::endl;
     throw index;
   }
 
-  unsigned int i = (this->index_now + index) % this->size;
-  return this->values[i];
+  unsigned int i = (this->index_now + index) % this->values_real.size();
+  return {this->values_real[i], this->values_imag[i]};
 }
 
 __END_UGUCA__
 
-#endif /* __LIMITED_HISTORY_H__ */
+#endif /* __MODAL_LIMITED_HISTORY_H__ */

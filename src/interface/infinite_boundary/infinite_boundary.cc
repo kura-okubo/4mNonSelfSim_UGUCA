@@ -35,18 +35,18 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 InfiniteBoundary::InfiniteBoundary(FFTableMesh & mesh,
+				   SpatialDirectionSet components,
 				   int side_factor,
 				   Material & material,
 				   const std::string & name,
 				   const SolverMethod & method) :
-  Interface(mesh,name),
-  external(mesh,"external") {
+  Interface(mesh,components,name),
+  external(mesh,components,"external") {
 
-  this->hs = HalfSpace::newHalfSpace(mesh, side_factor, this->name+"_hs", method);
+  this->hs = HalfSpace::newHalfSpace(material, mesh, side_factor, components, this->name+"_hs", method);
   
   this->half_spaces.resize(1);
   this->half_spaces[0] = this->hs;
-  this->hs->setMaterial(&material);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -99,11 +99,11 @@ void InfiniteBoundary::computeExternal() {
   std::vector<double> eta = {1.0, Cp / Cs, 1.0};
 
   int sf = this->hs->getSideFactor();
-  
-  for (int d = 0; d < this->mesh.getDim(); ++d) {
-    double *int_p =  this->hs->getInternal().storage(d);
-    double *ext_p =  this->external.storage(d);
-    double *velo_p = this->hs->getVelo().storage(d);
+
+  for (const auto& d : this->external.getComponents()) {
+    double *int_p =  this->hs->getInternal().data(d);
+    double *ext_p =  this->external.data(d);
+    double *velo_p = this->hs->getVelo().data(d);
     double eta_d = eta[d];
 
     for (int n = 0; n < this->external.getNbNodes(); ++n) {
@@ -130,12 +130,6 @@ void InfiniteBoundary::advanceTimeStepNeumann() {
 
 /* -------------------------------------------------------------------------- */
 void InfiniteBoundary::registerDumpField(const std::string &field_name) {
-
-  int d = std::atoi(&field_name[field_name.length() - 1]);
-
-  if (d >= this->mesh.getDim())
-    throw std::runtime_error("Field "+field_name
-			     +" cannot be dumped, too high dimension");
 
   bool registered = false;
 

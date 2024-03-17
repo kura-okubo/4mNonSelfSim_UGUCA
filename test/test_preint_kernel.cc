@@ -31,7 +31,7 @@
 
 #include "preint_kernel.hh"
 #include "precomputed_kernel.hh"
-#include "limited_history.hh"
+#include "modal_limited_history.hh"
 
 #include <cmath>
 #include <iomanip> // for std::setprecision
@@ -57,16 +57,16 @@ int main(){
   double time_step   = 0.01;
   PrecomputedKernel pk(kernel_fname);
 
-  PreintKernel pik(&pk);
+  std::shared_ptr<PreintKernel> pik(new PreintKernel(&pk));
 
   // --------------------------------------------------------------
 
   // test preintegrate -- applied trapezoidal rule
   std::cout << "check preintegrate" << std::endl;
-  pik.preintegrate(time_factor,time_step);
+  pik->preintegrate(time_factor,time_step);
   int i=kernel_length/15;
   expected = 0.5*(pk.at(i*time_step*time_factor)+pk.at((i+1)*time_step*time_factor))*time_step*time_factor;
-  found = pik.getValues()[i];
+  found = pik->getValues()[i];
   rel_error = std::abs(found - expected) / expected;
   if (rel_error > 1e-12) {
     std::cout << "failed" << std::endl;
@@ -78,7 +78,7 @@ int main(){
 
   // test getSize
   std::cout << "check getSize" << std::endl;
-  if ((unsigned int)(pk.getTruncation() / time_factor / time_step)-1 != pik.getSize()) {
+  if ((unsigned int)(pk.getTruncation() / time_factor / time_step)-1 != pik->getSize()) {
     std::cout << "failed" << std::endl;
     return 1; // failure
   }
@@ -89,9 +89,9 @@ int main(){
   // test multiplyBy
   std::cout << "check multiplyBy" << std::endl;
   double factor=2.0;
-  expected = factor * pik.getValues()[i];
-  pik.multiplyBy(factor);
-  found = pik.getValues()[i];
+  expected = factor * pik->getValues()[i];
+  pik->multiplyBy(factor);
+  found = pik->getValues()[i];
   rel_error = std::abs(found - expected) / expected;
   if (rel_error > 1e-12) {
     std::cout << "failed" << std::endl;
@@ -104,15 +104,17 @@ int main(){
   // test convolve
   std::cout << "check convolve" << std::endl;
   // test case where (lt.getSize()- lt.getIndexNow()>=lt.getNbHistoryPoints())
-  LimitedHistory lt(pik.getSize());
+  ModalLimitedHistory lt;
+  lt.resize(pik->getSize());
   for (double val=0.25; val<2.0;val+=0.25){
-    lt.addCurrentValue(val);
+    fftw_complex cval = {val,0};
+    lt.addCurrentValue(cval);
   }
   expected = 0.0;
   for (unsigned int n=0; n<lt.getNbHistoryPoints();n++){
-    expected+=pik.getValues()[n]*lt.getValues()[lt.getIndexNow()+n];
+    expected+=pik->getValues()[n]*lt.real()[lt.getIndexNow()+n];
   }
-  found = (pik.convolve(&lt,&lt)).real();
+  found = (pik->convolve(lt)).real();
   rel_error = std::abs(found - expected) / expected;
   if (rel_error > 1e-12) {
     std::cout << "failed" << std::endl;
@@ -123,17 +125,18 @@ int main(){
   // test case where (lt.getSize()- lt.getIndexNow()<lt.getNbHistoryPoints())
   for (unsigned int n=0; n<lt.getSize();n++){
     for (double val=0.25; val<.0;val+=0.25){
-      lt.addCurrentValue(val);
+      fftw_complex cval = {val,0};
+      lt.addCurrentValue(cval);
     }
   }
   expected = 0.0;
   for (unsigned int n=0; n<lt.getSize()-lt.getIndexNow(); n++){
-    expected+=pik.getValues()[n]*lt.getValues()[lt.getIndexNow()+n];
+    expected+=pik->getValues()[n]*lt.real()[lt.getIndexNow()+n];
   }
   for (unsigned int n=lt.getSize()-lt.getIndexNow(); n<lt.getSize(); n++){
-    expected+=pik.getValues()[n]*lt.getValues()[n-(lt.getSize()-lt.getIndexNow())];
+    expected+=pik->getValues()[n]*lt.real()[n-(lt.getSize()-lt.getIndexNow())];
   }
-  found = (pik.convolve(&lt,&lt)).real();
+  found = (pik->convolve(lt)).real();
   rel_error = std::abs(found - expected) / expected;
   if (rel_error > 1e-12) {
     std::cout << "failed" << std::endl;

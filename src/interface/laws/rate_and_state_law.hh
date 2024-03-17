@@ -35,8 +35,6 @@
 
 #include "interface_law.hh"
 
-#include <vector>
-
 /*
   Rate and state slip law in shear direction only.
   No interpenetration allowed
@@ -83,40 +81,40 @@ public:
   virtual void registerToRestart(Restart & restart);
   
 protected:
-  virtual void computeTheta(NodalFieldComponent & target,
-			    NodalFieldComponent & delta_dot);
+  virtual void computeTheta(NodalField & target,
+			    NodalField & delta_dot);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  NodalFieldComponent & getTheta() { return this->theta; };
-  NodalFieldComponent & getA() { return this->a; };
-  NodalFieldComponent & getB() { return this->b; };
-  NodalFieldComponent & getVw();    // for slip law with strong rate weakening
+  NodalField & getTheta() { return this->theta; };
+  NodalField & getA() { return this->a; };
+  NodalField & getB() { return this->b; };
+  NodalField & getVw();    // for slip law with strong rate weakening
   void setFw(double fw);  // for slip law with strong rate weakening
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
  protected:
-  NodalFieldComponent theta;          // state variable
-  NodalFieldComponent theta_pc;       // state variable for predictor
-  //NodalFieldComponent sigma;          // normal stress (compression is positive)
-  NodalFieldComponent V;              // slip rate
-  NodalFieldComponent iterations;     // iterations took in Newton-Raphson algorithm
-  NodalFieldComponent rel_error;      // for Newton-Raphson algorithm debugging
+  NodalField theta;          // state variable
+  NodalField theta_pc;       // state variable for predictor
+  //NodalField sigma;          // normal stress (compression is positive)
+  NodalField V;              // slip rate
+  NodalField iterations;     // iterations took in Newton-Raphson algorithm
+  NodalField rel_error;      // for Newton-Raphson algorithm debugging
   // NodalField * abs_error;          // for Newton-Raphson algorithm debugging
   double V0;                          // reference slip rate
   double f0;                          // reference parameter
-  NodalFieldComponent a;              // friction parameter
-  NodalFieldComponent b;              // friction parameter
-  NodalFieldComponent Dc;             // friction parameter
+  NodalField a;              // friction parameter
+  NodalField b;              // friction parameter
+  NodalField Dc;             // friction parameter
   bool predictor_corrector;           // indicates whether predictor-corrector is activated
   EvolutionLaw evolution_law;         // indicates which state evolution law to use
   double Vguard = 1.0e-20;            // minimum absolute velocity
   double Vplate;                      // plate velocity
-  NodalFieldComponent Vw;             // for slip law with strong rate weakening
+  NodalField Vw;             // for slip law with strong rate weakening
   double fw = -1.0;                   // for slip law with strong rate weakening
 };
 

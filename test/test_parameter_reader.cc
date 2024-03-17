@@ -88,6 +88,14 @@ int main(){
   }
   std::cout << "content correct -> success" << std::endl;
 
+  // check alternative value option
+  std::cout << "check alternative value" << std::endl;
+  double check_value = 33.453;
+  if (pr2.getOrUse<double>("no-in-there",check_value) != check_value) {
+    std::cerr << "wrong 'OrUse' value" << std::endl;
+    return 1; // failure
+  }
+  
   std::cout << "all checks passed -> overall success" << std::endl;
   return 0; // success
 }

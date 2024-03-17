@@ -117,28 +117,28 @@ int main(){
   // KERNELS
   std::cout << "check if kernels are read correctly" << std::endl;
   pstrain.readPrecomputedKernels();
-  Kernel * kernel = pstrain.getH00();
+  Kernel * kernel = pstrain.getKernel(Krnl::H00);
   double exp = 1.232050807569e+00;
   if ((kernel->at(0) - exp) / exp > 1e-5) {
     std::cerr << "wrong H00 kernel: " << kernel->at(0) << std::endl;
     return 1; // failure
   }
 
-  kernel = pstrain.getH01();
+  kernel = pstrain.getKernel(Krnl::H01);
   exp = 4.641016151378e-13;
   if ((kernel->at(0) - exp) / exp > 1e-5) {
     std::cerr << "wrong H01 kernel: " << kernel->at(0) << std::endl;
     return 1; // failure
   }
 
-  kernel = pstrain.getH11();
+  kernel = pstrain.getKernel(Krnl::H11);
   exp = 4.019237886467e-01;
   if ((kernel->at(0) - exp) / exp > 1e-5) {
     std::cerr << "wrong H11 kernel: " << kernel->at(0) << std::endl;
     return 1; // failure
   }
 
-  kernel = pstrain.getH22();
+  kernel = pstrain.getKernel(Krnl::H22);
   exp = 5.000000000000e-01;
   if ((kernel->at(0) - exp) / exp > 1e-5) {
     std::cerr << "wrong H22 kernel: " << kernel->at(0) << std::endl;

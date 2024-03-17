@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
   // mesh
   double length   = data.get<double>("length");
-  int nb_elements = data.get<int>("nb_elements");
+  int nb_elements = data.getOrUse<int>("nb_elements",512); // getOrUse let's you set default value
   SimpleMesh mesh(length, nb_elements);
 
   // constitutive interface law
@@ -86,11 +86,11 @@ int main(int argc, char *argv[]) {
   bot_mat.readPrecomputedKernels();
 
   // interface
-  BimatInterface interface(mesh, top_mat, bot_mat, law);
+  BimatInterface interface(mesh, {_x,_y}, top_mat, bot_mat, law);
 
   // external loading
-  interface.getLoad().component(0).setAllValuesTo(data.get<double>("shear_load"));
-  interface.getLoad().component(1).setAllValuesTo(data.get<double>("normal_load"));
+  interface.getLoad().setAllValuesTo(data.get<double>("shear_load"),0);
+  interface.getLoad().setAllValuesTo(data.get<double>("normal_load"),1);
 
   // time step
   double duration = data.get<double>("duration");
@@ -102,11 +102,11 @@ int main(int argc, char *argv[]) {
   interface.init();
 
   // heterogeneity for nucleation: decreased strength
-  double * X = mesh.getLocalCoords()[0];
-  NodalFieldComponent & tau_max = law.getTauMax();
+  const TwoDVector & coords = mesh.getLocalCoords();
+  NodalField & tau_max = law.getTauMax();
   double a0 = data.get<double>("a0");
   for (int i=0;i<mesh.getNbLocalNodes(); ++i)
-    if (std::abs(X[i] - length/2.) < a0/2.)
+    if (std::abs(coords(i,0) - length/2.) < a0/2.)
       tau_max(i) = 0.;
 
   // dumping

@@ -1,14 +1,14 @@
 /**
- * @file   uca_parameter_reader.hh
+ * @file   hist_fftable_nodal_field.hh
  *
  * @author David S. Kammer <dkammer@ethz.ch>
  * @author Gabriele Albertini <ga288@cornell.edu>
  * @author Chun-Yu Ke <ck659@cornell.edu>
  *
  * @date creation: Fri Feb 5 2021
- * @date last modification: Sun Jun 26 2022
+ * @date last modification: Fri Feb 5 2021
  *
- * @brief  reads input file and stores input parameters
+ * @brief  TODO
  *
  *
  * Copyright (C) 2021 ETH Zurich (David S. Kammer)
@@ -29,82 +29,107 @@
  * along with uguca.  If not, see <https://www.gnu.org/licenses/>.
  */
 /* -------------------------------------------------------------------------- */
-#ifndef __PARAMETER_READER_HH__
-#define __PARAMETER_READER_HH__
+#ifndef __HIST_FFTABLE_NODAL_FIELD_H__
+#define __HIST_FFTABLE_NODAL_FIELD_H__
 /* -------------------------------------------------------------------------- */
-#include "uca_common.hh"
-#include "uca_input_section.hh"
+#include "fftable_nodal_field.hh"
 
-// std
-#include <map>
+#include "modal_limited_history.hh"
+//#include "convolutions.hh"
+
 #include <memory>
 
-__BEGIN_UGUCA__
-
 /* -------------------------------------------------------------------------- */
-class ParameterReader {
-  
-private:
-  inline static const std::string general = "general";
+
+__BEGIN_UGUCA__
+class HistFFTableNodalField : public FFTableNodalField {
+
+  friend class BaseIO;
 
   /* ------------------------------------------------------------------------ */
   /* Typedefs                                                                 */
   /* ------------------------------------------------------------------------ */
 protected:
-  typedef std::map<const std::string,std::shared_ptr<InputSection>> SectionMap;
+  typedef std::vector<ModalLimitedHistory> LHVector;
 
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
+  HistFFTableNodalField(const std::string & name = "unnamed")
+    : FFTableNodalField(name) {}
 
-  ParameterReader();
-  virtual ~ParameterReader() {};
+  HistFFTableNodalField(FFTableMesh & mesh,
+			SpatialDirectionSet components = {0},
+			const std::string & name = "unnamed");
+
+  virtual ~HistFFTableNodalField() {}
+
+private:
+  // private copy constructor: NodalField cannot be copied (for now to debug)
+  HistFFTableNodalField(HistFFTableNodalField & to_copy);
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  /// read input file
-  void readInputFile(std::string file_name);
+  // adds current value to history (for all modes and dimensions)
+  void addCurrentValueToHistory();
 
-  /// write input file
-  void writeInputFile(std::string file_name) const;
+  // add current value of a different vector to history
+  // (needed when predicting)
+  void addCurrentValueToHistory(FFTableNodalField & other);
 
+  // change current value to history (for all modes and dimensions)
+  void changeCurrentValueOfHistory();
+
+  // fills history with current value (for all modes and dimensions)
+  void fillHistoryWithCurrentValue();
+
+  // fills history with current value of different vector
+  // (needed when predicting)
+  void fillHistoryWithCurrentValue(FFTableNodalField & other);
+  
+  // extend the history to at least this size
+  void extendHistory(unsigned int size);
+  
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  /// get a section
-  InputSection & getSection(std::string name = ParameterReader::general);
-  InputSection & getSection(std::string name = ParameterReader::general) const;
-
-  ///
-  template<typename T>
-  T get(std::string key, std::string section = ParameterReader::general) const;
-
-  /// get value or use
-  template<typename T>
-  T getOrUse(std::string key, T alt_value, std::string section = ParameterReader::general) const;
-
-  /// check if key exists in a given section
-  bool has(std::string key, std::string section = ParameterReader::general) const;
+  // get ModalLimitedHistory of frequency domain in direction d
+  inline const ModalLimitedHistory & hist(int f, int d=0) const;
+  inline ModalLimitedHistory & hist(int f, int d=0);
   
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
-private:
-  /// data
-  SectionMap sections;
+protected:
+  // start indices for each component
+  std::vector<int> hist_start;
+  
+  // past values of field in frequency domain
+  // each LimitedHistory is for a given dimension d and wave number q
+  LHVector hist_storage;
 };
-
 
 /* -------------------------------------------------------------------------- */
 /* inline functions                                                           */
 /* -------------------------------------------------------------------------- */
+inline const ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) const {
+  return this->hist(f,d);
+}
+
+inline ModalLimitedHistory & HistFFTableNodalField::hist(int f, int d) {
+  if (!this->components.count(d)) 
+    throw std::runtime_error("HistFFTableNodalField "
+			     +this->name
+			     +" has no component "
+			     +std::to_string(d)+"\n");
+  // needs to be structured as fd_storage
+  return this->hist_storage[this->hist_start[d]+f]; 
+}
 
 __END_UGUCA__
 
-//#include "parameter_reader_inline_impl.cc"
-
-#endif /* __PARAMETER_READER_HH__ */
+#endif /* __HIST_FFTABLE_NODAL_FIELD_H__ */

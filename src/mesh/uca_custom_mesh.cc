@@ -31,7 +31,7 @@
 #include "uca_custom_mesh.hh"
 #include "static_communicator_mpi.hh"
 #include "uca_simple_mesh.hh"
-#include "fftable_nodal_field_component.hh"
+#include "fftable_nodal_field.hh"
 
 #include <iomanip>
 #include <cmath>
@@ -45,21 +45,12 @@ __BEGIN_UGUCA__
  */
 CustomMesh::CustomMesh(double Lx, int Nx,
 		       std::vector<double> & x_coords) :
-  SimpleMesh(Lx,Nx,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
+  SimpleMesh(Lx,Nx),
+  max_nodes_pp(-1)
 {
   std::vector<double> empty(0);
   this->init(x_coords, empty);
 }
-
-CustomMesh::CustomMesh(double Lx, int Nx) :
-  SimpleMesh(Lx,Nx,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
-{}
 
 /* --------------------------------------------------------------------------
  * 3D
@@ -68,82 +59,58 @@ CustomMesh::CustomMesh(double Lx, int Nx,
 		       double Lz, int Nz,
 		       std::vector<double> & x_coords,
 		       std::vector<double> & z_coords) :
-  SimpleMesh(Lx,Nx,Lz,Nz,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
+  SimpleMesh(Lx,Nx,Lz,Nz),
+  max_nodes_pp(-1)
 {
   this->init(x_coords, z_coords);
-}
-
-CustomMesh::CustomMesh(double Lx, int Nx,
-		       double Lz, int Nz) :
-  SimpleMesh(Lx,Nx,Lz,Nz,false),
-  sort_custom_nodes_map(NULL),
-  max_nodes_pp(-1),
-  double_buffer(NULL)
-{}
-
-/* -------------------------------------------------------------------------- */
-CustomMesh::~CustomMesh() {
-  delete[] this->double_buffer;
-  delete[] this->sort_custom_nodes_map;
 }
 
 /* -------------------------------------------------------------------------- */
 void CustomMesh::init(std::vector<double> & x_coords,
 		      std::vector<double> & z_coords) {
-
-  DistributedFFTableMesh::init();
     
   int psize = StaticCommunicatorMPI::getInstance()->getNbProc();
 
   this->initCustomCoords(x_coords, z_coords);
 
   // all procs could gather and scatter as root
-  this->double_buffer = new double[this->max_nodes_pp*psize];
-    for (int i=0; i<this->max_nodes_pp*psize; ++i)
-      this->double_buffer[i] = 0.;
+  this->double_buffer.resize(this->max_nodes_pp*psize);
   
   this->initSortCustomNodesMap();
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::forwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void CustomMesh::forwardFFT(FFTableNodalField & nodal_field) {
   
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
 
-  double * disp_tmp = NULL;
+  NodalField tmp;
   // copy displacement for after gatherAndSort
   if (prank == this->root) {
-    disp_tmp = new double[this->nb_nodes_local];
-    double * p_nfc = nodal_field_comp.storage();
-    for (int n=0; n<nodal_field_comp.getNbNodes(); ++n)
-      disp_tmp[n] = p_nfc[n];
+    tmp.copyDataFrom(nodal_field);
   }
-  else {
-    disp_tmp = new double[1];
-    disp_tmp[0] = 0;
+
+  // loop over all components of the nodal field
+  for (const auto& d : nodal_field.getComponents()) {
+    this->gatherAndSortCustomNodes(nodal_field.data(d), this->root);
   }
-  
-  this->gatherAndSortCustomNodes(nodal_field_comp.storage(), this->root);
-  SimpleMesh::forwardFFT(nodal_field_comp);
+  SimpleMesh::forwardFFT(nodal_field);
 
   // restore the displacement
   if (prank == this->root) {
-    double * p_nfc = nodal_field_comp.storage();
-    for (int n=0; n<nodal_field_comp.getNbNodes(); ++n)
-      p_nfc[n] = disp_tmp[n];
+    nodal_field.copyDataFrom(tmp);
   }
-
-  delete[] disp_tmp;
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::backwardFFT(FFTableNodalFieldComponent & nodal_field_comp) {
+void CustomMesh::backwardFFT(FFTableNodalField & nodal_field) {
 
-  SimpleMesh::backwardFFT(nodal_field_comp);
-  this->sortAndScatterCustomNodes(nodal_field_comp.storage(), this->root);
+  SimpleMesh::backwardFFT(nodal_field);
+
+  // loop over all components of the nodal field
+  for (const auto& d : nodal_field.getComponents()) {
+    this->sortAndScatterCustomNodes(nodal_field.data(d), this->root);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -156,43 +123,45 @@ void CustomMesh::initCustomCoords(std::vector<double> & x_coords,
   if ((z_coords.size() > 0) && (x_coords.size() != z_coords.size()))
     throw std::runtime_error("CustomMesh: provided coords do not match in size\n");
 
-  this->nb_nodes_local = x_coords.size();
+  int nb_nodes_local = x_coords.size();
 
   // find max nb nodes per process
-  StaticCommunicatorMPI::getInstance()->allReduce(&this->nb_nodes_local,
+  StaticCommunicatorMPI::getInstance()->allReduce(&nb_nodes_local,
 						  &this->max_nodes_pp,
 						  1,
 						  MPI_MAX);
 
   // fftforward/backward will be done by the first procs in parallel
+  int nb_nodes_local_alloc = -1;
   if (prank == this->root) //< this->dim)
-    this->nb_nodes_local_alloc = this->max_nodes_pp*psize;
+    nb_nodes_local_alloc = this->max_nodes_pp*psize;
   else
-    this->nb_nodes_local_alloc = this->max_nodes_pp;
-  
-  // correct size of local coords array
-  this->freeRealSpace();
-  this->allocateRealSpace();
+    nb_nodes_local_alloc = this->max_nodes_pp;
 
+  // resize the local coords
+  BaseMesh::resize(nb_nodes_local, nb_nodes_local_alloc);
+  // use const cast: not changing length, only content
+  TwoDVector & coords_local = const_cast<TwoDVector&>(this->getLocalCoords());
+  
   // copy coordinates
-  for (int n=0; n<this->nb_nodes_local; ++n){
-    this->coords_local[0][n] = x_coords[n];
-    this->coords_local[1][n] = 0.;  // x-z plane is always at y=0
+  for (int n=0; n<nb_nodes_local; ++n){
+    coords_local(n,0) = x_coords[n];
+    coords_local(n,1) = 0.;  // x-z plane is always at y=0
     if (this->dim > 2) {
-      this->coords_local[2][n] = z_coords[n];
+      coords_local(n,2) = z_coords[n];
     }
   }
 
   // fill rest with NaN for initSortCustomNodesMap
-  for (int n=this->nb_nodes_local; n<this->max_nodes_pp; ++n) {
+  for (int n=nb_nodes_local; n<this->max_nodes_pp; ++n) {
     for (int d=0; d<this->dim; ++d)
-      this->coords_local[d][n] = NAN;
+      coords_local(n,d) = NAN;
   }
 }
 
 /* -------------------------------------------------------------------------- */
 struct meshcompare {
-  meshcompare(double * coord_x, double * coord_z) :
+  meshcompare(const std::vector<double> & coord_x, std::vector<double> & coord_z) :
     coord_x(coord_x),
     coord_z(coord_z)
   { }
@@ -210,8 +179,8 @@ struct meshcompare {
       return this->coord_x[i]<this->coord_x[j];
   }
   
-  double * coord_x;
-  double * coord_z;
+  const std::vector<double> & coord_x;
+  const std::vector<double> & coord_z;
 };
 
 /* --------------------------------------------------------------------------
@@ -224,26 +193,23 @@ void CustomMesh::initSortCustomNodesMap() {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
  
   // allocate sort nodes now that you know needed size
-  this->sort_custom_nodes_map = new int [this->getNbGlobalNodes()];
-  for (int n=0; n<this->getNbGlobalNodes(); ++n) {
-    this->sort_custom_nodes_map[n] = 0;
-  }
+  this->sort_custom_nodes_map.resize(this->getNbGlobalNodes());
+  std::fill(this->sort_custom_nodes_map.begin(), this->sort_custom_nodes_map.end(), 0);
 
-  double * coords_global_tmp[3];
-  this->allocateVector(coords_global_tmp, this->nb_nodes_local_alloc);
+  TwoDVector coords_global_tmp(3,this->getNbLocalNodesAlloc());
   
   // gather all local mesh to root
   for (int d=0; d<this->dim; ++d) {
-    StaticCommunicatorMPI::getInstance()->gather(coords_global_tmp[d],
-						 this->coords_local[d],
+    StaticCommunicatorMPI::getInstance()->gather(coords_global_tmp.data(d).data(),
+						 this->getLocalCoordsData(d),
 						 this->max_nodes_pp,
 						 this->root);
   }
   
   if (prank == this->root) {
     
-    meshcompare mymeshcompare(coords_global_tmp[0],
-			      coords_global_tmp[this->dim-1]);
+    meshcompare mymeshcompare(coords_global_tmp.data(0),
+			      coords_global_tmp.data(this->dim-1));
     
     // argsort by increasing x, z coords
     std::vector<int> sort_map_vec(0);
@@ -258,45 +224,41 @@ void CustomMesh::initSortCustomNodesMap() {
     // create sorting map
     for (int i=0; i<this->getNbGlobalNodes(); ++i)
       this->sort_custom_nodes_map[i] = sort_map_vec[i];
-    
+
     // verify coords
     this->checkCustomCoords(coords_global_tmp);
   }
   
-  this->freeVector(coords_global_tmp);
-  
-  StaticCommunicatorMPI::getInstance()->broadcast(this->sort_custom_nodes_map,
+  StaticCommunicatorMPI::getInstance()->broadcast(this->sort_custom_nodes_map.data(),
 						  this->getNbGlobalNodes(),
 						  this->root);
 }
 
 /* -------------------------------------------------------------------------- */
-void CustomMesh::checkCustomCoords(double ** coords_global) {
+void CustomMesh::checkCustomCoords(TwoDVector & coords_global) {
 
-  double dx = this->getDeltaX();
+  double dx = this->getDelta(0);
   double tolerance = dx*1e-6;
 
-  double * coords_global_ref[3];
-  this->allocateVector(coords_global_ref, this->getNbGlobalNodes());
+  TwoDVector coords_global_ref(3, this->getNbGlobalNodes());
   this->initSimpleCoords(coords_global_ref);
   
   // declare arrays and alloc memory
-  double * coords_global_sorted[3];
-  this->allocateVector(coords_global_sorted, this->getNbGlobalNodes());
+  TwoDVector coords_global_sorted(3, this->getNbGlobalNodes());;
   
   //----------------------------------------------------
   // sort coords using sorting map
 
   for (int d=0; d<this->dim; ++d)
-    this->sortCustomNodes(coords_global[d],
-			  coords_global_sorted[d],
+    this->sortCustomNodes(coords_global.data(d).data(),
+			  coords_global_sorted.data(d).data(),
 			  this->root);
 
   // find origin
-  double x0 = coords_global_sorted[0][0];
+  double x0 = coords_global_sorted(0,0);
   double z0 = 0.;
   if (this->dim == 3)
-    z0 = coords_global_sorted[2][0];
+    z0 = coords_global_sorted(0,2);
   std::vector<double> origin = {x0,0,z0};
 
   //----------------------------------------------------
@@ -307,18 +269,18 @@ void CustomMesh::checkCustomCoords(double ** coords_global) {
 
   for (int n=0; n<this->getNbGlobalNodes(); ++n) {
     for (int d=0; d<this->dim; d+=2) {
-      double error = std::abs(coords_global_sorted[d][n]
+      double error = std::abs(coords_global_sorted(n,d)
 			      - origin[d]
-			      - coords_global_ref[d][n]);
+			      - coords_global_ref(n,d));
       if (error > tolerance) {
 	test_passed = false;
 	if (d>0)
 	  std::cerr<<n<<" error in custom mesh : is "
-		   <<std::setw(6)<<      coords_global_sorted[0][n] - origin[0]
-		   <<std::setw(6)<<", "<<coords_global_sorted[d][n] - origin[d]
+		   <<std::setw(6)<<      coords_global_sorted(n,0) - origin[0]
+		   <<std::setw(6)<<", "<<coords_global_sorted(n,d) - origin[d]
 		   <<" should "
-		   <<std::setw(6)<<      coords_global_ref[0][n]
-		   <<std::setw(6)<<", "<<coords_global_ref[d][n]
+		   <<std::setw(6)<<      coords_global_ref(n,0)
+		   <<std::setw(6)<<", "<<coords_global_ref(n,d)
 		   <<std::endl;
       }
     }
@@ -326,10 +288,6 @@ void CustomMesh::checkCustomCoords(double ** coords_global) {
   if (!test_passed) {
     throw std::runtime_error("Error; custom mesh is not a regular grid\n");
   }
-  
-  // free memory
-  this->freeVector(coords_global_ref);
-  this->freeVector(coords_global_sorted);
 }
 
 
@@ -339,9 +297,11 @@ void CustomMesh::checkCustomCoords(double ** coords_global) {
 template <typename T>
 void CustomMesh::sortCustomNodes(T* un_sorted, T * sorted, int root_rank) {
   int prank = StaticCommunicatorMPI::getInstance()->whoAmI();
-  if (prank == root_rank)
-    for (int n=0; n<this->getNbGlobalNodes(); ++n)
+  if (prank == root_rank) {
+    for (int n=0; n<this->getNbGlobalNodes(); ++n) {
       sorted[n] = un_sorted[this->sort_custom_nodes_map[n]];
+    }
+  }
 }
 /* -------------------------------------------------------------------------- */
 template <typename T>
@@ -439,7 +399,7 @@ void CustomMesh::gatherAndSortCustomNodes(int * Uglobal, int * Ulocal,
 /* -------------------------------------------------------------------------- */
 void CustomMesh::sortAndScatterCustomNodes(double * Uglobal, double * Ulocal,
 					   int root_rank) {
-  this->sortAndScatterCustomNodes(Uglobal,Ulocal,this->double_buffer,
+  this->sortAndScatterCustomNodes(Uglobal,Ulocal,this->double_buffer.data(),
 				  this->max_nodes_pp,root_rank);
 }
 
@@ -447,7 +407,7 @@ void CustomMesh::sortAndScatterCustomNodes(double * Uglobal, double * Ulocal,
 void CustomMesh::gatherAndSortCustomNodes(double * Uglobal, double * Ulocal,
 					  int root_rank) {
 
-  this->gatherAndSortCustomNodes(Uglobal, Ulocal, this->double_buffer,
+  this->gatherAndSortCustomNodes(Uglobal, Ulocal, this->double_buffer.data(),
 				 this->max_nodes_pp, root_rank);
 }
 
