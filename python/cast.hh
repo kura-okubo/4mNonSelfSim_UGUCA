@@ -91,8 +91,7 @@ namespace pybind11
         std::cout << field.getDataSize().size() << std::endl;
     
         std::cout << field.getDataSize()[0] << std::endl;
-        std::cout << field.getDataSize()[1] << std::endl;
-    
+        std::cout << field.getInternalData() << std::endl;
         py::array a(std::move(field.getDataSize()),
                     field.getInternalData(),
                     parent);

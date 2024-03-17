@@ -102,15 +102,15 @@ public:
   int getNbComponents() const { return this->components.size(); }
 
   // get data size for each dim
-  std::vector<int> getDataSize() const
+  std::vector<size_t> getDataSize() const
   {
-    std::vector<int> sizes;
-    for (unsigned int i = 0; i < this->start.size() - 1; ++i)
+    std::vector<size_t> sizes;
+    for (size_t i = 0; i < _spatial_dir_count; ++i)
     {
-      sizes.push_back(this->start[i+1] - this->start[i]);
+      if (this->components.count(i)) {
+        sizes.push_back(this->start[i+1] - this->start[i]);
+      }
     }
-    sizes.push_back(this->storage.size() - this->start.back());
-
     return sizes;
   }
 

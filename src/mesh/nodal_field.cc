@@ -56,8 +56,6 @@ void NodalField::resize(BaseMesh & mesh, SpatialDirectionSet components) {
   this->mesh = &mesh;
   this->components = components;
 
-  std::cout << components.size() << std::endl;
-
   // Loop over the components to define their start
   this->start = {0};
   for (size_t i = 0; i < _spatial_dir_count; ++i) {
@@ -67,8 +65,6 @@ void NodalField::resize(BaseMesh & mesh, SpatialDirectionSet components) {
     }
     this->start.push_back(new_start);
   }
-
-std::cout << this->start.size() << std::endl;
 
   
 #ifdef UCA_VERBOSE
