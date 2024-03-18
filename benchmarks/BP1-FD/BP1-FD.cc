@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
   double domain_factor = 2.0;
 
   double duration = 47304000000; // 1500 years
-  double dump_int = 1e6;
+  double dump_int = 1;
 
-  unsigned nb_nodes_x = 2000;  // 50e3 / 25 = 2000
+  unsigned nb_nodes_x = 4000;  // 50e3 * 2 / 25 = 4000
   double time_step_factor = 0.35;
 
   unsigned n_pc = 1;
@@ -208,8 +208,7 @@ int main(int argc, char *argv[]) {
 
   if (world_rank == 0) std::cout << bname << std::endl;
 
-  // interface.initDump(bname, ".", Dumper::Format::Binary);
-  interface.initDump(bname, ".", Dumper::Format::CSV);
+  interface.initDump(bname, ".", Dumper::Format::Binary);
 
   interface.registerDumpField("cohesion");
   interface.registerDumpField("top_disp");

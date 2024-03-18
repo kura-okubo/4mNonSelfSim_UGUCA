@@ -22,7 +22,7 @@ def inspect_results(full_path, bname):
   for station in stations:
     location = station.split('fltst')[1].split('/')[-2]
     location = location.split('dp')
-    x = int(location[0]) * 100
+    x = int(location[1]) * 100
     compare_station(full_path, bname, x)
   # compare_cplot(full_path, bname)
 
@@ -90,33 +90,27 @@ def inspect_results(full_path, bname):
 
 def compare_station(full_path, bname, x_interest):
   spec = bname.split('_')
-  nb_nodes_x = int(spec[1][2::])
-  domain_factor = float(spec[3][1::])
-  nb_nodes = nb_nodes_x * nb_nodes_z
-  length_x_rpt = 36e3
+  nb_nodes_x = int(spec[1][1::])
+  domain_factor = float(spec[2][1::])
+  nb_nodes = nb_nodes_x
+  length_x_rpt = 50e3
   length_x = domain_factor * length_x_rpt
-  length_z = domain_factor * length_z_rpt
   dx = length_x / nb_nodes_x
-  dz = length_z / nb_nodes_z
   x = np.arange(nb_nodes_x) * dx - length_x / 2
-  z = 7.5e3 + length_z / 2 - np.arange(nb_nodes_z) * dz
   idx_x = np.argmin(np.abs(x - x_interest))
-  idx_z = np.argmin(np.abs(z - z_interest))
-  idx = (idx_x - 1) * nb_nodes_z + idx_z
-  print('Double check: (%.2e, %.2e) = (%e, %e) ?' %
-        (x_interest, z_interest, x[idx_x], z[idx_z]))
+  idx = idx_x
+  print('Double check: %.2e = %e ?' % (x_interest, x[idx_x]))
 
   t = np.fromfile('%s.time' % full_path, sep=' ')
-  t = t[1:-1:2]
+  t = t[1:-10:2]
   nt = len(t)
-  delta = read_data('%s-DataFiles/top_disp_0.out' %
-                    full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z) * 2
-  delta_dot = read_data('%s-DataFiles/top_velo_0.out' %
-                        full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z) * 2
-  cohesion = read_data('%s-DataFiles/cohesion_0.out' %
-                       full_path, nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)
-  theta = read_data('%s-DataFiles/theta.out' % full_path,
-                    nb_nodes_x, nb_nodes_z, nt, idx_x, idx_z)
+  delta = read_data('%s-DataFiles/top_disp.out' % full_path, nb_nodes_x, 1, nt, idx_x, 0) * 2
+  delta = delta[:, 0]
+  delta_dot = read_data('%s-DataFiles/top_velo.out' % full_path, nb_nodes_x, 1, nt, idx_x, 0) * 2
+  delta_dot = delta_dot[:, 0]
+  cohesion = read_data('%s-DataFiles/cohesion.out' % full_path, nb_nodes_x, 1, nt, idx_x, 0)
+  cohesion = cohesion[:, 0]
+  theta = read_data('%s-DataFiles/theta.out' % full_path, nb_nodes_x, 1, nt, idx_x, 0)
 
   params = {
       'text.latex.preamble': r'''\usepackage{siunitx}',
@@ -135,7 +129,7 @@ def compare_station(full_path, bname, x_interest):
   ax1.set_xlabel(r'$t$ (sec)')
   ax1.set_ylabel(r'$\delta$ (m)')
   ax2 = fig.add_subplot(2, 2, 2)
-  ax2.plot(t, delta_dot, '-k', label='uguca', linewidth=1, zorder=10)
+  ax2.semilogy(t, delta_dot, '-k', label='uguca', linewidth=1, zorder=10)
   ax2.set_xlabel(r'$t$ (sec)')
   ax2.set_ylabel(r'$\dot{\delta}$ (m/s)')
   ax3 = fig.add_subplot(2, 2, 3)
@@ -147,21 +141,20 @@ def compare_station(full_path, bname, x_interest):
   ax4.set_xlabel(r'$t$ (sec)')
   ax4.set_ylabel(r'$\theta$ (m/s)')
 
-  data_dir = './ref/faultst%03ddp%03d/*' % (x_interest / 100, z_interest / 100)
+  data_dir = './ref/fltst_dp%03d/*' % (x_interest / 100)
   refs = glob(data_dir)
   for ref in refs:
     author = ref.split('/')[-1].split('.')[0]
     data = read_scec(ref)
     ax1.plot(data['time'], data['delta_x'], '--', label=author, linewidth=1)
-    ax2.plot(data['time'], data['delta_dot_x'],
+    ax2.semilogy(data['time'], 10 ** data['delta_dot_x'],
              '--', label=author, linewidth=1)
     ax3.plot(data['time'], data['tau_x'], '--', label=author, linewidth=1)
     ax4.semilogy(data['time'], 10 ** data['log_theta'],
                  '--', label=author, linewidth=1)
 
   ax2.legend(loc='upper right', ncol=1, fontsize=7)
-  plt.savefig('%s_%03ddp%03d.pdf' %
-              (bname, x_interest / 100, z_interest / 100))
+  plt.savefig('%s_dp%03d.pdf' %(bname, x_interest / 100))
 
 
 def read_scec(path):
@@ -173,11 +166,7 @@ def read_scec(path):
   data['delta_x'] = raw[1::, 1]
   data['delta_dot_x'] = raw[1::, 2]
   data['tau_x'] = raw[1::, 3]
-  data['delta_y'] = raw[1::, 4]
-  data['delta_dot_y'] = raw[1::, 5]
-  data['tau_y'] = raw[1::, 6]
-  data['sigma'] = raw[1::, 7]
-  data['log_theta'] = raw[1::, 8]
+  data['log_theta'] = raw[1::, 4]
   return data
 
 
