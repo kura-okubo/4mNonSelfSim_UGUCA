@@ -81,7 +81,7 @@ void Interface::init(bool velocity_initial_conditions) {
     }
   }
 
-  this->computeInternal();
+  this->computeInternal(false,false,false); // steady state starting point
   this->computeCohesion();
   this->computeResidual();
   if (!velocity_initial_conditions)

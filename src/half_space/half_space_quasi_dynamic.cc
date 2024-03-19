@@ -54,7 +54,7 @@ HalfSpaceQuasiDynamic::~HalfSpaceQuasiDynamic() {}
 
 /* -------------------------------------------------------------------------- */
 double HalfSpaceQuasiDynamic::getStableTimeStep() {
-  return HalfSpace::getStableTimeStep();
+  return HalfSpaceDynamic::getStableTimeStep();
 }
 
 /* -------------------------------------------------------------------------- */

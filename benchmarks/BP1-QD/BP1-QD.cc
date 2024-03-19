@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
     }
 
     // time integration
-    interface.advanceTimeStep();
+    interface.advanceTimeStep(false);
 
     // dump
     if (world_rank == 0 && s % s_dump == 0) interface.dump(s, s * time_step);
