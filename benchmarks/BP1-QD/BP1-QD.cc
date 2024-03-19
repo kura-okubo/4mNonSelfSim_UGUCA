@@ -1,5 +1,5 @@
 /**
- * @file   BP1-FD.cc
+ * @file   BP1-QD.cc
  *
  * @author Chun-Yu Ke <ck659@cornell.edu>
  * @author David S. Kammer <dkammer@ethz.ch>
@@ -56,8 +56,8 @@ int main(int argc, char *argv[]) {
 
   double domain_factor = 2.0;
 
-  double duration = 47304000000; // 1500 years
-  double dump_int = 1;
+  double duration = 94608000000; // 3000 years
+  double dump_int = 100000;
 
   unsigned nb_nodes_x = 4000;  // 50e3 * 2 / 25 = 4000
   double time_step_factor = 0.35;
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
   // ---------------------------------------------------------------------------
   // weak interface
 
-  UnimatShearInterface interface(mesh, {_z}, mat, law);
+  UnimatShearInterface interface(mesh, {_z}, mat, law, SolverMethod::_quasi_dynamic);
 
   // ---------------------------------------------------------------------------
   // initial conditions
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
 
   std::ostringstream bname_out;
   bname_out << std::fixed << std::setprecision(2)
-            << "BP1-FD_N" << nb_nodes_x
+            << "BP1-QD_N" << nb_nodes_x
             << "_s" << domain_factor
             << "_tf" << time_step_factor
             << "_npc" << n_pc;

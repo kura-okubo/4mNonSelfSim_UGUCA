@@ -1,0 +1,1 @@
+mpirun ./BP1-FD
