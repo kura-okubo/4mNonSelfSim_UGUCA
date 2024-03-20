@@ -197,7 +197,11 @@ int main(int argc, char *argv[]) {
   interface.init(true);
   // ---------------------------------------------------------------------------
   // dumping
-  if (world_rank == 0) std::cout << "dump int = " << dump_int << std::endl;
+  if (world_rank == 0) {
+    std::cout << "time step = " << time_step << std::endl;
+    std::cout << "dump int = " << dump_int << std::endl;
+    std::cout << "duration = " << duration << std::endl;
+  }
 
   std::ostringstream bname_out;
   bname_out << std::fixed << std::setprecision(2)
