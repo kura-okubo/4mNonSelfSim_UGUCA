@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
     // find best time step for now
     double current_time_step =  std::numeric_limits<double>::max();
     for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
-      double cts = xi(i) * L(i) / velo_top(i,2);          // <---- Huey
+      double cts = xi(i) * L(i) / (2*velo_top(i,2));          // <---- Huey
       current_time_step = std::min(current_time_step, cts);
     }
     double ts_factor = std::max(int(current_time_step / time_step),1);
