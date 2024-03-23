@@ -254,8 +254,17 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    // find best time step for now
+    double current_time_step =  std::numeric_limits<double>::max();
+    for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
+      double cts = xi(i) * L(i) / velo_top(i,2);          // <---- Huey
+      current_time_step = std::min(current_time_step, cts);
+    }
+    double ts_factor = std::max(int(current_time_step / time_step),1);
+    s += (ts_factor - 1);
+
     // time integration
-    interface.advanceTimeStep(_quasi_dynamic);
+    interface.advanceTimeStep(SolverMethod::_quasi_dynamic, ts_factor);
 
     // dump
     if (world_rank == 0 && s % s_dump == 0) interface.dump(s, s * time_step);
