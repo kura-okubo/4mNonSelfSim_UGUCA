@@ -74,14 +74,15 @@ private:
   /* ------------------------------------------------------------------------ */
 public:
   // adds current value to history (for all modes and dimensions)
-  void addCurrentValueToHistory();
+  void addCurrentValueToHistory(unsigned int add_count = 1);
 
   // add current value of a different vector to history
   // (needed when predicting)
-  void addCurrentValueToHistory(FFTableNodalField & other);
+  void addCurrentValueToHistory(FFTableNodalField & other,
+				unsigned int add_count = 1);
 
   // change current value to history (for all modes and dimensions)
-  void changeCurrentValueOfHistory();
+  void changeCurrentValueOfHistory(unsigned int change_count = 1);
 
   // fills history with current value (for all modes and dimensions)
   void fillHistoryWithCurrentValue();

@@ -57,7 +57,8 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   virtual void computeCohesiveForces(NodalField & cohesion,
-                                     bool predicting = false) = 0;
+                                     bool predicting = false,
+				     unsigned int ts_factor = 1.) = 0;
 
   // dumper function
   virtual void registerDumpField(const std::string & field_name);

@@ -67,10 +67,12 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeDisplacement(bool predicting = false);
+  virtual void computeDisplacement(bool predicting = false,
+				   unsigned int ts_factor = 1.);
   virtual void computeInternal(bool predicting = false,
 			       bool correcting = false,
-			       bool dynamic = true);
+			       SolverMethod solver_method = _dynamic,
+			       unsigned int ts_factor = 1);
   virtual void computeResidual(NodalField & external);
   virtual void computeVelocity(bool predicting = false);
 
@@ -102,12 +104,14 @@ protected:
 
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
-					 bool dynamic = true) = 0;
+					 SolverMethod sm = _dynamic,
+					 unsigned int ts_factor = 1) = 0;
 
 private:
   void computeDisplacement(NodalField & disp,
 			   NodalField & velo,
-			   NodalField & target);
+			   NodalField & target,
+			   unsigned int ts_factor = 1.);
   void computeVelocity(NodalField & _velo);
   void correctVelocity(NodalField & velo_n,
 		       NodalField & velo_pc,

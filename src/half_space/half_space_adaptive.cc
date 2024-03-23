@@ -57,15 +57,16 @@ void HalfSpaceAdaptive::setTimeStep(double time_step) {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceAdaptive::computeStressFourierCoeff(bool predicting,
 						  bool correcting,
-						  bool dynamic) {
-  if (!dynamic) {
+						  SolverMethod sm,
+						  unsigned int ts_factor) {
+  if (sm == _quasi_dynamic) {
     this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
     this->previously_dynamic = false;
   }
   else {
     if (!this->previously_dynamic)
       this->setSteadyState(predicting);
-    this->computeStressFourierCoeffDynamic(predicting, correcting);
+    this->computeStressFourierCoeffDynamic(predicting, correcting, ts_factor);
     this->previously_dynamic = true;
   }
 }

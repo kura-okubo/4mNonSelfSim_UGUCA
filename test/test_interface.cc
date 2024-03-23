@@ -47,7 +47,8 @@ class TestInterfaceLaw : public InterfaceLaw {
 public:
   TestInterfaceLaw(SimpleMesh & mesh): InterfaceLaw(mesh) {}
   void computeCohesiveForces(NodalField &,
-			     bool = false) {
+			     bool = false,
+			     unsigned int = 1.) {
     computeCohesiveForcesCalled = true;
   }
   void registerDumpField(const std::string &) {
@@ -61,12 +62,13 @@ class TestHalfSpace : public HalfSpaceDynamic {
 public:
   TestHalfSpace(Material & material, SimpleMesh & mesh, int side_factor, SpatialDirectionSet & comp)
     : HalfSpaceDynamic(material, mesh, side_factor, comp) {}
-  void computeDisplacement(bool = false) {
+  void computeDisplacement(bool = false, unsigned int = 1.) {
     computeDisplacementCalled = true;
   }
   void computeStressFourierCoeff(bool = false,
 				 bool = false,
-				 bool = true) {
+				 SolverMethod = _dynamic,
+				 unsigned int = 1) {
     computeStressFourierCoeffCalled = true;
   }
   void computeResidual(NodalField &) {
@@ -115,7 +117,7 @@ public:
    constructed = true;
  }
   // pure virtual functions
-  void closingNormalGapForce(NodalField &, bool = false) {
+  void closingNormalGapForce(NodalField &, bool = false, unsigned int = 1) {
     throw "TestInterface::closingNormalGapForce() is not implemented.";
   }
   void maintainShearGapForce(NodalField &) {
