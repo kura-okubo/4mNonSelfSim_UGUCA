@@ -82,7 +82,8 @@ public:
 				   unsigned int ts_factor = 1.);
   virtual void computeInternal(bool predicting = false,
 			       bool correcting = false,
-			       SolverMethod solver_method = _dynamic);
+			       SolverMethod solver_method = _dynamic,
+			       unsigned int ts_factor = 1);
   virtual void computeCohesion(bool predicting = false,
 			       unsigned int ts_factor = 1.);
   virtual void computeResidual();

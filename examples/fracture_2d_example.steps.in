@@ -34,7 +34,7 @@ a0 = 0.05
 
 # duration and time stepping
 duration = 2.6e-4
-tsf = 0.1           # time step factor
+tsf = 0.05          # time step factor
 step_advances = 4   # number of integrations per step
 
 # dumping

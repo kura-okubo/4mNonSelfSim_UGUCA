@@ -228,7 +228,7 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
 	const VecComplex & c_H01_U1 = cnvls.getResult(std::make_pair(Krnl::H01,1));
 	const VecComplex & c_H22_U0 = cnvls.getResult(std::make_pair(Krnl::H22,0));
 	const VecComplex & c_H22_U2 = cnvls.getResult(std::make_pair(Krnl::H22,2));
-	  
+
 	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
 	F_tmp += imag * mu * k * c_H01_U1[j];
 	F_tmp -= this->side_factor * mu *

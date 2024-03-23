@@ -125,10 +125,11 @@ void Interface::computeDisplacement(bool predicting,
 
 /* -------------------------------------------------------------------------- */
 void Interface::computeInternal(bool predicting, bool correcting,
-				SolverMethod solver_method) {
+				SolverMethod solver_method,
+				unsigned int ts_factor) {
   for (unsigned int i=0;i<this->half_spaces.size();++i)
     this->half_spaces[i]->computeInternal(predicting, correcting,
-					  solver_method);
+					  solver_method, ts_factor);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -183,7 +184,7 @@ void Interface::advanceTimeStep(SolverMethod solver_method,
 
   // compute displacement
   this->computeDisplacement(false, ts_factor);
-  this->computeInternal(false,false,solver_method);
+  this->computeInternal(false, false, solver_method, ts_factor);
   this->computeCohesion(false, ts_factor);
   this->computeResidual();
   this->computeVelocity();

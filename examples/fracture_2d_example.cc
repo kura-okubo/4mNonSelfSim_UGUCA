@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
     }
 
     // time integration
-    interface.advanceTimeStep(_quasi_dynamic, data.getOrUse<int>("step_advances",1));
+    interface.advanceTimeStep(_dynamic, data.getOrUse<int>("step_advances",1));
 
     // dump
     if (s % dump_int == 0)
