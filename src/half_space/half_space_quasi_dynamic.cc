@@ -70,8 +70,9 @@ void HalfSpaceQuasiDynamic::initConvolutions() {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceQuasiDynamic::computeStressFourierCoeff(bool predicting,
 						      bool correcting,
-						      bool dynamic) {
-  if (!dynamic)
+						      SolverMethod sm,
+						      unsigned int /*ts_factor*/) {
+  if (sm == _quasi_dynamic)
     this->computeStressFourierCoeffQuasiDynamic(predicting, correcting);
   else
     throw std::runtime_error("HalfSpaceQuasiDynamic cannot compute stress for dynamic problem!");

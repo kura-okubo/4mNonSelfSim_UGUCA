@@ -54,7 +54,8 @@ UnimatShearInterface::~UnimatShearInterface() {
 
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::closingNormalGapForce(NodalField & close_force,
-						 bool predicting) {
+						 bool predicting,
+						 unsigned int ts_factor) {
 
   // check if the normal direction exists (it doesn't for antiplane)
   if (!close_force.getComponents().count(_y)) {
@@ -67,7 +68,7 @@ void UnimatShearInterface::closingNormalGapForce(NodalField & close_force,
   double cs_t = mat_t.getCs();
   double mu_t = mat_t.getShearModulus();
   double eta_t = cp_t / cs_t;
-  double fact_t = this->time_step * cs_t / mu_t / eta_t;
+  double fact_t = ts_factor * this->time_step * cs_t / mu_t / eta_t;
 
   // accessors
   double * u_1_t = this->top->getDisp(predicting).data(1);

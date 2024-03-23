@@ -43,6 +43,8 @@ configure_file(fracture_2d_example_fig.py fracture_2d_example_fig.py COPYONLY)
 configure_file(fracture_2d_example.restart.in fracture_2d_example.restart.in COPYONLY)
 configure_file(fracture_2d_example.restart.sh fracture_2d_example.restart.sh COPYONLY)
 configure_file(fracture_2d_example_plot.restart.py fracture_2d_example_plot.restart.py COPYONLY)
+# variable time steps
+configure_file(fracture_2d_example.steps.in fracture_2d_example.steps.in COPYONLY)
 
 # 3d fracture example
 add_simulation(fracture_3d_example fracture_3d_example.cc)

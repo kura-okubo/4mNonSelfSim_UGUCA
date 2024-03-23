@@ -142,10 +142,11 @@ void RateAndStateLaw::init() {
 
 /* -------------------------------------------------------------------------- */
 void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
-					    bool predicting) {
+					    bool predicting,
+					    unsigned int ts_factor) {
 
   // find forces needed to close normal gap
-  this->interface->closingNormalGapForce(cohesion, predicting);
+  this->interface->closingNormalGapForce(cohesion, predicting, ts_factor);
 
   // access to contact pressure
   // if constant contact pressure was initiated, use it

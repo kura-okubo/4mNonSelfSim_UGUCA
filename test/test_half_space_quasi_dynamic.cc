@@ -85,7 +85,7 @@ int main(){
       std::cout << "check computeStressFourierCoeff 2D (prank>0)" << std::endl;
     }
 
-    hs2.computeInternal(false,false,false); // predicting, correcting, dynamic
+    hs2.computeInternal(false,false,_quasi_dynamic); // predicting, correcting, dynamic
 
     FFTableNodalField & inter = hs2.getInternal();
 
@@ -157,36 +157,40 @@ int main(){
     }
 
     // destroys the fourier space
-    hs3.computeInternal(false,false,false); // predicting, correcting, dynamic
+    for (int i=1; i<3; ++i) { // for testing time-step-factor
 
-    if (prank==0) // complete data is gathered to process 0
-    {
-      std::cout<<"test computeStressFourierCoeff 3D (prank==0)"<<std::endl;
+      // predicting, correcting, dynamic, time-step-factor
+      hs3.computeInternal(false,false,_quasi_dynamic,i); 
+
+      if (prank==0) { // complete data is gathered to process 0
+	std::cout << "test computeStressFourierCoeff 3D (prank==0 i="
+		  << i << ")"<<std::endl;
+
+	FFTableNodalField & inter = hs3.getInternal();
       
-      FFTableNodalField & inter = hs3.getInternal();
-      
-      if (false) {
-	std::cout<<"solution"<<std::endl
-		 << std::setprecision(12)
-		 << inter(4,0) << std::endl
-		 << inter(62,1) << std::endl
-		 << inter(47,2) << std::endl;
-      }
-      else {
-	if (std::abs(inter(4,0) - (-493509032930))>1e0) {
-	  std::cout << "failed 4" << std::endl
-		    << inter(4,0) << std::endl;
-	  return 1; // failure
+	if (false) {
+	  std::cout<<"solution"<<std::endl
+		   << std::setprecision(12)
+		   << inter(4,0) << std::endl
+		   << inter(62,1) << std::endl
+		   << inter(47,2) << std::endl;
 	}
-	if (std::abs(inter(62,1) - (627247523903))>1e0) {
-	  std::cout << "failed 62" << std::endl
-		    << inter(62,1) << std::endl;
-	  return 1; // failure
-	}
-	if (std::abs(inter(47,2) - (66306881961.8))>1e0) {
-	  std::cout << "failed 47" << std::endl
-		    << inter(47,2) << std::endl;
-	  return 1; // failure
+	else {
+	  if (std::abs(inter(4,0) - (-493509032930))>1e0) {
+	    std::cout << "failed 4" << std::endl
+		      << inter(4,0) << std::endl;
+	    return 1; // failure
+	  }
+	  if (std::abs(inter(62,1) - (627247523903))>1e0) {
+	    std::cout << "failed 62" << std::endl
+		      << inter(62,1) << std::endl;
+	    return 1; // failure
+	  }
+	  if (std::abs(inter(47,2) - (66306881961.8))>1e0) {
+	    std::cout << "failed 47" << std::endl
+		      << inter(47,2) << std::endl;
+	    return 1; // failure
+	  }
 	}
       }
     }

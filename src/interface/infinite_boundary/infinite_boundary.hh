@@ -72,7 +72,7 @@ private:
   void computeExternal();
 
   // due to inheritance from interface
-  void closingNormalGapForce(NodalField &, bool) {
+  void closingNormalGapForce(NodalField &, bool, unsigned int) {
     throw std::runtime_error(
 	 "InfiniteBoundary::closingNormalGapForce not implemented.");
   }
