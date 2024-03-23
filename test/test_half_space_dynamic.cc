@@ -353,15 +353,20 @@ int main(){
     mat.readPrecomputedKernels();
 
     HalfSpaceDynamic hs3(mat,msh3,1,{_x,_y,_z});
-
+    HalfSpaceDynamic hs4(mat,msh3,1,{_x,_y,_z});
+    
     double dt=hs3.getStableTimeStep()*0.1;
 
     hs3.setTimeStep(dt);
+    hs4.setTimeStep(0.5*dt);
 
     hs3.initPredictorCorrector();
+    hs4.initPredictorCorrector();
     hs3.initConvolutions();
+    hs4.initConvolutions();
 
-    NodalField & disp = hs3.getDisp();
+    NodalField & disp  = hs3.getDisp();
+    NodalField & disp4 = hs4.getDisp();
 
     if (prank==0) {
       for (int i=0; i<nb_x; ++i){
@@ -369,18 +374,23 @@ int main(){
 	  int ij =i*nb_z+j;
 	  disp(ij,0)=0.3*cos(i*3+6)+sin(i*2+1) +2*cos(j*2)+sin(j*6-2);
 	  disp(ij,1)=0.5*cos(i*6)+0.4*(sin(i+2))-1*cos(j*7)+sin(j*9-5);
-	  disp(ij,2)=0.5*cos(i*6+5)+0.4*(sin(i-2))+0.5*cos(5-j*2)+sin(j);;
+	  disp(ij,2)=0.5*cos(i*6+5)+0.4*(sin(i-2))+0.5*cos(5-j*2)+sin(j);
+	  disp4(ij,0) = disp(ij,0);
+	  disp4(ij,1) = disp(ij,1);
+	  disp4(ij,2) = disp(ij,2);
 	}
       }
     }
 
-    hs3.computeInternal(); // destroys the fourier space
-
+    hs3.computeInternal(false, false, _dynamic, 1);
+    hs4.computeInternal(false, false, _dynamic, 2); // test time-step factor 
+    
     if (prank==0) // complete data is gathered to process 0
     {
       std::cout<<"test computeStressFourierCoeff 3D (prank==0)"<<std::endl;
       
-      FFTableNodalField & inter = hs3.getInternal();
+      FFTableNodalField & inter  = hs3.getInternal();
+      FFTableNodalField & inter4 = hs4.getInternal();
       
       if (false) {
 	std::cout<<"solution"<<std::endl
@@ -395,14 +405,32 @@ int main(){
 		    << inter(4,0) << std::endl;
 	  return 1; // failure
 	}
+	if (std::abs((inter(4,0) - inter4(4,0))/inter(4,0))>0.01) {
+	  std::cout << "failed 4 (of double time step)" << std::endl
+		    << inter4(4,0) << " (" << inter(4,0)
+		    << ")" << std::endl;
+	  return 1; // failure
+	}
 	if (std::abs(inter(62,1) - (17019761277.7))>1e-1) {
 	  std::cout << "failed 62" << std::endl
 		    << inter(62,1) << std::endl;
 	  return 1; // failure
 	}
+	if (std::abs((inter(62,1) - inter4(62,1))/inter(62,1))>0.01) {
+	  std::cout << "failed 62 (of double time step)" << std::endl
+		    << inter4(62,1) << " (" << inter(62,1)
+		    << ")" << std::endl;
+	  return 1; // failure
+	}
 	if (std::abs(inter(47,2) - (5687137976.34))>1e-2) {
 	  std::cout << "failed 47" << std::endl
 		    << inter(47,2) << std::endl;
+	  return 1; // failure
+	}
+	if (std::abs((inter(47,2) - inter4(47,2))/inter(47,2))>0.01) {
+	  std::cout << "failed 47 (of double time step)" << std::endl
+		    << inter4(47,2) << " (" << inter(47,2)
+		    << ")" << std::endl;
 	  return 1; // failure
 	}
       }
