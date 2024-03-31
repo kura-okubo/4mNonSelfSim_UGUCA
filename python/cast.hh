@@ -33,7 +33,7 @@ namespace pybind11
     }
 
     /**
-     * Type caster for grid classes
+     * Type caster for nodal field
      * inspired by https://tinyurl.com/y8m47qh3 from T. De Geus
      * and pybind11/eigen.h
      */
@@ -88,17 +88,26 @@ namespace pybind11
       {
         parent = policy_switch(policy, parent);
 
-        std::cout << field.getDataSize().size() << std::endl;
-    
-        std::cout << field.getDataSize()[0] << std::endl;
-        std::cout << field.getInternalData() << std::endl;
-        py::array a(std::move(field.getDataSize()),
+        std::vector<size_t> shapes(field.getDataSize().size());
+        shapes[0] = field.getDataSize()[0];
+        shapes[1] = 2;
+
+        std::vector<size_t> strides(field.getDataSize().size());        
+        strides[0] = shapes[1]*sizeof(double);
+        strides[1] = 1*sizeof(double);      
+
+
+        py::array a(std::move(shapes),
+                    std::move(strides),
                     field.getInternalData(),
                     parent);
+
+        std::cout << "moved" << std::endl;
 
         return a.release();
       }
     };
+
 
   }
 }

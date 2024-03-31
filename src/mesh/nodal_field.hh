@@ -107,18 +107,21 @@ public:
     std::vector<size_t> sizes;
     for (size_t i = 0; i < _spatial_dir_count; ++i)
     {
-      if (this->components.count(i)) {
-        sizes.push_back(this->start[i+1] - this->start[i]);
+      if (this->components.count(i))
+      {
+        sizes.push_back(this->start[i + 1] - this->start[i]);
       }
     }
     return sizes;
   }
 
+
   // get the const reference to data
-  const double* getInternalData() const {return this->storage.data(); }
+  const double *getInternalData() const { return this->storage.data(); }
 
   // get the components, i.e. a set of integers
   SpatialDirectionSet getComponents() const { return this->components; }
+
 
   // access the value of node n (reading and writing)
   inline double &operator()(int n, int d = 0);

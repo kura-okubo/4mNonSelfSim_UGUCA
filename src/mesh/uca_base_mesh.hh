@@ -49,6 +49,7 @@ public:
   inline double & operator()(int n, int d) { return this->storage[d][n]; }
   inline double operator()(int n, int d) const { return this->storage[d][n]; }
   inline std::vector<double> & data(int d) { return this->storage[d]; }
+  inline std::vector<std::vector<double>> & getStorage() {return this->storage; }
 private:
   std::vector<std::vector<double>> storage;
 private:
@@ -85,8 +86,10 @@ public:
   virtual int getNbLocalNodes() const { return this->nb_nodes_local; }
 
   // access to coordinates
-  const TwoDVector & getLocalCoords() const { return this->coords_local; }
+  //const TwoDVector & getLocalCoords() const { return this->coords_local; }
   
+  TwoDVector & getLocalCoords() { return this->coords_local; }
+
   // inheritate mesh needs to know if it is parallel or not
   virtual int getNbGlobalNodes() const { return this->getNbLocalNodes(); };
 
@@ -106,13 +109,15 @@ protected:
   // spatial dimension: either 2 or 3
   int dim;
 
+
+  // coordinates of local nodes
+  TwoDVector coords_local;
+
 private:
   // discretization: local
   int nb_nodes_local;
   int nb_nodes_local_alloc;
 
-  // coordinates of local nodes
-  TwoDVector coords_local;
 };
 
 __END_UGUCA__

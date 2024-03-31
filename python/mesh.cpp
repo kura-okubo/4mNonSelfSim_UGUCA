@@ -21,7 +21,12 @@ namespace uguca
 
 		void wrapMesh(py::module &mod)
 		{
-			py::class_<BaseMesh, std::shared_ptr<BaseMesh>>(mod, "BaseMesh");
+			py::class_<BaseMesh, std::shared_ptr<BaseMesh>>(mod, "BaseMesh")
+				.def("getLocalCoords", 
+				     [](BaseMesh &self)
+					 { py::array ret =  py::cast(self.getLocalCoords().getStorage());
+					   return ret;
+					 });
 
 			py::class_<FFTableMesh, BaseMesh,
 					   std::shared_ptr<FFTableMesh>>(mod, "FFTableMesh");
