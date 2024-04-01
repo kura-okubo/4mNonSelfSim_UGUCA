@@ -51,9 +51,9 @@ namespace pybind11
 
     public:
       /**
-       * This macro establishes the name 'NodalFieldComponentWrap' in
+       * This macro establishes the name 'NodalFieldWrap' in
        * function signatures and declares a local variable
-       * 'value' of type NodalFieldComponentWrap
+       * 'value' of type NodalFieldWrap
        */
       PYBIND11_TYPE_CASTER(type, _("NodalFieldWrap"));
 
@@ -88,21 +88,32 @@ namespace pybind11
       {
         parent = policy_switch(policy, parent);
 
-        std::vector<size_t> shapes(field.getDataSize().size());
-        shapes[0] = field.getDataSize()[0];
-        shapes[1] = 2;
+        auto dims = field.getDataSize().size();
+        
+        std::vector<size_t> shapes(dims);
+        std::vector<size_t> strides(dims);        
+      
+        switch (dims)
+        {
+        case 1:
+          shapes[0] = field.getDataSize()[0];
+          strides[0] = 1.*sizeof(double);
+          break;
+        case 2:
+          shapes[1] = field.getDataSize()[0];
+          shapes[0] = 2;
 
-        std::vector<size_t> strides(field.getDataSize().size());        
-        strides[0] = shapes[1]*sizeof(double);
-        strides[1] = 1*sizeof(double);      
-
-
+          strides[0] = shapes[1]*sizeof(double);
+          strides[1] = 1.*sizeof(double);
+          break;
+        default:
+          break;
+        }
+        
         py::array a(std::move(shapes),
                     std::move(strides),
                     field.getInternalData(),
                     parent);
-
-        std::cout << "moved" << std::endl;
 
         return a.release();
       }
