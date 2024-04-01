@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../../build/python/')
 import uguca as ug
 import numpy as np
 
@@ -7,17 +9,15 @@ nb_elements = [128, 128]
 mesh = ug.SimpleMesh(Lx=lengths[0], Nx=nb_elements[0],
                          Lz=lengths[1], Nz=nb_elements[1])
 
-coords_x = mesh.getLocalCoords(0)
-coords_z = mesh.getLocalCoords(2)
-print(coords_x)
-print(coords_z)
+coords = mesh.getLocalCoords()
+print(coords.shape)
 
 law = ug.BarrasLaw(mesh, 3.5e6, 2e-5)
 
 top_mat = ug.Material(7e9, 0.33, 2000)
-top_mat.readPrecomputedKernels();
+top_mat.readPrecomputedKernels()
 
-interface = ug.DefRigInterface(mesh, top_mat, law)
+interface = ug.DefRigInterface(mesh, {ug.x, ug.y, ug.z}, top_mat, law)
 
 loads = interface.getLoad()
 loads.component(1)[:] = 1e6
@@ -29,8 +29,8 @@ interface.setTimeStep(time_step)
 interface.init(False)
 
 crack_length = 0.05
-indexes = np.where((np.abs(coords_x - lengths[0]/2.) < crack_length/2.) &
-                   (np.abs(coords_z - lengths[1]/2.) < crack_length/2.))[0]
+indexes = np.where((np.abs(coords[0, :] - lengths[0]/2.) < crack_length/2.) &
+                   (np.abs(coords[2. :] - lengths[1]/2.) < crack_length/2.))[0]
 print(indexes)
 tau_max = law.getTauMax()
 tau_max[indexes] = 0.

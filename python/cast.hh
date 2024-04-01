@@ -107,6 +107,7 @@ namespace pybind11
           strides[1] = 1.*sizeof(double);
           break;
         default:
+          std::cout << "Not implemented yet" << std::endl;
           break;
         }
         
