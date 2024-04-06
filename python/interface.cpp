@@ -108,7 +108,7 @@ namespace uguca
 														 "DefRigInterface")
 				.def(py::init<FFTableMesh &, SpatialDirectionSet, Material &, InterfaceLaw &,
 							  const SolverMethod &>(),
-					 py::arg("mesh"),py::arg("components"), py::arg("top_material"), py::arg("law"),
+					 py::arg("mesh"), py::arg("components"), py::arg("top_material"), py::arg("law"),
 					 py::arg("method") = _dynamic)
 				.def("init",
 					 &DefRigInterface::init)

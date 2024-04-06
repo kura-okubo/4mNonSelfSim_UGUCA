@@ -73,7 +73,7 @@ namespace pybind11
           shape[i] = buf.shape()[i];
         }
 
-        //value = type(shape[0], buf.data());
+        // value = type(shape[0], buf.data());
 
         // if (dims != 1)
         //   return false;
@@ -83,34 +83,34 @@ namespace pybind11
       }
 
       /// Conversion part 2 --- (C++ -> python)
-      static py::handle cast(const type & field,
+      static py::handle cast(const type &field,
                              py::return_value_policy policy, py::handle parent)
       {
         parent = policy_switch(policy, parent);
 
         auto dims = field.getDataSize().size();
-        
+
         std::vector<size_t> shapes(dims);
-        std::vector<size_t> strides(dims);        
-      
+        std::vector<size_t> strides(dims);
+
         switch (dims)
         {
         case 1:
           shapes[0] = field.getDataSize()[0];
-          strides[0] = 1.*sizeof(double);
+          strides[0] = 1. * sizeof(double);
           break;
         case 2:
           shapes[1] = field.getDataSize()[0];
           shapes[0] = 2;
 
-          strides[0] = shapes[1]*sizeof(double);
-          strides[1] = 1.*sizeof(double);
+          strides[0] = shapes[1] * sizeof(double);
+          strides[1] = 1. * sizeof(double);
           break;
         default:
           std::cout << "Not implemented yet" << std::endl;
           break;
         }
-        
+
         py::array a(std::move(shapes),
                     std::move(strides),
                     field.getInternalData(),
@@ -119,7 +119,6 @@ namespace pybind11
         return a.release();
       }
     };
-
 
   }
 }
