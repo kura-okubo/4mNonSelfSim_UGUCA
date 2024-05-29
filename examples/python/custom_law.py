@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../../build/python/')
+
 import uguca as ug
 import numpy as np
 
@@ -6,7 +9,7 @@ class CustomLaw(ug.InterfaceLaw):
         super().__init__(mesh)
         self.tau_max = np.full(mesh.getNbLocalNodesAlloc(), tau_max)
         self.delta_c = np.full(mesh.getNbLocalNodesAlloc(), delta_c)
-        self.gap = ug.NodalField(mesh)
+        self.gap = ug.NodalField(mesh, {ug.x, ug.y})
 
 
     def computeCohesiveForces(self, predicting):
@@ -15,24 +18,22 @@ class CustomLaw(ug.InterfaceLaw):
 
         # find current gap
         interface.computeGap(self.gap, predicting)
-        gaps_array = np.array((self.gap.component(0), self.gap.component(1)))
-        gap_norm = np.linalg.norm(gaps_array, axis=0)
+        gap_norm = np.linalg.norm(self.gap.storage(), axis=0)
 
         # find forces needed to close normal gap
-        cohesion_force = cohesion.component(1)
-        interface.closingNormalGapForce(cohesion_force, predicting)
+        interface.closingNormalGapForce(cohesion, predicting)
 
         # find force needed to maintain shear gap
         interface.maintainShearGapForce(cohesion)
-        tau_shear = np.abs(cohesion.component(0))
+        tau_shear = np.abs(cohesion.storage()[0, :])
 
         alpha_field = np.zeros(self.getMesh().getNbLocalNodesAlloc())
         strength = self.tau_max[:] * np.maximum(0., 1.-gap_norm/self.delta_c)
 
-        cohesion_force[:] = np.minimum(cohesion_force, strength)
+        cohesion.storage()[1, :] = np.minimum(cohesion.storage()[1, :], strength)
         alpha_field = np.minimum(1, np.abs(strength/tau_shear))
 
-        cohesion.component(0)[:] *= alpha_field[:]
+        cohesion.storage()[0, :] *= alpha_field[:]
 
 
 length = 1.
@@ -50,9 +51,9 @@ bot_mat = ug.Material(5e9, 0.25, 1200)
 bot_mat.readPrecomputedKernels()
 
 
-interface = ug.BimatInterface(mesh, top_mat, bot_mat, law)
+interface = ug.BimatInterface(mesh, {ug.x, ug.y}, top_mat, bot_mat, law)
 
-loads = interface.getLoad()
+loads = interface.getLoad().storage()
 loads[0, :] = 2e6
 loads[1, :] = 1e6
 
