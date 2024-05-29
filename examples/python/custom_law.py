@@ -9,7 +9,7 @@ class CustomLaw(ug.InterfaceLaw):
         self.gap = ug.NodalField(mesh)
 
 
-    def computeCohesiveForces(self, predicting):
+    def computeCohesiveForces(self, cohesion, predicting):
         cohesion = self.getCohesion()
         interface = self.getInterface()
 

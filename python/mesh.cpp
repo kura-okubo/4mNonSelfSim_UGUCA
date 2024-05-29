@@ -45,17 +45,11 @@ namespace uguca
 				.def("getNbLocalNodesAlloc",
 					 &SimpleMesh::getNbLocalNodesAlloc);
 
-			/*py::class_<NodalField, std::shared_ptr<NodalField>>(mod, "NodalField")
-				.def(py::init<const std::string &>(),
-					 py::arg("name") = "unnamed")
-				.def(py::init<BaseMesh &, std::set<int>, const std::string &>(),
-					 py::arg("mesh"),
-					 py::arg("components"),
-					 py::arg("name") = "unnamed")
-				.def("setAllValuesTo",
-					 &NodalField::setAllValuesTo)
-				.def("zeros",
-					 &NodalField::zeros);*/
+			//py::class_<NodalField, std::shared_ptr<NodalField>>(mod, "NodalField")
+			//	.def(py::init<BaseMesh &, std::set<int>, const std::string &>(),
+			//		 py::arg("mesh"),
+			//		 py::arg("components"),
+			//		 py::arg("name") = "unnamed");
 		}
 
 	}
