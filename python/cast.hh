@@ -42,7 +42,7 @@ namespace pybind11
      * Type Caster : NodalField <-> NumPy-array
      */
 
-    template <>
+   /* template <>
     struct type_caster<uguca::NodalField>
     {
       using type = uguca::NodalField;
@@ -50,15 +50,10 @@ namespace pybind11
       using array_type = py::array_t<U, array::c_style | array::forcecast>;
 
     public:
-      /**
-       * This macro establishes the name 'NodalFieldWrap' in
-       * function signatures and declares a local variable
-       * 'value' of type NodalFieldWrap
-       */
       PYBIND11_TYPE_CASTER(type, _("NodalFieldWrap"));
 
       /// Conversion part 1 ---- (Python -> C++)
-      bool load(py::handle src, bool /*convert*/)
+      bool load(py::handle src, bool convert)
       {
 
         auto buf = array_type<double>::ensure(src);
@@ -119,6 +114,7 @@ namespace pybind11
         return a.release();
       }
     };
+    */
 
   }
 }

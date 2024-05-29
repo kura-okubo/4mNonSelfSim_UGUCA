@@ -1,6 +1,7 @@
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl_bind.h>
 
 #include "uca_common.hh"
 #include "uca_base_mesh.hh"
@@ -45,11 +46,44 @@ namespace uguca
 				.def("getNbLocalNodesAlloc",
 					 &SimpleMesh::getNbLocalNodesAlloc);
 
-			//py::class_<NodalField, std::shared_ptr<NodalField>>(mod, "NodalField")
-			//	.def(py::init<BaseMesh &, std::set<int>, const std::string &>(),
-			//		 py::arg("mesh"),
-			//		 py::arg("components"),
-			//		 py::arg("name") = "unnamed");
+			py::class_<NodalField, std::shared_ptr<NodalField>>(mod, "NodalField")
+				.def(py::init<BaseMesh &, std::set<int>, const std::string &>(),
+					 py::arg("mesh"),
+					 py::arg("components"),
+					 py::arg("name") = "unnamed")
+				.def("storage",
+					 [](NodalField &self)
+					 {
+						 auto dims = self.getDataSize().size();
+
+						 std::vector<size_t> shapes(dims);
+						 std::vector<size_t> strides(dims);
+
+						 switch (dims)
+						 {
+						 case 1:
+							 shapes[0] = self.getDataSize()[0];
+							 strides[0] = 1. * sizeof(double);
+							 break;
+						 case 2:
+							 shapes[1] = self.getDataSize()[0];
+							 shapes[0] = 2;
+
+							 strides[0] = shapes[1] * sizeof(double);
+							 strides[1] = 1. * sizeof(double);
+							 break;
+						 default:
+							 std::cout << "Not implemented yet" << std::endl;
+							 break;
+						 }
+
+						 py::array a(std::move(shapes),
+									 std::move(strides),
+									 self.getInternalData(),
+									 py::none());
+
+						return a;
+					 });
 		}
 
 	}

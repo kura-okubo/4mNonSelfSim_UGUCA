@@ -123,6 +123,8 @@ public:
   SpatialDirectionSet getComponents() const { return this->components; }
 
 
+  inline std::vector<double> & getStorage() {return this->storage; }
+
   // access the value of node n (reading and writing)
   inline double &operator()(int n, int d = 0);
   inline const double &operator()(int n, int d = 0) const;
