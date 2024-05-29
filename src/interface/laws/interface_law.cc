@@ -44,4 +44,8 @@ void InterfaceLaw::registerDumpField(const std::string & field_name) {
 
 }
 
+NodalField &  InterfaceLaw::getCohesion() {
+    return this->interface->getCohesion();
+ };
+
 __END_UGUCA__

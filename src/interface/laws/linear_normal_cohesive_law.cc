@@ -35,25 +35,25 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 
-LinearNormalCohesiveLaw::LinearNormalCohesiveLaw(BaseMesh & mesh,
-						 double Gc_default,
-						 double sigma_c_default,
-						 const std::string & name) :
-  InterfaceLaw(mesh,name),
-  G_c(mesh),
-  sigma_c(mesh)
+LinearNormalCohesiveLaw::LinearNormalCohesiveLaw(BaseMesh &mesh,
+                                                 double Gc_default,
+                                                 double sigma_c_default,
+                                                 const std::string &name) : InterfaceLaw(mesh, name),
+                                                                            G_c(mesh),
+                                                                            sigma_c(mesh)
 {
   this->G_c.setAllValuesTo(Gc_default);
-  this->G_c.setName(name+"_G_c");
-  
+  this->G_c.setName(name + "_G_c");
+
   this->sigma_c.setAllValuesTo(sigma_c_default);
-  this->sigma_c.setName(name+"_sigma_c");
+  this->sigma_c.setName(name + "_sigma_c");
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearNormalCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
-						    bool predicting) {
-
+void LinearNormalCohesiveLaw::computeCohesiveForces(bool predicting)
+{
+  NodalField &cohesion = this->interface->getCohesion();
+  
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);
 
@@ -77,54 +77,61 @@ void LinearNormalCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
-  for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
+  for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n)
+  {
 
-    if ((G_c(0) < 1e-12) || (sigma_c(n) < 1e-12)) {
+    if ((G_c(0) < 1e-12) || (sigma_c(n) < 1e-12))
+    {
       alpha(n) = 0.;
     }
-    else {
-    
-      double slope = pow(sigma_c(n),2) / 2. / G_c(n);
+    else
+    {
+
+      double slope = pow(sigma_c(n), 2) / 2. / G_c(n);
       double strength = std::max(sigma_c(n) - normal_gap_norm(n) * slope, 0.);
 
       // maximal normal cohesive force given by strength.
       // keep orientation of normal force
-      alpha(n) = std::min(1.,std::abs(strength / normal_trac_norm(n)));
+      alpha(n) = std::min(1., std::abs(strength / normal_trac_norm(n)));
     }
   }
 
   // only in normal direction
-  cohesion.multiplyByScalarField(alpha,1);
+  cohesion.multiplyByScalarField(alpha, 1);
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearNormalCohesiveLaw::registerDumpField(const std::string & field_name) {
+void LinearNormalCohesiveLaw::registerDumpField(const std::string &field_name)
+{
 
   // G_c
-  if (field_name == "G_c") {
+  if (field_name == "G_c")
+  {
     this->interface->registerIO(field_name,
-				this->G_c);
+                                this->G_c);
   }
 
   // sigma_c
-  else if (field_name == "sigma_c") {
+  else if (field_name == "sigma_c")
+  {
     this->interface->registerIO(field_name,
-				this->sigma_c);
+                                this->sigma_c);
   }
 
   // do not know this field
-  else {
+  else
+  {
     InterfaceLaw::registerDumpField(field_name);
   }
-
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearNormalCohesiveLaw::registerToRestart(Restart & restart) {
+void LinearNormalCohesiveLaw::registerToRestart(Restart &restart)
+{
 
   restart.registerIO(this->G_c);
   restart.registerIO(this->sigma_c);
-  
+
   InterfaceLaw::registerToRestart(restart);
 }
 

@@ -37,29 +37,29 @@ __BEGIN_UGUCA__
 
 /* -------------------------------------------------------------------------- */
 
-LinearShearCohesiveLaw::LinearShearCohesiveLaw(BaseMesh & mesh,
-					       double Gc_default,
-					       double tau_c_default,
-					       double tau_r_default,
-					       const std::string & name) :
-  InterfaceLaw(mesh,name),
-  G_c(mesh),
-  tau_c(mesh),
-  tau_r(mesh)
+LinearShearCohesiveLaw::LinearShearCohesiveLaw(BaseMesh &mesh,
+                                               double Gc_default,
+                                               double tau_c_default,
+                                               double tau_r_default,
+                                               const std::string &name) : InterfaceLaw(mesh, name),
+                                                                          G_c(mesh),
+                                                                          tau_c(mesh),
+                                                                          tau_r(mesh)
 {
   this->G_c.setAllValuesTo(Gc_default);
-  this->G_c.setName(name+"_G_c");
-  
+  this->G_c.setName(name + "_G_c");
+
   this->tau_c.setAllValuesTo(tau_c_default);
-  this->tau_c.setName(name+"_tau_c");
-  
+  this->tau_c.setName(name + "_tau_c");
+
   this->tau_r.setAllValuesTo(tau_r_default);
-  this->tau_r.setName(name+"_tau_r");
+  this->tau_r.setName(name + "_tau_r");
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
-                                                   bool predicting) {
+void LinearShearCohesiveLaw::computeCohesiveForces(bool predicting)
+{
+  NodalField &cohesion = this->interface->getCohesion();
 
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);
@@ -84,64 +84,71 @@ void LinearShearCohesiveLaw::computeCohesiveForces(NodalField & cohesion,
 
   // coh1 > 0 is a adhesive force
   // coh1 < 0 is a contact pressure
-  for (int n = 0; n<this->mesh.getNbLocalNodes(); ++n) {
+  for (int n = 0; n < this->mesh.getNbLocalNodes(); ++n)
+  {
 
     // avoid penetration "at any cost"
     // apply no normal cohesive force
-    cohesion(n,1) = std::min(cohesion(n,1), 0.);
+    cohesion(n, 1) = std::min(cohesion(n, 1), 0.);
 
-    double slope = pow(tau_c(n) - tau_r(n),2) / 2. / G_c(n);
+    double slope = pow(tau_c(n) - tau_r(n), 2) / 2. / G_c(n);
     double strength = std::max(tau_c(n) - shear_gap_norm(n) * slope,
-			       tau_r(n));
+                               tau_r(n));
 
     // maximal shear cohesive force given by strength.
     // keep orientation of shear force
-    alpha(n) = std::min(1.,std::abs(strength / shear_trac_norm(n)));
+    alpha(n) = std::min(1., std::abs(strength / shear_trac_norm(n)));
   }
 
   // only in shear direction
-  for (const auto& d : cohesion.getComponents()) {
-    if (d==1) // ignore normal direction
+  for (const auto &d : cohesion.getComponents())
+  {
+    if (d == 1) // ignore normal direction
       continue;
-    cohesion.multiplyByScalarField(alpha,d);
+    cohesion.multiplyByScalarField(alpha, d);
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearShearCohesiveLaw::registerDumpField(const std::string & field_name) {
+void LinearShearCohesiveLaw::registerDumpField(const std::string &field_name)
+{
 
   // G_c
-  if (field_name == "G_c") {
+  if (field_name == "G_c")
+  {
     this->interface->registerIO(field_name,
-				     this->G_c);
+                                this->G_c);
   }
 
   // tau_c
-  else if (field_name == "tau_c") {
+  else if (field_name == "tau_c")
+  {
     this->interface->registerIO(field_name,
-				     this->tau_c);
+                                this->tau_c);
   }
 
   // tau_r
-  else if (field_name == "tau_r") {
+  else if (field_name == "tau_r")
+  {
     this->interface->registerIO(field_name,
-				     this->tau_r);
+                                this->tau_r);
   }
 
   // do not know this field
-  else {
+  else
+  {
     InterfaceLaw::registerDumpField(field_name);
   }
-
 }
 
 /* -------------------------------------------------------------------------- */
-void LinearShearCohesiveLaw::registerToRestart(Restart & restart) {
+void LinearShearCohesiveLaw::registerToRestart(Restart &restart)
+{
 
   restart.registerIO(this->G_c);
   restart.registerIO(this->tau_c);
   restart.registerIO(this->tau_r);
-  
+
   InterfaceLaw::registerToRestart(restart);
 }
 

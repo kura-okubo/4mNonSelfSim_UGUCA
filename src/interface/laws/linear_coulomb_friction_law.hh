@@ -50,45 +50,44 @@
 
 __BEGIN_UGUCA__
 
-class LinearCoulombFrictionLaw : public InterfaceLaw {
+class LinearCoulombFrictionLaw : public InterfaceLaw
+{
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
+  LinearCoulombFrictionLaw(BaseMesh &mesh,
+                           double mu_s_default,
+                           double mu_k_default,
+                           double d_c_default,
+                           double char_reg_time = 0.,
+                           const std::string &name = "lcflaw");
 
-  LinearCoulombFrictionLaw(BaseMesh & mesh,
-			   double mu_s_default,
-			   double mu_k_default,
-			   double d_c_default,
-			   double char_reg_time = 0.,
-			   const std::string & name = "lcflaw");
-
-  virtual ~LinearCoulombFrictionLaw() {};
+  virtual ~LinearCoulombFrictionLaw(){};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(NodalField & cohesion,
-			     bool predicting = false);
+  void computeCohesiveForces(bool predicting = false);
 
-  void computeRegContactPressure(NodalField & cohesion,
-				 NodalField & reg_cont_pres);
+  void computeRegContactPressure(NodalField &cohesion,
+                                 NodalField &reg_cont_pres);
 
   // dumper function
-  virtual void registerDumpField(const std::string & field_name);
+  virtual void registerDumpField(const std::string &field_name);
 
   // restart
-  virtual void registerToRestart(Restart & restart);
+  virtual void registerToRestart(Restart &restart);
 
- /* ------------------------------------------------------------------------ */
- /* Accessors                                                                */
- /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------ */
+  /* Accessors                                                                */
+  /* ------------------------------------------------------------------------ */
 public:
-  NodalField & getMuS() { return this->mu_s; };
-  NodalField & getMuK() { return this->mu_k; };
-  NodalField & getDc() { return this->d_c; };
-  NodalField & getCharacteristicTime() { return this->char_time; };
+  NodalField &getMuS() { return this->mu_s; };
+  NodalField &getMuK() { return this->mu_k; };
+  NodalField &getDc() { return this->d_c; };
+  NodalField &getCharacteristicTime() { return this->char_time; };
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -108,6 +107,6 @@ private:
 
 __END_UGUCA__
 
-//#include "linear_coulomb_friction_law_impl.cc"
+// #include "linear_coulomb_friction_law_impl.cc"
 
 #endif /* __LINEAR_COULOMB_FRICTION_LAW_H__ */

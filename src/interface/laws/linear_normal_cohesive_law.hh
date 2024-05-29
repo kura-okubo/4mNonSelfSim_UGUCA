@@ -43,39 +43,37 @@
 
 __BEGIN_UGUCA__
 
-class LinearNormalCohesiveLaw : public InterfaceLaw {
+class LinearNormalCohesiveLaw : public InterfaceLaw
+{
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
+  LinearNormalCohesiveLaw(BaseMesh &mesh,
+                          double Gc_default,
+                          double sigma_c_default,
+                          const std::string &name = "lnclaw");
 
-
-  LinearNormalCohesiveLaw(BaseMesh & mesh,
-			  double Gc_default,
-			  double sigma_c_default,
-			  const std::string & name = "lnclaw");
-
-  virtual ~LinearNormalCohesiveLaw() {};
+  virtual ~LinearNormalCohesiveLaw(){};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(NodalField & cohesion,
-			     bool predicting = false);
+  void computeCohesiveForces(bool predicting = false);
 
   // dumper function
-  virtual void registerDumpField(const std::string & field_name);
+  virtual void registerDumpField(const std::string &field_name);
 
   // restart
-  virtual void registerToRestart(Restart & restart);
+  virtual void registerToRestart(Restart &restart);
 
- /* ------------------------------------------------------------------------ */
- /* Accessors                                                                */
- /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------ */
+  /* Accessors                                                                */
+  /* ------------------------------------------------------------------------ */
 public:
-  NodalField & getGc()     { return this->G_c;   }
-  NodalField & getSigmac() { return this->sigma_c; }
+  NodalField &getGc() { return this->G_c; }
+  NodalField &getSigmac() { return this->sigma_c; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -87,6 +85,6 @@ private:
 
 __END_UGUCA__
 
-//#include "linear_normal_cohesive_law_impl.cc"
+// #include "linear_normal_cohesive_law_impl.cc"
 
 #endif /* __LINEAR_NORMAL_COHESIVE_LAW_H__ */

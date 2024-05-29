@@ -46,41 +46,40 @@
 
 __BEGIN_UGUCA__
 
-class LinearShearCohesiveLaw : public InterfaceLaw {
+class LinearShearCohesiveLaw : public InterfaceLaw
+{
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
+  LinearShearCohesiveLaw(BaseMesh &mesh,
+                         double Gc_default,
+                         double tau_c_default,
+                         double tau_r_default = 0.,
+                         const std::string &name = "lsclaw");
 
-
-  LinearShearCohesiveLaw(BaseMesh & mesh,
-			 double Gc_default,
-			 double tau_c_default,
-			 double tau_r_default = 0.,
-			 const std::string & name = "lsclaw");
-
-  virtual ~LinearShearCohesiveLaw() {};
+  virtual ~LinearShearCohesiveLaw(){};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
- void computeCohesiveForces(NodalField & cohesion,
-                            bool predicting = false);
+  void computeCohesiveForces(
+      bool predicting = false);
 
   // dumper function
-  virtual void registerDumpField(const std::string & field_name);
+  virtual void registerDumpField(const std::string &field_name);
 
   // restart
-  virtual void registerToRestart(Restart & restart);
+  virtual void registerToRestart(Restart &restart);
 
- /* ------------------------------------------------------------------------ */
- /* Accessors                                                                */
- /* ------------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------------ */
+  /* Accessors                                                                */
+  /* ------------------------------------------------------------------------ */
 public:
-  NodalField & getGc()   { return this->G_c;   }
-  NodalField & getTauc() { return this->tau_c; }
-  NodalField & getTaur() { return this->tau_r; }
+  NodalField &getGc() { return this->G_c; }
+  NodalField &getTauc() { return this->tau_c; }
+  NodalField &getTaur() { return this->tau_r; }
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
@@ -93,6 +92,6 @@ private:
 
 __END_UGUCA__
 
-//#include "linear_shear_cohesive_law_impl.cc"
+// #include "linear_shear_cohesive_law_impl.cc"
 
 #endif /* __LINEAR_SHEAR_COHESIVE_LAW_H__ */

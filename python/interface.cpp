@@ -136,19 +136,20 @@ namespace uguca
 			py::class_<InterfaceLaw,
 					   std::shared_ptr<InterfaceLaw>, PyInterfaceLaw>(mod, "InterfaceLaw")
 				.def(py::init<BaseMesh &>(),
-					 py::arg("mesh"));
-			//.def("getCohesion",
-			//     &InterfaceLaw::getCohesion,
-			//     py::return_value_policy::reference)
-			//.def("getInterface",
-			//     &InterfaceLaw::getInterface)
-			//.def("getMesh",
-			//     &InterfaceLaw::getMesh,
-			//     py::return_value_policy::reference)
-			//.def("computeCohesiveForces",
-			//     [](InterfaceLaw & self, bool predicting=false) {
-			//       self.computeCohesiveForces(predicting);
-			//     });
+					 py::arg("mesh"))
+				.def("getCohesion",
+					 &InterfaceLaw::getCohesion,
+					 py::return_value_policy::reference)
+				.def("getInterface",
+					 &InterfaceLaw::getInterface)
+				.def("getMesh",
+					 &InterfaceLaw::getMesh,
+					 py::return_value_policy::reference)
+				.def("computeCohesiveForces",
+					 [](InterfaceLaw &self, bool predicting = false)
+					 {
+						 self.computeCohesiveForces(predicting);
+					 });
 
 			py::class_<BarrasLaw, InterfaceLaw,
 					   std::shared_ptr<BarrasLaw>>(mod, "BarrasLaw")

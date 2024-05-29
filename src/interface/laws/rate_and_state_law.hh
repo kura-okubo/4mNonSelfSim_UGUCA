@@ -46,77 +46,82 @@
 
 __BEGIN_UGUCA__
 
-class RateAndStateLaw : public InterfaceLaw {
+class RateAndStateLaw : public InterfaceLaw
+{
 public:
-  enum class EvolutionLaw{AgingLaw, SlipLaw, SlipLawWithStrongRateWeakening};
+  enum class EvolutionLaw
+  {
+    AgingLaw,
+    SlipLaw,
+    SlipLawWithStrongRateWeakening
+  };
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
   RateAndStateLaw(
-       BaseMesh & mesh,
-       double a_default,
-       double b_default,
-       double Dc_default,
-       double V0,
-       double f0,
-       double theta_default,
-       EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
-       bool predictor_corrector = true,
-       double plate_velocity = 0.0,
-       const std::string & name = "rslaw"
-       );
+      BaseMesh &mesh,
+      double a_default,
+      double b_default,
+      double Dc_default,
+      double V0,
+      double f0,
+      double theta_default,
+      EvolutionLaw evolution_law = EvolutionLaw::AgingLaw,
+      bool predictor_corrector = true,
+      double plate_velocity = 0.0,
+      const std::string &name = "rslaw");
   virtual ~RateAndStateLaw();
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  void computeCohesiveForces(NodalField & cohesion,
-			     bool predicting = false);
+  void computeCohesiveForces(
+      bool predicting = false);
 
   // dumper function
-  virtual void registerDumpField(const std::string & field_name);
+  virtual void registerDumpField(const std::string &field_name);
   virtual void init();
 
   // restart
-  virtual void registerToRestart(Restart & restart);
-  
+  virtual void registerToRestart(Restart &restart);
+
 protected:
-  virtual void computeTheta(NodalField & target,
-			    NodalField & delta_dot);
+  virtual void computeTheta(NodalField &target,
+                            NodalField &delta_dot);
 
   /* ------------------------------------------------------------------------ */
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
-  NodalField & getTheta() { return this->theta; };
-  NodalField & getA() { return this->a; };
-  NodalField & getB() { return this->b; };
-  NodalField & getVw();    // for slip law with strong rate weakening
-  void setFw(double fw);  // for slip law with strong rate weakening
+  NodalField &getTheta() { return this->theta; };
+  NodalField &getA() { return this->a; };
+  NodalField &getB() { return this->b; };
+  NodalField &getVw();   // for slip law with strong rate weakening
+  void setFw(double fw); // for slip law with strong rate weakening
 
   /* ------------------------------------------------------------------------ */
   /* Class Members                                                            */
   /* ------------------------------------------------------------------------ */
- protected:
-  NodalField theta;          // state variable
-  NodalField theta_pc;       // state variable for predictor
-  //NodalField sigma;          // normal stress (compression is positive)
-  NodalField V;              // slip rate
-  NodalField iterations;     // iterations took in Newton-Raphson algorithm
-  NodalField rel_error;      // for Newton-Raphson algorithm debugging
+protected:
+  NodalField theta;    // state variable
+  NodalField theta_pc; // state variable for predictor
+  // NodalField sigma;          // normal stress (compression is positive)
+  NodalField V;          // slip rate
+  NodalField iterations; // iterations took in Newton-Raphson algorithm
+  NodalField rel_error;  // for Newton-Raphson algorithm debugging
   // NodalField * abs_error;          // for Newton-Raphson algorithm debugging
-  double V0;                          // reference slip rate
-  double f0;                          // reference parameter
-  NodalField a;              // friction parameter
-  NodalField b;              // friction parameter
-  NodalField Dc;             // friction parameter
-  bool predictor_corrector;           // indicates whether predictor-corrector is activated
-  EvolutionLaw evolution_law;         // indicates which state evolution law to use
-  double Vguard = 1.0e-20;            // minimum absolute velocity
-  double Vplate;                      // plate velocity
-  NodalField Vw;             // for slip law with strong rate weakening
-  double fw = -1.0;                   // for slip law with strong rate weakening
+  double V0;                  // reference slip rate
+  double f0;                  // reference parameter
+  NodalField a;               // friction parameter
+  NodalField b;               // friction parameter
+  NodalField Dc;              // friction parameter
+  bool predictor_corrector;   // indicates whether predictor-corrector is activated
+  EvolutionLaw evolution_law; // indicates which state evolution law to use
+  double Vguard = 1.0e-20;    // minimum absolute velocity
+  double Vplate;              // plate velocity
+  NodalField Vw;              // for slip law with strong rate weakening
+  double fw = -1.0;           // for slip law with strong rate weakening
 };
 
 __END_UGUCA__

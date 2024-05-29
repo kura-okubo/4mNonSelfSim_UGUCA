@@ -51,52 +51,53 @@ __BEGIN_UGUCA__
 */
 
 RateAndStateLaw::RateAndStateLaw(
-       BaseMesh & mesh,
-       double a_default,
-       double b_default,
-       double Dc_default,
-       double V0,
-       double f0,
-       double theta_default,
-       EvolutionLaw evolution_law,
-       bool predictor_corrector,
-       double plate_velocity,
-       const std::string & name):
-  InterfaceLaw(mesh,name),
-  theta(mesh),
-  theta_pc(),  // not allocated
-  V(mesh),
-  iterations(mesh),
-  rel_error(mesh),
-  V0(V0),
-  f0(f0),
-  a(mesh),
-  b(mesh),
-  Dc(mesh),
-  predictor_corrector(predictor_corrector),
-  evolution_law(evolution_law),
-  Vplate(plate_velocity),
-  Vw() // not allocated
+    BaseMesh &mesh,
+    double a_default,
+    double b_default,
+    double Dc_default,
+    double V0,
+    double f0,
+    double theta_default,
+    EvolutionLaw evolution_law,
+    bool predictor_corrector,
+    double plate_velocity,
+    const std::string &name) : InterfaceLaw(mesh, name),
+                               theta(mesh),
+                               theta_pc(), // not allocated
+                               V(mesh),
+                               iterations(mesh),
+                               rel_error(mesh),
+                               V0(V0),
+                               f0(f0),
+                               a(mesh),
+                               b(mesh),
+                               Dc(mesh),
+                               predictor_corrector(predictor_corrector),
+                               evolution_law(evolution_law),
+                               Vplate(plate_velocity),
+                               Vw() // not allocated
 {
   this->theta.setAllValuesTo(theta_default);
-  this->theta.setName(name+"_theta");
-  
-  this->a.setAllValuesTo(a_default);
-  this->a.setName(name+"_a");
-  
-  this->b.setAllValuesTo(b_default);
-  this->b.setName(name+"_b");
-  
-  this->Dc.setAllValuesTo(Dc_default);
-  this->Dc.setName(name+"_Dc");
+  this->theta.setName(name + "_theta");
 
-  if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening) {
+  this->a.setAllValuesTo(a_default);
+  this->a.setName(name + "_a");
+
+  this->b.setAllValuesTo(b_default);
+  this->b.setName(name + "_b");
+
+  this->Dc.setAllValuesTo(Dc_default);
+  this->Dc.setName(name + "_Dc");
+
+  if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening)
+  {
     this->Vw.resize(mesh, V.getComponents());
-    this->Vw.setName(name+"_vw");
+    this->Vw.setName(name + "_vw");
   }
-  if (predictor_corrector) {
+  if (predictor_corrector)
+  {
     this->theta_pc.resize(mesh, theta.getComponents());
-    this->theta_pc.setName(name+"_pctheta");
+    this->theta_pc.setName(name + "_pctheta");
   }
 }
 
@@ -104,27 +105,33 @@ RateAndStateLaw::RateAndStateLaw(
 RateAndStateLaw::~RateAndStateLaw() {}
 
 /* -------------------------------------------------------------------------- */
-void RateAndStateLaw::init() {
+void RateAndStateLaw::init()
+{
   // check if external load is not all zero on direction 2
   if (mesh.getDim() == 2)
     return;
   unsigned int nb = this->mesh.getNbLocalNodes();
   const double *external_2 = this->interface->getLoad().data(2);
   bool checks_out = true;
-  for (unsigned i = 0; i < nb; ++i) {
-    if (external_2[i] != 0.0) {
+  for (unsigned i = 0; i < nb; ++i)
+  {
+    if (external_2[i] != 0.0)
+    {
       checks_out = false;
       break;
     }
   }
-  if (!checks_out) {
+  if (!checks_out)
+  {
     std::string message = "[ERROR] RateAndStateLaw currently only supports friction in 0 direction.";
     std::cerr << message << std::endl;
     throw message;
   }
   // check fw for EvolutionLaw::SlipLawWithStrongRateWeakening
-  if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening) {
-    if (fw < 0) {
+  if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening)
+  {
+    if (fw < 0)
+    {
       std::string message =
           "[ERROR] fw needs to be set before init() when using "
           "EvolutionLaw::SlipLawWithStrongRateWeakening";
@@ -135,8 +142,11 @@ void RateAndStateLaw::init() {
 }
 
 /* -------------------------------------------------------------------------- */
-void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
-					    bool predicting) {
+void RateAndStateLaw::computeCohesiveForces(
+    bool predicting)
+{
+
+  NodalField &cohesion = this->interface->getCohesion();
 
   // find forces needed to close normal gap
   this->interface->closingNormalGapForce(cohesion, predicting);
@@ -145,17 +155,17 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
   this->interface->maintainShearGapForce(cohesion);
 
   // interface properties
-  const HalfSpace & top = this->interface->getTop();
-  const HalfSpace & bot = this->interface->getBot();
-  const Material & mat_top = top.getMaterial();
-  const Material & mat_bot = bot.getMaterial();
+  const HalfSpace &top = this->interface->getTop();
+  const HalfSpace &bot = this->interface->getBot();
+  const Material &mat_top = top.getMaterial();
+  const Material &mat_bot = bot.getMaterial();
   double fact_top = mat_top.getCs() / mat_top.getShearModulus();
   double fact_bot = mat_bot.getCs() / mat_bot.getShearModulus();
   double fact_both = fact_top + fact_bot;
 
-  const NodalField & inttop = top.getInternal();
-  const NodalField & intbot = bot.getInternal();
-  const NodalField & ext = this->interface->getLoad();
+  const NodalField &inttop = top.getInternal();
+  const NodalField &intbot = bot.getInternal();
+  const NodalField &ext = this->interface->getLoad();
 
   NodalField gap_velo(this->mesh, cohesion.getComponents());
   // compute delta_dot: do not use v* here -- predicting = false
@@ -165,15 +175,19 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
 
   // compute theta
   this->computeTheta(predicting ? this->theta_pc : this->theta, this->V);
-  NodalField * _theta = predicting ? &(this->theta_pc) : &(this->theta);
+  NodalField *_theta = predicting ? &(this->theta_pc) : &(this->theta);
 
   // solve tau_coh using Newton-Raphson
   // V is then solved in Interface::advanceTimeStep()
-  for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i) {
+  for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i)
+  {
     double Z;
-    if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening) {
+    if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening)
+    {
       Z = 0.5 / V0 * std::exp((*_theta)(i) / this->a(i));
-    } else {
+    }
+    else
+    {
       Z = 0.5 / V0 * std::exp((f0 + this->b(i) * std::log(V0 * (*_theta)(i) / this->Dc(i))) / this->a(i));
     }
 
@@ -187,137 +201,159 @@ void RateAndStateLaw::computeCohesiveForces(NodalField & cohesion,
     unsigned iter = 0;
     unsigned sign_change_count = 0;
     // Newton-Raphson
-    do {
+    do
+    {
       ++iter;
-      tau = this->a(i) * std::abs(cohesion(i,1)) * std::asinh(Z * (v_prev + Vplate));
-      dtau = this->a(i) * std::abs(cohesion(i,1)) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
-      F = fact_both * (ext(i,0) - tau) + fact_top * inttop(i,0) +
-          fact_bot * intbot(i,0) - v_prev;
+      tau = this->a(i) * std::abs(cohesion(i, 1)) * std::asinh(Z * (v_prev + Vplate));
+      dtau = this->a(i) * std::abs(cohesion(i, 1)) * Z / std::sqrt(1.0 + Z * Z * (v_prev + Vplate) * (v_prev + Vplate));
+      F = fact_both * (ext(i, 0) - tau) + fact_top * inttop(i, 0) +
+          fact_bot * intbot(i, 0) - v_prev;
       dF = -fact_both * dtau - 1.0;
       v = v_prev - F / dF;
       rel_change = std::abs(F / dF / v_prev);
       // catching infinite loop when v is jumping across 0 more than 4 times
       // set v to 0 (Vp) and continue the iterations
-      if ((v_prev + Vplate) * (v + Vplate) < 0) ++sign_change_count;
-      if (sign_change_count >= 4) {
+      if ((v_prev + Vplate) * (v + Vplate) < 0)
+        ++sign_change_count;
+      if (sign_change_count >= 4)
+      {
         v = -Vplate;
         sign_change_count = 0;
         rel_change = 1.0;
       }
-      if (!std::isfinite(v)) {
+      if (!std::isfinite(v))
+      {
         v = -Vplate;
         rel_change = 1.0;
-      } else if (!std::isfinite(rel_change)) {
+      }
+      else if (!std::isfinite(rel_change))
+      {
         rel_change = 1.0;
       }
-      if (!std::isfinite(v)){
+      if (!std::isfinite(v))
+      {
         v = -Vplate;
         rel_change = 1;
       }
-      if (!std::isfinite(rel_change)) rel_change = 1.0;
+      if (!std::isfinite(rel_change))
+        rel_change = 1.0;
       v_prev = v;
     } while ((rel_change > rel_tol && iter < max_iter) || iter < min_iter);
-    if (iter == max_iter) {
+    if (iter == max_iter)
+    {
       throw std::runtime_error("Newton-Raphson not converged in RateAndStateLaw::computeCohesiveForces");
     }
-    tau = this->a(i) * std::abs(cohesion(i,1)) * std::asinh(Z * (v + Vplate));
-    cohesion(i,0) = tau;
+    tau = this->a(i) * std::abs(cohesion(i, 1)) * std::asinh(Z * (v + Vplate));
+    cohesion(i, 0) = tau;
     this->iterations(i) = iter;
     this->rel_error(i) = rel_change;
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void RateAndStateLaw::computeTheta(NodalField & target,
-				   NodalField & delta_dot) {
+void RateAndStateLaw::computeTheta(NodalField &target,
+                                   NodalField &delta_dot)
+{
 
   double dt = this->interface->getTimeStep();
 
-  switch (evolution_law) {
-    case EvolutionLaw::AgingLaw: {
-      for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i) {
-        double v_i = std::abs(delta_dot(i) + Vplate);
-        v_i = std::isfinite(v_i) ?
-          std::max(v_i, this->Vguard) : this->Vguard;
-        // assuming constant v within time step:
-        double D = exp(-v_i * dt / this->Dc(i));
-        target(i) = this->theta(i) * D + this->Dc(i) / v_i * (1.0 - D);
-        // assuming constant d(theta)/dt within time step:
-        // target(i) = this->theta(i) + (1 - v_i * this->theta(i) / this->Dc(i)) * dt;
-      }
-      break;
+  switch (evolution_law)
+  {
+  case EvolutionLaw::AgingLaw:
+  {
+    for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i)
+    {
+      double v_i = std::abs(delta_dot(i) + Vplate);
+      v_i = std::isfinite(v_i) ? std::max(v_i, this->Vguard) : this->Vguard;
+      // assuming constant v within time step:
+      double D = exp(-v_i * dt / this->Dc(i));
+      target(i) = this->theta(i) * D + this->Dc(i) / v_i * (1.0 - D);
+      // assuming constant d(theta)/dt within time step:
+      // target(i) = this->theta(i) + (1 - v_i * this->theta(i) / this->Dc(i)) * dt;
     }
-    case EvolutionLaw::SlipLaw: {
-      for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i) {
-        double v_i = std::abs(delta_dot(i) + Vplate);
-        v_i = std::isfinite(v_i) ?
-          std::max(v_i, this->Vguard) : this->Vguard;
-        // assuming constant v within time step:
-        double D = exp(-v_i * dt / this->Dc(i));
-        target(i) = this->Dc(i) / v_i * pow(v_i * this->theta(i) / this->Dc(i), D);
-        // assuming constant d(theta)/dt within time step:
-        // double D = v_i * this->theta(i) / this->Dc(i);
-        // target(i) = this->theta(i) - D * std::log(D) * dt;
-      }
-      break;
+    break;
+  }
+  case EvolutionLaw::SlipLaw:
+  {
+    for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i)
+    {
+      double v_i = std::abs(delta_dot(i) + Vplate);
+      v_i = std::isfinite(v_i) ? std::max(v_i, this->Vguard) : this->Vguard;
+      // assuming constant v within time step:
+      double D = exp(-v_i * dt / this->Dc(i));
+      target(i) = this->Dc(i) / v_i * pow(v_i * this->theta(i) / this->Dc(i), D);
+      // assuming constant d(theta)/dt within time step:
+      // double D = v_i * this->theta(i) / this->Dc(i);
+      // target(i) = this->theta(i) - D * std::log(D) * dt;
     }
-    case EvolutionLaw::SlipLawWithStrongRateWeakening: {
-      for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i) {
-        double v_i = std::abs(delta_dot(i) + Vplate);
-        v_i = std::isfinite(v_i) ? std::max(v_i, this->Vguard) : this->Vguard;
-        double f_LV_i = f0 - (this->b(i) - this->a(i)) * std::log(v_i / V0);
-        double f_ss_i =
-            fw + (f_LV_i - fw) / std::pow(1 + std::pow(v_i / this->Vw(i), 8.0), 0.125);
-        double theta_ss_i = this->a(i) * std::log(2.0 * V0 / v_i *
-						  std::sinh(f_ss_i / this->a(i)));
-        double D = exp(-v_i * dt / this->Dc(i));
-        target(i) = D * this->theta(i) + (1.0 - D) * theta_ss_i;
-      }
-      break;
+    break;
+  }
+  case EvolutionLaw::SlipLawWithStrongRateWeakening:
+  {
+    for (int i = 0; i < this->mesh.getNbLocalNodes(); ++i)
+    {
+      double v_i = std::abs(delta_dot(i) + Vplate);
+      v_i = std::isfinite(v_i) ? std::max(v_i, this->Vguard) : this->Vguard;
+      double f_LV_i = f0 - (this->b(i) - this->a(i)) * std::log(v_i / V0);
+      double f_ss_i =
+          fw + (f_LV_i - fw) / std::pow(1 + std::pow(v_i / this->Vw(i), 8.0), 0.125);
+      double theta_ss_i = this->a(i) * std::log(2.0 * V0 / v_i *
+                                                std::sinh(f_ss_i / this->a(i)));
+      double D = exp(-v_i * dt / this->Dc(i));
+      target(i) = D * this->theta(i) + (1.0 - D) * theta_ss_i;
     }
-    default:
-      std::string message = "[ERROR] RateAndStateLaw found unsupported evolution law option.";
-      std::cerr << message << std::endl;
-      throw message;
+    break;
+  }
+  default:
+    std::string message = "[ERROR] RateAndStateLaw found unsupported evolution law option.";
+    std::cerr << message << std::endl;
+    throw message;
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void RateAndStateLaw::registerDumpField(const std::string &field_name) {
+void RateAndStateLaw::registerDumpField(const std::string &field_name)
+{
   // theta
-  if (field_name == "theta") {
+  if (field_name == "theta")
+  {
     this->interface->registerIO(field_name,
-				     this->theta);
+                                this->theta);
   }
   // iterations
-  else if (field_name == "iterations") {
+  else if (field_name == "iterations")
+  {
     this->interface->registerIO(field_name,
-				     this->iterations);
+                                this->iterations);
   }
   // rel_error in Newton-Raphson
-  else if (field_name == "rel_error") {
+  else if (field_name == "rel_error")
+  {
     this->interface->registerIO(field_name,
-				     this->rel_error);
+                                this->rel_error);
   }
   // a
-  else if (field_name == "a") {
+  else if (field_name == "a")
+  {
     this->interface->registerIO(field_name,
-				     this->a);
+                                this->a);
   }
   // b
-  else if (field_name == "b") {
+  else if (field_name == "b")
+  {
     this->interface->registerIO(field_name,
-				     this->b);
+                                this->b);
   }
   // do not know this field
-  else {
+  else
+  {
     InterfaceLaw::registerDumpField(field_name);
   }
-
 }
 
 /* -------------------------------------------------------------------------- */
-void RateAndStateLaw::registerToRestart(Restart & restart) {
+void RateAndStateLaw::registerToRestart(Restart &restart)
+{
 
   restart.registerIO(this->theta);
   restart.registerIO(this->theta_pc);
@@ -326,24 +362,28 @@ void RateAndStateLaw::registerToRestart(Restart & restart) {
   restart.registerIO(this->b);
   restart.registerIO(this->Dc);
   restart.registerIO(this->Vw);
-  
+
   InterfaceLaw::registerToRestart(restart);
 }
 
 /* -------------------------------------------------------------------------- */
-NodalField & RateAndStateLaw::getVw() {
+NodalField &RateAndStateLaw::getVw()
+{
   if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening)
     return this->Vw;
-  else {
+  else
+  {
     throw std::runtime_error(
         "Vw is only used in EvolutionLaw::SlipLawWithStrongRateWeakening");
   }
 }
 
-void RateAndStateLaw::setFw(double fw) {
+void RateAndStateLaw::setFw(double fw)
+{
   if (evolution_law == EvolutionLaw::SlipLawWithStrongRateWeakening)
     this->fw = fw;
-  else {
+  else
+  {
     throw std::runtime_error(
         "fw is only used in EvolutionLaw::SlipLawWithStrongRateWeakening");
   }

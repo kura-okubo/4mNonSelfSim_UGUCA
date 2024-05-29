@@ -41,26 +41,26 @@
 __BEGIN_UGUCA__
 
 class Interface; // <--- don't know if this works --------------------------
+class NodalField;
 
-class InterfaceLaw {
+class InterfaceLaw
+{
   /* ------------------------------------------------------------------------ */
   /* Constructors/Destructors                                                 */
   /* ------------------------------------------------------------------------ */
 public:
-
-  InterfaceLaw(BaseMesh & mesh, const std::string & name = "law")
-    : name(name), mesh(mesh) {};
-  virtual ~InterfaceLaw() {};
+  InterfaceLaw(BaseMesh &mesh, const std::string &name = "law")
+      : name(name), mesh(mesh){};
+  virtual ~InterfaceLaw(){};
 
   /* ------------------------------------------------------------------------ */
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeCohesiveForces(NodalField & cohesion,
-                                     bool predicting = false) = 0;
+  virtual void computeCohesiveForces([[gnu::unused]] bool predicting = false) {};
 
   // dumper function
-  virtual void registerDumpField(const std::string & field_name);
+  virtual void registerDumpField(const std::string &field_name);
 
   // restart
   virtual void registerToRestart(Restart &) {};
@@ -69,21 +69,34 @@ public:
   /* Accessors                                                                */
   /* ------------------------------------------------------------------------ */
 public:
- virtual void setInterface(Interface *interface) {
-   this->interface = interface;
- };
+  virtual void setInterface(Interface *interface)
+  {
+    this->interface = interface;
+  };
 
- /* ------------------------------------------------------------------------ */
- /* Class Members                                                            */
- /* ------------------------------------------------------------------------ */
+  BaseMesh &getMesh()
+  {
+    return this->mesh;
+  };
+
+  Interface *getInterface()
+  {
+    return this->interface;
+  };
+
+  NodalField &getCohesion();
+
+  /* ------------------------------------------------------------------------ */
+  /* Class Members                                                            */
+  /* ------------------------------------------------------------------------ */
 protected:
   std::string name;
-  BaseMesh & mesh;
-  Interface * interface;
+  BaseMesh &mesh;
+  Interface *interface;
 };
 
 __END_UGUCA__
 
-//#include "interface_law_impl.cc"
+// #include "interface_law_impl.cc"
 
 #endif /* __INTERFACE_LAW_H__ */
