@@ -83,7 +83,7 @@ int main(){
   std::cout << "data correct -> success" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh, {_x,_y});
+  //NodalField cohesion(mesh, {_x,_y});
 
   // access to various properties needed to apply values
   NodalField & load = interface.getLoad();
@@ -96,6 +96,8 @@ int main(){
   NodalField rcp(mesh);
   double prev_rcp = 0.5e6;
   rcp.setAllValuesTo(prev_rcp);
+
+  NodalField & cohesion = law.getCohesion();
   cohesion.setAllValuesTo(std::abs(sig),1);
   law.computeRegContactPressure(cohesion, rcp);
 
@@ -114,7 +116,9 @@ int main(){
   double tau0v = 0.9*mus*sig;
   load.setAllValuesTo(tau0v,0);
 
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
+  
+
   std::cout << "stick (" << tau0v << "): " << cohesion(0,0) << std::endl;
   if ((std::abs(cohesion(0,0) - tau0v) / tau0v > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
     std::cout << "stick failed (" << tau0v << "): " << cohesion(0,0) << std::endl;
@@ -124,7 +128,7 @@ int main(){
   // check stick-to-slip: tau0 > tauc & u=0
   tau0v = 1.1*mus*sig;
   load.setAllValuesTo(tau0v,0);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   std::cout << "stick-to-slip (" << (mus*sig) << "): " << cohesion(0,0) << std::endl;
   if ((std::abs(cohesion(0,0) - mus*sig) / (mus*sig) > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
     std::cout << "stick-to-slip failed (" << (mus*sig) << "): " << cohesion(0,0) << std::endl;
@@ -137,7 +141,7 @@ int main(){
   double u0v = 0.7*dc;
   u.setAllValuesTo(u0v,0);
   val = (mus - u0v/dc*(mus - muk)) * sig;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   std::cout << "weakening (" << val << "): " << cohesion(0,0) << std::endl;
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
     std::cout << "weakening failed (" << val << "): " << cohesion(0,0) << std::endl;
@@ -150,7 +154,7 @@ int main(){
   u0v = 1.1*dc;
   u.setAllValuesTo(u0v,0);
   val = muk*sig;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   std::cout << "residual (" << val << "): " << cohesion(0,0) << std::endl;
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
     std::cout << "residual failed (" << val << "): " << cohesion(0,0) << std::endl;
@@ -163,7 +167,7 @@ int main(){
   u0v = -1.1*dc;
   u.setAllValuesTo(u0v,0);
   val = -muk*sig;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   std::cout << "negative (" << val << "): " << cohesion(0,0) << std::endl;
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
     std::cout << "negative failed (" << val << "): " << cohesion(0,0) << std::endl;
@@ -171,7 +175,7 @@ int main(){
   }
 
   // check no penetration: sig0 < 0
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   std::cout << "no penetration (" << sig << "): " << cohesion(0,1) << std::endl;
   if ((std::abs(cohesion(0,1) - sig) / sig > 1e-5) || (cohesion(0,1) * sig < 0)) {
     std::cout << "no penetration failed (" << sig << "): " << cohesion(0,1) << std::endl;
@@ -181,7 +185,7 @@ int main(){
   // check no adhesion: sig0 > 0
   double sig0v = -sig;
   load.setAllValuesTo(sig0v,1);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   std::cout << "no adhesion (" << 0. << "): " << cohesion(0,1) << std::endl;
   if (std::abs(cohesion(0,1)) > 1e-8) {
     std::cout << "no adhesion failed (" << 0. << "): " << cohesion(0,1) << std::endl;

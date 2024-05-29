@@ -73,7 +73,7 @@ int main(){
   std::cout << "check computeCohesiveForces" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh, {_x,_y});
+  //NodalField cohesion(mesh, {_x,_y});
 
   // access to various properties needed to apply values
   NodalField & load = interface.getLoad();
@@ -83,7 +83,9 @@ int main(){
   // check: sigma0 < sigmac & u=0
   double sigma0v = 0.9*sigmac;
   load.setAllValuesTo(sigma0v,1);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
+  NodalField & cohesion =  law.getCohesion();
+
   if ((std::abs(cohesion(0,1) - sigma0v) / sigma0v > 1e-5)
       || (cohesion(0,1) * sigma0v < 0)) {
     std::cout << "cohesion failed (" << sigma0v << "): "
@@ -94,7 +96,8 @@ int main(){
   // check: sigma0 > sigmac & u=0
   sigma0v = 1.1*sigmac;
   load.setAllValuesTo(sigma0v,1);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
+  
   if ((std::abs(cohesion(0,1) - sigmac) / sigmac > 1e-5)
       || (cohesion(0,1) * sigma0v < 0)) {
     std::cout << "onset failed (" << sigmac << "): "
@@ -108,7 +111,7 @@ int main(){
   double u1v = 0.7*dc;
   u.setAllValuesTo(u1v,1);
   double val = sigmac - u1v/dc*sigmac;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,1) - val) / val > 1e-5)
       || (cohesion(0,1) * sigma0v < 0)) {
     std::cout << "weakening failed (" << val << "): "
@@ -122,7 +125,7 @@ int main(){
   u1v = 1.1*dc;
   u.setAllValuesTo(u1v,1);
   val = 0;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,1) - val) / val > 1e-5)
       || (cohesion(0,1) * sigma0v < 0)) {
     std::cout << "residual failed (" << val << "): "
@@ -133,7 +136,7 @@ int main(){
   // check no penetration: sig0 < 0
   double sig0v = -2*sigmac;
   load.setAllValuesTo(sig0v,1);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,1) - sig0v) / sig0v > 1e-5)
       || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "no penetration failed (" << sig0v << "): "

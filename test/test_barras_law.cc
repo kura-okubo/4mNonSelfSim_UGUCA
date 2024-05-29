@@ -71,7 +71,7 @@ int main(){
   std::cout << "check computeCohesiveForces" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh, {_x,_y});
+  //NodalField cohesion(mesh, {_x,_y});
 
   // access to various properties needed to apply values
   NodalField & load = interface.getLoad();
@@ -87,7 +87,9 @@ int main(){
   disp.setAllValuesTo(u0v,0);
   disp.setAllValuesTo(u1v,1);
   double val = tau0v;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
+  NodalField & cohesion = law.getCohesion();
+
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0)) {
     std::cout << "shear failed (" << val << "): " << cohesion(0,0) << std::endl;
     return 1; // failure
@@ -103,7 +105,7 @@ int main(){
   disp.setAllValuesTo(u0v,0);
   disp.setAllValuesTo(u1v,1);
   val = sig0v;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "normal failed (" << val << "): " << cohesion(0,1) << std::endl;
     return 1; // failure
@@ -119,7 +121,7 @@ int main(){
   disp.setAllValuesTo(u0v,0);
   disp.setAllValuesTo(u1v,1);
   val = sig0v;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "contact failed (" << val << "): " << cohesion(0,1) << std::endl;
     return 1; // failure
@@ -135,7 +137,7 @@ int main(){
   disp.setAllValuesTo(u0v,0);
   disp.setAllValuesTo(u1v,1);
   val = tauc;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0) ||
       (std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "decohesion failed (" << val << "): "
@@ -153,7 +155,7 @@ int main(){
   disp.setAllValuesTo(u0v,0);
   disp.setAllValuesTo(u1v,1);
   val = tauc * (1 - std::sqrt(u0v*u0v+u1v*u1v)/dc);
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0) ||
       (std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "weakening failed (" << val << "): "
@@ -171,7 +173,7 @@ int main(){
   disp.setAllValuesTo(u0v,0);
   disp.setAllValuesTo(u1v,1);
   val = 0.;
-  law.computeCohesiveForces(cohesion, false);
+  law.computeCohesiveForces(false);
   if ((std::abs(cohesion(0,0) - val) / val > 1e-5) || (cohesion(0,0) * tau0v < 0) ||
       (std::abs(cohesion(0,1) - val) / val > 1e-5) || (cohesion(0,1) * sig0v < 0)) {
     std::cout << "open failed (" << val << "): "

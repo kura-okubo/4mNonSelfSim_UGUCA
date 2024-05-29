@@ -26,10 +26,10 @@ namespace uguca
 		public:
 			using InterfaceLaw::InterfaceLaw;
 
-			void computeCohesiveForces(NodalField &cohesion, bool predicting = false) override
+			void computeCohesiveForces(bool predicting = false) override
 			{
 				// NOLINTNEXTLINE
-				PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, cohesion, predicting);
+				PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, predicting);
 			}
 		};
 

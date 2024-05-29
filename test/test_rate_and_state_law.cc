@@ -90,9 +90,11 @@ int main(){
   std::cout << "check computeCohesiveForces (steady state)" << std::endl;
 
   // fill empty cohesion vector for testing
-  NodalField cohesion(mesh, {_x,_y});
+  //NodalField cohesion(mesh, {_x,_y});
   
-  law.computeCohesiveForces(cohesion);
+  law.computeCohesiveForces();
+  NodalField & cohesion =  law.getCohesion();
+  
   if ((std::abs(cohesion(0,0) - tau) / tau > tol) || (cohesion(0,0) * tau < 0)) {
     std::cout << "stick failed (" << tau << "): " << cohesion(0,0) << std::endl;
     return 1; // failure
