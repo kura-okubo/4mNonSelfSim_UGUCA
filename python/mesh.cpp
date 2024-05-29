@@ -51,6 +51,8 @@ namespace uguca
 					 py::arg("mesh"),
 					 py::arg("components"),
 					 py::arg("name") = "unnamed")
+				.def("setAllValuesTo",
+					 &NodalField::setAllValuesTo)
 				.def("storage",
 					 [](NodalField &self)
 					 {
@@ -82,7 +84,7 @@ namespace uguca
 									 self.getInternalData(),
 									 py::none());
 
-						return a;
+						 return a;
 					 });
 		}
 
