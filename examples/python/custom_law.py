@@ -9,7 +9,7 @@ class CustomLaw(ug.InterfaceLaw):
         self.gap = ug.NodalField(mesh)
 
 
-    def computeCohesiveForces(self, cohesion, predicting):
+    def computeCohesiveForces(self, predicting):
         cohesion = self.getCohesion()
         interface = self.getInterface()
 
@@ -39,7 +39,7 @@ length = 1.
 nb_elements = 1024
 
 mesh = ug.SimpleMesh(Lx=length, Nx=nb_elements)
-coords_x = mesh.getLocalCoords(0)
+coords = mesh.getLocalCoords()
 
 law = CustomLaw(mesh, tau_max=3.5e6, delta_c=2e-5)
 
@@ -53,8 +53,8 @@ bot_mat.readPrecomputedKernels()
 interface = ug.BimatInterface(mesh, top_mat, bot_mat, law)
 
 loads = interface.getLoad()
-loads.component(0)[:] = 2e6
-loads.component(1)[:] = 1e6
+loads[0, :] = 2e6
+loads[1, :] = 1e6
 
 total_duration = 2.6e-4
 time_factor = 0.4
@@ -64,7 +64,7 @@ interface.init(False)
 
 
 crack_length = 0.05
-indexes = np.where(np.abs(coords_x - length/2.) < crack_length/2.)[0]
+indexes = np.where(np.abs(coords[0, :] - length/2.) < crack_length/2.)[0]
 
 law.tau_max[indexes] = 0.
 
