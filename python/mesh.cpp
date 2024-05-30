@@ -75,7 +75,7 @@ namespace uguca
 							 strides[1] = 1. * sizeof(double);
 							 break;
 						 default:
-							 std::cout << "Not implemented yet" << std::endl;
+							 std::cout << "Not implemented yet" << dims << std::endl;
 							 break;
 						 }
 
