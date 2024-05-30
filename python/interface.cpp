@@ -26,10 +26,10 @@ namespace uguca
 		public:
 			using InterfaceLaw::InterfaceLaw;
 
-			void computeCohesiveForces(bool predicting = false) override
+			void computeCohesiveForces(bool predicting = false, unsigned int ts_factor=1) override
 			{
 				// NOLINTNEXTLINE
-				PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, predicting);
+				PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, predicting, ts_factor);
 			}
 		};
 
@@ -71,7 +71,8 @@ namespace uguca
 				.def("dump", [](BimatInterface &self, unsigned int step, double time)
 					 { self.dump(step, time); })
 				.def("advanceTimeStep",
-					 &BimatInterface::advanceTimeStep);
+					 &BimatInterface::advanceTimeStep, 
+					 py::arg("solver_method"), py::arg("ts_factor")=1);
 
 			py::class_<UnimatShearInterface,
 					   std::shared_ptr<UnimatShearInterface>, Interface>(mod,
@@ -147,9 +148,9 @@ namespace uguca
 					 &InterfaceLaw::getMesh,
 					 py::return_value_policy::reference)
 				.def("computeCohesiveForces",
-					 [](InterfaceLaw &self, bool predicting = false)
+					 [](InterfaceLaw &self, bool predicting = false, unsigned int ts_factor=1)
 					 {
-						 self.computeCohesiveForces(predicting);
+						 self.computeCohesiveForces(predicting, ts_factor);
 					 });
 
 			py::class_<BarrasLaw, InterfaceLaw,

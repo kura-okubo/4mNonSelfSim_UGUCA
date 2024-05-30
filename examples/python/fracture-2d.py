@@ -45,7 +45,7 @@ interface.dump(0, 0)
 nb_time_steps = int(total_duration/time_step)
 
 for s in range(nb_time_steps):
-    interface.advanceTimeStep(True)
+    interface.advanceTimeStep(solver_method=ug.dynamic, ts_factor=1)
 
     if s%10 == 0:
         print(s)

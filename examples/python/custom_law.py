@@ -12,7 +12,7 @@ class CustomLaw(ug.InterfaceLaw):
         self.gap = ug.NodalField(mesh, {ug.x, ug.y})
 
 
-    def computeCohesiveForces(self, predicting):
+    def computeCohesiveForces(self, predicting, ts_factor):
         cohesion = self.getCohesion()
         interface = self.getInterface()
 
@@ -21,7 +21,7 @@ class CustomLaw(ug.InterfaceLaw):
         gap_norm = np.linalg.norm(self.gap.array(), axis=0)
 
         # find forces needed to close normal gap
-        interface.closingNormalGapForce(cohesion, predicting)
+        interface.closingNormalGapForce(cohesion, predicting, ts_factor)
 
         # find force needed to maintain shear gap
         interface.maintainShearGapForce(cohesion)
@@ -71,14 +71,14 @@ law.tau_max[indexes] = 0.
 
 
 interface.initDump('fracture_2d_example', '.')
-interface.registerDumpFields('cohesion_0,cohesion_1,top_disp_0,top_disp_1,bot_disp_0,bot_disp_1')
+interface.registerDumpFields('cohesion,top_disp,bot_disp')
 interface.dump(0, 0)
 
 
 nb_time_steps = int(total_duration/time_step)
 
 for s in range(nb_time_steps):
-    interface.advanceTimeStep(True)
+    interface.advanceTimeStep(solver_method=ug.dynamic, ts_factor=1)
 
     if s%10 == 0:
         print(s)

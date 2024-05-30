@@ -14,7 +14,7 @@ namespace uguca {
       .value("static", SolverMethod::_static)
       .value("quasi_dynamic", SolverMethod::_quasi_dynamic)
       .value("dynamic", SolverMethod::_dynamic)
-      .value("apaptive", SolverMethod::_adaptive)
+      .value("adaptive", SolverMethod::_adaptive)
       .export_values();
 
     py::enum_<SpatialDirection>(mod, "SpatialDirection")
