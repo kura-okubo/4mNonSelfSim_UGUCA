@@ -39,6 +39,9 @@ namespace uguca
                py::arg("name") = "half_space")
           .def("getDisp", py::overload_cast<bool>(&HalfSpace::getDisp, py::const_),
                py::arg("predicting") = false,
+               py::return_value_policy::reference)
+          .def("getVelo", py::overload_cast<bool>(&HalfSpace::getVelo, py::const_),
+               py::arg("predicting") = false,
                py::return_value_policy::reference);
     }
 

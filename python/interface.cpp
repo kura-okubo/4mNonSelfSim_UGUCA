@@ -110,7 +110,13 @@ namespace uguca
 					 &UnimatShearInterface::advanceTimeStep)
 				.def("getLoad",
 					 &UnimatShearInterface::getLoad,
-					 py::return_value_policy::reference);
+					 py::return_value_policy::reference)
+				.def("computeGap", [](UnimatShearInterface &self, NodalField &gap, bool predicting)
+					 { self.computeGap(gap, predicting); })
+				.def("closingNormalGapForce",
+					 &UnimatShearInterface::closingNormalGapForce)
+				.def("maintainShearGapForce",
+					 &UnimatShearInterface::maintainShearGapForce);
 
 			py::class_<DefRigInterface,
 					   std::shared_ptr<DefRigInterface>>(mod,
