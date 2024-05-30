@@ -46,7 +46,7 @@ using namespace uguca;
 class TestInterfaceLaw : public InterfaceLaw {
 public:
   TestInterfaceLaw(SimpleMesh & mesh): InterfaceLaw(mesh) {}
-  void computeCohesiveForces(NodalField &,
+  void computeCohesiveForces(
 			     bool = false) {
     computeCohesiveForcesCalled = true;
   }
