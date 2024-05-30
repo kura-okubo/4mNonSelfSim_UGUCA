@@ -20,7 +20,7 @@ bot_mat.readPrecomputedKernels()
 
 interface = ug.BimatInterface(mesh, {ug.x, ug.y},  top_mat, bot_mat, law)
 
-loads = interface.getLoad()
+loads = interface.getLoad().array()
 
 loads[0, :] = 2e6
 loads[1, :] = 1e6
@@ -34,7 +34,7 @@ interface.init(False)
 crack_length = 0.05
 indexes = np.where(np.abs(coords[0, :] - length/2.) < crack_length/2.)[0]
 
-tau_max = law.getTauMax()
+tau_max = law.getTauMax().array()
 tau_max[indexes] = 0.
 
 

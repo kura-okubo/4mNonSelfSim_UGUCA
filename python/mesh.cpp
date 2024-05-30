@@ -53,8 +53,7 @@ namespace uguca
 					 py::arg("name") = "unnamed")
 				.def("setAllValuesTo",
 					 &NodalField::setAllValuesTo)
-				.def("storage",
-					 [](NodalField &self)
+				.def("array", [](NodalField &self)
 					 {
 						 auto dims = self.getDataSize().size();
 
@@ -84,8 +83,7 @@ namespace uguca
 									 self.getInternalData(),
 									 py::none());
 
-						 return a;
-					 });
+						 return a; }, py::return_value_policy::reference);
 		}
 
 	}

@@ -81,7 +81,7 @@ namespace uguca
 					 py::arg("mesh"), py::arg("components"), py::arg("top_material"), py::arg("law"),
 					 py::arg("method") = _dynamic)
 				.def("init",
-					 &UnimatShearInterface::init)
+					 &UnimatShearInterface::init, py::return_value_policy::reference)
 				.def("setTimeStep",
 					 &UnimatShearInterface::setTimeStep)
 				.def("getStableTimeStep",
@@ -141,7 +141,8 @@ namespace uguca
 					 &InterfaceLaw::getCohesion,
 					 py::return_value_policy::reference)
 				.def("getInterface",
-					 &InterfaceLaw::getInterface)
+					 &InterfaceLaw::getInterface, 
+					 py::return_value_policy::reference)
 				.def("getMesh",
 					 &InterfaceLaw::getMesh,
 					 py::return_value_policy::reference)

@@ -18,22 +18,22 @@ class CustomLaw(ug.InterfaceLaw):
 
         # find current gap
         interface.computeGap(self.gap, predicting)
-        gap_norm = np.linalg.norm(self.gap.storage(), axis=0)
+        gap_norm = np.linalg.norm(self.gap.array(), axis=0)
 
         # find forces needed to close normal gap
         interface.closingNormalGapForce(cohesion, predicting)
 
         # find force needed to maintain shear gap
         interface.maintainShearGapForce(cohesion)
-        tau_shear = np.abs(cohesion.storage()[0, :])
+        tau_shear = np.abs(cohesion.array()[0, :])
 
         alpha_field = np.zeros(self.getMesh().getNbLocalNodesAlloc())
         strength = self.tau_max[:] * np.maximum(0., 1.-gap_norm/self.delta_c)
 
-        cohesion.storage()[1, :] = np.minimum(cohesion.storage()[1, :], strength)
+        cohesion.array()[1, :] = np.minimum(cohesion.array()[1, :], strength)
         alpha_field = np.minimum(1, np.abs(strength/tau_shear))
 
-        cohesion.storage()[0, :] *= alpha_field[:]
+        cohesion.array()[0, :] *= alpha_field[:]
 
 
 length = 1.
@@ -53,7 +53,7 @@ bot_mat.readPrecomputedKernels()
 
 interface = ug.BimatInterface(mesh, {ug.x, ug.y}, top_mat, bot_mat, law)
 
-loads = interface.getLoad().storage()
+loads = interface.getLoad().array()
 loads[0, :] = 2e6
 loads[1, :] = 1e6
 
