@@ -26,7 +26,7 @@ namespace uguca
 		public:
 			using InterfaceLaw::InterfaceLaw;
 
-			void computeCohesiveForces(bool predicting = false, unsigned int ts_factor=1) override
+			void computeCohesiveForces(bool predicting = false, unsigned int ts_factor = 1) override
 			{
 				// NOLINTNEXTLINE
 				PYBIND11_OVERRIDE_PURE(void, InterfaceLaw, computeCohesiveForces, predicting, ts_factor);
@@ -70,9 +70,13 @@ namespace uguca
 					 { self.registerDumpFields(field_names); })
 				.def("dump", [](BimatInterface &self, unsigned int step, double time)
 					 { self.dump(step, time); })
+				.def("getTop", &BimatInterface::getTop,
+					 py::return_value_policy::reference)
+				.def("getBot", &BimatInterface::getBot,
+					 py::return_value_policy::reference)
 				.def("advanceTimeStep",
-					 &BimatInterface::advanceTimeStep, 
-					 py::arg("solver_method"), py::arg("ts_factor")=1);
+					 &BimatInterface::advanceTimeStep,
+					 py::arg("solver_method"), py::arg("ts_factor") = 1);
 
 			py::class_<UnimatShearInterface,
 					   std::shared_ptr<UnimatShearInterface>, Interface>(mod,
@@ -98,6 +102,10 @@ namespace uguca
 				.def("dump", [](UnimatShearInterface &self, unsigned int step,
 								double time)
 					 { self.dump(step, time); })
+				.def("getTop", &UnimatShearInterface::getTop,
+					 py::return_value_policy::reference)
+				.def("getBot", &UnimatShearInterface::getBot,
+					 py::return_value_policy::reference)
 				.def("advanceTimeStep",
 					 &UnimatShearInterface::advanceTimeStep)
 				.def("getLoad",
@@ -128,6 +136,10 @@ namespace uguca
 				.def("dump", [](DefRigInterface &self, unsigned int step,
 								double time)
 					 { self.dump(step, time); })
+				.def("getTop", &DefRigInterface::getTop,
+					 py::return_value_policy::reference)
+				.def("getBot", &DefRigInterface::getBot,
+					 py::return_value_policy::reference)
 				.def("advanceTimeStep",
 					 &DefRigInterface::advanceTimeStep)
 				.def("getLoad",
@@ -142,13 +154,13 @@ namespace uguca
 					 &InterfaceLaw::getCohesion,
 					 py::return_value_policy::reference)
 				.def("getInterface",
-					 &InterfaceLaw::getInterface, 
+					 &InterfaceLaw::getInterface,
 					 py::return_value_policy::reference)
 				.def("getMesh",
 					 &InterfaceLaw::getMesh,
 					 py::return_value_policy::reference)
 				.def("computeCohesiveForces",
-					 [](InterfaceLaw &self, bool predicting = false, unsigned int ts_factor=1)
+					 [](InterfaceLaw &self, bool predicting = false, unsigned int ts_factor = 1)
 					 {
 						 self.computeCohesiveForces(predicting, ts_factor);
 					 });

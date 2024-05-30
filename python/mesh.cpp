@@ -9,6 +9,7 @@
 #include "uca_distributed_fftable_mesh.hh"
 #include "uca_simple_mesh.hh"
 #include "nodal_field.hh"
+#include "fftable_nodal_field.hh"
 
 #include "wrap.hh"
 
@@ -75,6 +76,41 @@ namespace uguca
 							 break;
 						 default:
 							 std::cout << "Not implemented yet" << std::endl;
+							 break;
+						 }
+
+						 py::array a(std::move(shapes),
+									 std::move(strides),
+									 self.getInternalData(),
+									 py::none());
+
+						 return a; }, py::return_value_policy::reference);
+
+			py::class_<FFTableNodalField, NodalField, std::shared_ptr<FFTableNodalField>>(mod, "FFTableNodalField")
+				.def(py::init<const std::string &>(),
+					 py::arg("name") = "unnamed")
+				.def("array", [](FFTableNodalField &self)
+					 {
+						 auto dims = self.getDataSize().size();
+	
+						 std::vector<size_t> shapes(dims);
+						 std::vector<size_t> strides(dims);
+
+						 switch (dims)
+						 {
+						 case 1:
+							 shapes[0] = self.getDataSize()[0];
+							 strides[0] = 1. * sizeof(double);
+							 break;
+						 case 2:
+							 shapes[1] = self.getDataSize()[0];
+							 shapes[0] = 2;
+
+							 strides[0] = shapes[1] * sizeof(double);
+							 strides[1] = 1. * sizeof(double);
+							 break;
+						 default:	
+							 std::cout << "Not implemented yet for " << dims << std::endl;
 							 break;
 						 }
 
