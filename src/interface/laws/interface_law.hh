@@ -57,7 +57,7 @@ public:
   /* Methods                                                                  */
   /* ------------------------------------------------------------------------ */
 public:
-  virtual void computeCohesiveForces([[gnu::unused]] bool predicting = false) {};
+  virtual void computeCohesiveForces([[gnu::unused]] bool predicting = false, [[gnu::unused]]  unsigned int ts_factor = 1.) {};
 
   // dumper function
   virtual void registerDumpField(const std::string &field_name);

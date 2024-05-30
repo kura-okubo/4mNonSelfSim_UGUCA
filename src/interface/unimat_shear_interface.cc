@@ -54,14 +54,15 @@ UnimatShearInterface::~UnimatShearInterface() {
 
 /* -------------------------------------------------------------------------- */
 void UnimatShearInterface::closingNormalGapForce(NodalField & close_force,
-						 bool predicting) {
+						 bool predicting,
+						 unsigned int ts_factor) {
   // top material information
   const Material & mat_t = this->top->getMaterial();
   double cp_t = mat_t.getCp();
   double cs_t = mat_t.getCs();
   double mu_t = mat_t.getShearModulus();
   double eta_t = cp_t / cs_t;
-  double fact_t = this->time_step * cs_t / mu_t / eta_t;
+  double fact_t = ts_factor * this->time_step * cs_t / mu_t / eta_t;
 
   // accessors
   double * u_1_t = this->top->getDisp(predicting).data(1);

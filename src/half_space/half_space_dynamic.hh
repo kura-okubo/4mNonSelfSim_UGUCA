@@ -70,11 +70,13 @@ protected:
   /// compute the stress fourier coefficients (fails if not dynamic)
   virtual void computeStressFourierCoeff(bool predicting = false,
 					 bool correcting = false,
-					 bool dynamic = true);
+					 SolverMethod sm = _dynamic,
+					 unsigned int ts_factor = 1);
 
   /// compute the stress fourier coefficients for dynamic case
   void computeStressFourierCoeffDynamic(bool predicting,
-					bool correcting);
+					bool correcting,
+					unsigned int ts_factor = 1);
 
   /// compute F from U in fourier space
   void computeF(FFTableNodalField & F,

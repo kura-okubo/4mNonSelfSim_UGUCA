@@ -62,10 +62,11 @@ DefRigInterface::~DefRigInterface() {
 
 /* -------------------------------------------------------------------------- */
 void DefRigInterface::closingNormalGapForce(NodalField & close_force,
-					    bool predicting) {
+					    bool predicting,
+					    unsigned int ts_factor) {
   
   // C factor of notes
-  double fact_t = this->time_step * this->fact_t_2;
+  double fact_t = ts_factor * this->time_step * this->fact_t_2;
 
   // accessors
   double * f_1_t = this->top->getInternal().data(1);

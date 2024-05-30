@@ -149,26 +149,28 @@ void HalfSpaceDynamic::initConvolutions() {
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeff(bool predicting,
 						 bool correcting,
-						 bool dynamic) {
-  if (dynamic)
-    this->computeStressFourierCoeffDynamic(predicting, correcting);
+						 SolverMethod solver_method,
+						 unsigned int ts_factor) {
+  if (solver_method == _dynamic)
+    this->computeStressFourierCoeffDynamic(predicting, correcting, ts_factor);
   else
     throw std::runtime_error("HalfSpaceDynamic cannot compute stress for quasi dynamic problem!");
 }
 
 /* -------------------------------------------------------------------------- */
 void HalfSpaceDynamic::computeStressFourierCoeffDynamic(bool predicting,
-							bool correcting) {
+							bool correcting,
+							unsigned int ts_factor) {
 
   // update history
   if (predicting) {
-    this->disp.addCurrentValueToHistory(this->disp_pc);
+    this->disp.addCurrentValueToHistory(this->disp_pc, ts_factor);
   }
   else {
-    this->disp.addCurrentValueToHistory();
+    this->disp.addCurrentValueToHistory(ts_factor);
   }
   if (correcting) {
-    this->disp.changeCurrentValueOfHistory();
+    this->disp.changeCurrentValueOfHistory(ts_factor);
   }
   
   // compute convolutions
@@ -226,7 +228,7 @@ void HalfSpaceDynamic::computeF(FFTableNodalField & F,
 	const VecComplex & c_H01_U1 = cnvls.getResult(std::make_pair(Krnl::H01,1));
 	const VecComplex & c_H22_U0 = cnvls.getResult(std::make_pair(Krnl::H22,0));
 	const VecComplex & c_H22_U2 = cnvls.getResult(std::make_pair(Krnl::H22,2));
-	  
+
 	F_tmp = imag * mu * (2-eta) * k * U.fd_or_zero(j,1);
 	F_tmp += imag * mu * k * c_H01_U1[j];
 	F_tmp -= this->side_factor * mu *

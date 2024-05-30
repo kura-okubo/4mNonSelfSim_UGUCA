@@ -77,7 +77,7 @@ public:
   /* ------------------------------------------------------------------------ */
 public:
   void computeCohesiveForces(
-      bool predicting = false);
+      bool predicting = false, unsigned int ts_factor = 1.);
 
   // dumper function
   virtual void registerDumpField(const std::string &field_name);

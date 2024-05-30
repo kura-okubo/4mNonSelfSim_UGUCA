@@ -98,17 +98,20 @@ double HalfSpace::getStableTimeStep() {
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpace::computeDisplacement(bool predicting) {
+void HalfSpace::computeDisplacement(bool predicting,
+				    unsigned int ts_factor) {
   this->computeDisplacement(this->disp,
 			    predicting ? this->velo_pc : this->velo,
-			    predicting ? this->disp_pc : this->disp);
+			    predicting ? this->disp_pc : this->disp,
+			    ts_factor);
 }
 
 /* -------------------------------------------------------------------------- */
 // u_i+1 = u_i + dt * v_i
 void HalfSpace::computeDisplacement(NodalField & disp,
 				    NodalField & velo,
-				    NodalField & target) {
+				    NodalField & target,
+				    unsigned int ts_factor) {
 
   for (const auto& d : target.getComponents()) {
 
@@ -117,15 +120,18 @@ void HalfSpace::computeDisplacement(NodalField & disp,
     double * target_p = target.data(d);
 
     for (int n=0; n<target.getNbNodes(); ++n) {
-      target_p[n] = disp_p[n] + velo_p[n] * this->time_step;
+      target_p[n] = disp_p[n] + velo_p[n] * this->time_step * ts_factor;
     }
   }
 }
 
 /* -------------------------------------------------------------------------- */
-void HalfSpace::computeInternal(bool predicting, bool correcting, bool dynamic) {
+void HalfSpace::computeInternal(bool predicting, bool correcting,
+				SolverMethod solver_method,
+				unsigned int ts_factor) {
   this->forwardFFT(predicting);
-  this->computeStressFourierCoeff(predicting, correcting, dynamic);
+  this->computeStressFourierCoeff(predicting, correcting,
+				  solver_method, ts_factor);
   this->backwardFFT();
 }
 
