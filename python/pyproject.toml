@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uguca"
+version = "1.0.0"
+description = "Uguca is cool"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [{ name = "David Kammer", email = "dkammer@ethz.ch" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: GNU License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = []
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["uguca", "uguca.*"]

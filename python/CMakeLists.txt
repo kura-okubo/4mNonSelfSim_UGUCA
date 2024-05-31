@@ -15,3 +15,4 @@ set_target_properties(puguca PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY uguca)
 
 file(COPY uguca DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY pyproject.toml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
