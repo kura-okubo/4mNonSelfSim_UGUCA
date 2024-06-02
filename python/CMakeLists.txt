@@ -16,3 +16,6 @@ set_target_properties(puguca PROPERTIES
 
 file(COPY uguca DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY pyproject.toml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_command(TARGET puguca POST_BUILD
+    COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/uguca && pybind11-stubgen --output-dir . puguca && cd ${CMAKE_CURRENT_BINARY_DIR})
