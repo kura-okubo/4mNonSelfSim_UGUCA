@@ -32,3 +32,7 @@ subprocess.run(
 
 # change back to the original directory
 os.chdir(current_dir)
+
+# use black to format the generated stubs
+print("Formatting the generated stubs with black")
+subprocess.run(["black", PACKAGE_NAME], check=True)
