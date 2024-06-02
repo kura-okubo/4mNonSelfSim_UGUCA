@@ -3,4 +3,4 @@ __copyright__ = (
     "Laboratory (CMBM - Computational Mechanics of Building Materials)"
 )
 
-from .puguca import *
+from uguca.puguca import *
