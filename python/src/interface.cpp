@@ -188,20 +188,14 @@ void wrapInterface(py::module &mod) {
            py::arg("mesh"), py::arg("Gc_default"), py::arg("tau_c_default"),
            py::arg("tau_r_default") = 0., py::arg("name") = "lsclaw",
            R"pbdoc(
-            Linear shear cohesive law.
+           Linear shear cohesive law.
 
-            Parameters
-            ----------
-            mesh : BaseMesh
-                Mesh object.
-            Gc_default : float
-                Cohesive energy.
-            tau_c_default : float
-                Cohesive strength.
-            tau_r_default : float
-                Residual strength.
-            name : str
-                Name of the law.
+           Args:
+               mesh (BaseMesh): Mesh object.
+               Gc_default (float): Cohesive energy.
+               tau_c_default (float): Cohesive strength.
+               tau_r_default (float): Residual strength.
+               name (str): Name of the law.
             )pbdoc")
       .def("getGc", &LinearShearCohesiveLaw::getGc,
            py::return_value_policy::reference)
