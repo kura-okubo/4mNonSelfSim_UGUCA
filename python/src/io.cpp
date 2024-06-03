@@ -1,5 +1,7 @@
 #include <pybind11/pybind11.h>
 
+#include "cast.hh"
+
 #include "uca_base_io.hh"
 #include "uca_common.hh"
 #include "uca_dumper.hh"

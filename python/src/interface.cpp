@@ -1,5 +1,7 @@
-#include "interface.hh"
 #include <pybind11/pybind11.h>
+
+#include "cast.hh"
+#include "interface.hh"
 
 #include "barras_law.hh"
 #include "bimat_interface.hh"

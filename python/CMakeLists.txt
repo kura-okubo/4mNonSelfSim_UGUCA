@@ -6,7 +6,7 @@ set(PUGUCA_SRCS
   src/mesh.cpp
 )
   
-pybind11_add_module(puguca SHARED ${PUGUCA_SRCS})
+pybind11_add_module(puguca ${PUGUCA_SRCS})
 
 target_link_libraries(puguca PUBLIC uguca)
 

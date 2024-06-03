@@ -4,6 +4,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
+#include "cast.hh"
+
 #include "fftable_nodal_field.hh"
 #include "nodal_field.hh"
 #include "uca_base_mesh.hh"
@@ -16,9 +18,9 @@ namespace py = pybind11;
 
 namespace uguca {
 
-using namespace py::literals;
-
 namespace uguca_wrappers {
+
+using namespace py::literals;
 
 void wrapMesh(py::module &mod) {
   py::class_<BaseMesh, std::shared_ptr<BaseMesh>>(mod, "BaseMesh")
@@ -113,6 +115,6 @@ void wrapMesh(py::module &mod) {
           py::return_value_policy::reference);
 }
 
-} // namespace wrap
+} // namespace uguca_wrappers
 
 } // namespace uguca

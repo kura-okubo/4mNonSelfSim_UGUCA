@@ -1,5 +1,7 @@
 #include <pybind11/pybind11.h>
 
+#include "cast.hh"
+
 #include "half_space.hh"
 #include "material.hh"
 #include "uca_fftable_mesh.hh"
