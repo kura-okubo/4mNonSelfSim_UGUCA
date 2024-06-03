@@ -1,9 +1,9 @@
 set(PUGUCA_SRCS
-  uguca_module.cpp
-  mesh.cpp
-  half_space.cpp
-  interface.cpp
-  io.cpp
+  src/uguca.cpp
+  src/half_space.cpp
+  src/interface.cpp
+  src/io.cpp
+  src/mesh.cpp
 )
   
 pybind11_add_module(puguca ${PUGUCA_SRCS})

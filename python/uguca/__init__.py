@@ -3,9 +3,4 @@ __copyright__ = (
     "Laboratory (CMBM - Computational Mechanics of Building Materials)"
 )
 
-from . import puguca as _puguca
-
-private_keys = set(dir(_puguca)) - set(dir())
-
-for k in private_keys:
-    globals()[k] = getattr(_puguca, k)
+from uguca.puguca import *

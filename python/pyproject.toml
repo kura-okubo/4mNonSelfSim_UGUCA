@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "uguca"
 version = "1.0.0"
-description = "Uguca is cool"
+description = "Python bindings for uguca. Spectral Boundary Integral Method to simulate dynamic and quasi-dynamic rupture propagation along a weak interface between two semi-infinite half-planes."
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "David Kammer", email = "dkammer@ethz.ch" }]
 license = { file = "LICENSE" }
