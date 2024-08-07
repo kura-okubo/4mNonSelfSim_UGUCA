@@ -235,11 +235,10 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
     double Ai = sigma_n * a(i);
     double Bi = sigma_n * b(i);
-    double chi = 0.25 * (k * Li / Ai - (Bi - Ai) / Ai) - k * Li / Ai;
-    if (std::abs(Ai - Bi) < 1e-10) {
+    double chi = 0.25 * std::pow((k * Li / Ai - (Bi - Ai) / Ai), 2) - k * Li / Ai;
+    if (std::abs(Ai - Bi) < 1e-6) {
       xi(i) = 0.5;
-    }
-    else if (chi > 0) {
+    } else if (chi > 0) {
       xi(i) = std::min(Ai / (k * Li - (Bi - Ai)), 0.5);
     } else {
       xi(i) = std::min(1.0 - (Bi - Ai) / (k * Li), 0.5);
@@ -282,7 +281,7 @@ int main(int argc, char *argv[]) {
     s += ts_factor - 1;
 
     // time integration
-    interface.advanceTimeStep(SolverMethod::_quasi_dynamic, ts_factor);
+    interface.advanceTimeStep(SolverMethod::_quasi_dynamic, (unsigned int)ts_factor);
 
     // dump
     if (world_rank == 0 /* && s % s_dump == 0*/) interface.dump(s, s * time_step);
