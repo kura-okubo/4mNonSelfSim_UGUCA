@@ -275,11 +275,11 @@ int main(int argc, char *argv[]) {
     // find best time step for now
     double current_time_step =  std::numeric_limits<double>::max();
     for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
-      double cts = xi(i) * Dc / (2 * velo_top(i, 2));
+      double cts = std::abs(xi(i) * Dc / (2.0 * velo_top(i, 2)));
       current_time_step = std::min(current_time_step, cts);
     }
-    double ts_factor = std::max(int(current_time_step / time_step),1);
-    s += (ts_factor - 1);
+    double ts_factor = std::max(std::floor(current_time_step / time_step),1.0);
+    s += ts_factor - 1;
 
     // time integration
     interface.advanceTimeStep(SolverMethod::_quasi_dynamic, ts_factor);
