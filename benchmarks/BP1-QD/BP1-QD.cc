@@ -227,6 +227,24 @@ int main(int argc, char *argv[]) {
 
   interface.dump(0, 0);
   unsigned s_dump = dump_int / time_step + 1;
+  NodalField xi(mesh, {(_x)}, "xi");
+  double gamma = M_PI_4;
+  double _h = length_x / nb_nodes_x;
+  double k = gamma * mu / _h;
+  double Li = Dc;
+  for (int i = 0; i < mesh.getNbLocalNodes(); ++i) {
+    double Ai = sigma_n * a(i);
+    double Bi = sigma_n * b(i);
+    double chi = 0.25 * (k * Li / Ai - (Bi - Ai) / Ai) - k * Li / Ai;
+    if (std::abs(Ai - Bi) < 1e-10) {
+      xi(i) = 0.5;
+    }
+    else if (chi > 0) {
+      xi(i) = std::min(Ai / (k * Li - (Bi - Ai)), 0.5);
+    } else {
+      xi(i) = std::min(1.0 - (Bi - Ai) / (k * Li), 0.5);
+    }
+  }
 
   NodalField &u_top = top.getDisp();
 
@@ -257,7 +275,7 @@ int main(int argc, char *argv[]) {
     // find best time step for now
     double current_time_step =  std::numeric_limits<double>::max();
     for (int i=0;i<mesh.getNbLocalNodes(); ++i) {
-      double cts = xi(i) * L(i) / (2*velo_top(i,2));          // <---- Huey
+      double cts = xi(i) * Dc / (2 * velo_top(i, 2));
       current_time_step = std::min(current_time_step, cts);
     }
     double ts_factor = std::max(int(current_time_step / time_step),1);
@@ -267,7 +285,7 @@ int main(int argc, char *argv[]) {
     interface.advanceTimeStep(SolverMethod::_quasi_dynamic, ts_factor);
 
     // dump
-    if (world_rank == 0 && s % s_dump == 0) interface.dump(s, s * time_step);
+    if (world_rank == 0 /* && s % s_dump == 0*/) interface.dump(s, s * time_step);
   }
 
   StaticCommunicatorMPI::getInstance()->finalize();
