@@ -56,13 +56,13 @@ int main(int argc, char *argv[]) {
 
   double domain_factor = 2.0;
 
-  double duration = 94608000000; // 3000 years
+  double duration = 1e10;//94608000000; // 3000 years
   double dump_int = 100000;
 
   unsigned nb_nodes_x = 4000;  // 50e3 * 2 / 25 = 4000
   double time_step_factor = 0.35;
 
-  unsigned n_pc = 1;
+  unsigned n_pc = 0;
 
   // ---------------------------------------------------------------------------
   // argument processing
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
   // time step
   double time_step = time_step_factor * interface.getStableTimeStep();
   interface.setTimeStep(time_step);
-  unsigned nb_time_steps = std::ceil(duration / time_step);
+  unsigned long nb_time_steps = std::ceil(duration / time_step);
   // init interface
   interface.initPredictorCorrector(n_pc);
   law.init();
@@ -247,11 +247,12 @@ int main(int argc, char *argv[]) {
 
   NodalField &u_top = top.getDisp();
 
-  if (world_rank == 0) std::cout << "simulation start..." << std::endl;
+  if (world_rank == mesh.getRoot())
+    std::cout << "simulation start..." << std::endl;
 
   // time stepping
-  for (unsigned s = 1; s <= nb_time_steps; ++s) {
-    if (world_rank == 0) {
+  for (unsigned long s = 1; s <= nb_time_steps; ++s) {
+    if (world_rank == mesh.getRoot()) {
       std::cout << "s=" << s << "/" << nb_time_steps << "\r";
       std::cout.flush();
     }
@@ -263,11 +264,11 @@ int main(int argc, char *argv[]) {
         // plate rate
         double x = std::abs(coords(i, _x) - length_x / domain_factor);
         if (x > Wf) {
-          velo_top(i, _z) = V_p;
+          velo_top(nb_nodes_x - i, _z) = V_p;
         }
         // free surface
-        u_top(nb_nodes_x - i, _z) = u_top(i, _z);
-        velo_top(nb_nodes_x - i, _z) = velo_top(i, _z);
+        u_top(i, _z) = -u_top(nb_nodes_x - i, _z);
+        velo_top(i, _z) = -velo_top(nb_nodes_x - i, _z);
       }
     }
 
@@ -277,19 +278,27 @@ int main(int argc, char *argv[]) {
       double cts = std::abs(xi(i) * Dc / (2.0 * velo_top(i, 2)));
       current_time_step = std::min(current_time_step, cts);
     }
-    double ts_factor = std::max(std::floor(current_time_step / time_step),1.0);
-    s += ts_factor - 1;
+    double current_time_step_pp = time_step;
+    StaticCommunicatorMPI::getInstance()->allReduce(&current_time_step,
+                                                    &current_time_step_pp,
+                                                    1,
+                                                    MPI_MIN);
+    
+    unsigned ts_factor = (unsigned)std::max(std::floor(current_time_step_pp / time_step), 1.0);
+    s += (unsigned)ts_factor - 1;
 
     // time integration
-    interface.advanceTimeStep(SolverMethod::_quasi_dynamic, (unsigned int)ts_factor);
+    interface.advanceTimeStep(SolverMethod::_quasi_dynamic, ts_factor);
 
     // dump
-    if (world_rank == 0 /* && s % s_dump == 0*/) interface.dump(s, s * time_step);
+    if (world_rank == mesh.getRoot()) {
+      interface.dump(s, s * time_step);
+    }
   }
 
   StaticCommunicatorMPI::getInstance()->finalize();
 
-  if (world_rank == 0)
+  if (world_rank == mesh.getRoot())
     std::cout << "uguca simulation completed." << std::endl;
 
   return 0;

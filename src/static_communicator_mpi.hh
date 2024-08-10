@@ -42,6 +42,7 @@
 #else
 typedef int MPI_Op;
 static const MPI_Op MPI_MAX=0;
+static const MPI_Op MPI_MIN = 1;
 #endif
 
 __BEGIN_UGUCA__

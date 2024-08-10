@@ -368,6 +368,7 @@ template void StaticCommunicatorMPI::broadcast<unsigned int>(unsigned int*, int,
 
 template void StaticCommunicatorMPI::allReduce<int>(int*, int*, int, const MPI_Op &);
 template void StaticCommunicatorMPI::allReduce<unsigned int>(unsigned int*, unsigned int*, int, const MPI_Op &);
+template void StaticCommunicatorMPI::allReduce<double>(double*, double*, int, const MPI_Op &);
 
 __END_UGUCA__
 
