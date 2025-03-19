@@ -1,8 +1,17 @@
-# uguca
+# UGUCA extended for analysis of non-self-similar earthquakes
 
-**Spectral Boundary Integral Method** to simulate rupture propagation along a weak interface between two semi-infinite half-planes.
+This repository contains the extended version of the spectral-boundary-integral method-based software [**UGUCA**](https://gitlab.com/uguca/uguca) for the analysis in [**4mNonSelfSim_Paper**](https://github.com/kura-okubo/4mNonSelfSim_Paper), where we performed dynamic rupture modeling of non-self-similar earthquakes observed in laboratory experiments.
 
-## License
+This version is forked from the `stable` branch of `v1.0` from the [UGUCA](https://gitlab.com/uguca/uguca) repository.  
+See the original GitLab repository for the latest version and software information.
+
+## Updated contents
+
+- Linear slip-weakening law with slip-strengthening regime.
+- Input files for the case study of laboratory non-self-similar earthquakes.
+- Kernel for the rock specimen ($\nu$=0.246).
+
+## Original License
 
 Copyright &copy; 2021 ETH Zurich (David S. Kammer)
 
@@ -11,55 +20,3 @@ uguca is free software: you can redistribute it and/or modify it under the terms
 uguca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with uguca.  If not, see <https://www.gnu.org/licenses/>.
-
-
-## Reference
-
-The implementation of uguca is described in
-
-> Kammer, D.S., Albertini, G., \& Ke C.-Y. (2021) ["UGUCA: a spectral-boundary-integral method for modeling fracture and friction"](https://doi.org/10.1016/j.softx.2021.100785) SoftwareX, 15, 100785.
-
-| [BibTeX](doc/ref/uguca_softwarex.bib)   | [EndNote](doc/ref/uguca_softwarex.enw)   | [RefMan](doc/ref/uguca_softwarex.ris)   |
-
-
-## Getting started
-
-**Requirements**:
-
-- [CMake](https://cmake.org/) (3.1.0 or higher)
-- [FFTW](http://www.fftw.org) (3.x)
-- [OpenMPI](https://www.open-mpi.org/) (2.x or higher)
-
-
-**Compilation**:
-
-To compile uguca, follow these steps
-
-1. `git clone https://gitlab.com/uguca/uguca.git -b stable`
-2. `cd uguca`
-3. `mkdir build; cd build;`
-4. `cmake -DCMAKE_BUILD_TYPE:STRING=Release ..`
-5. `make`
-
-
-**Test**:
-
-You may test if uguca is running well on your computer by following these steps
-
-1. `cd build`
-2. `ctest`
-
-
-**Example Simulation**:
-
-You may run an example simulation by following these steps
-
-1. `cd build/examples`
-2. `make`
-3. _e.g._ `./basic_example`
-4. visualize result (you need Python) _e.g._ `./basic_example_plot.py`
-
-
-## Documentation
-
-Detailed information can be found in the [online documentation](https://uguca.gitlab.io/uguca/)
