@@ -128,7 +128,7 @@ def invert(nu=0.25,tcut=100,dt=0.05,plane_stress=False,do_save=True,do_plot=True
     tt=mp.arange(0,tcut+dt,dt)
     tt[0]+=1e-12
 
-    pool = Pool()
+    pool = Pool(100)
     h00res = pool.apply_async(h00inv, [cdcs,tt,dt,do_save,nu,psss])
     h01res = pool.apply_async(h01inv, [cdcs,tt,dt,do_save,nu,psss])
     h11res = pool.apply_async(h11inv, [cdcs,tt,dt,do_save,nu,psss])
@@ -166,6 +166,10 @@ def analytical_inverse(tcut=100,dt=0.05,do_save=True,do_plot=True):
 if __name__=="__main__":
 
     import sys
+
+    import multiprocessing
+    multiprocessing.set_start_method("fork") 
+
     mp.dps = 100; mp.pretty = True
     
     if len(sys.argv)<2 or len(sys.argv)>4:

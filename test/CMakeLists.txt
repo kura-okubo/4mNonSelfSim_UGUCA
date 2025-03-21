@@ -87,3 +87,6 @@ uguca_add_test(test_linear_shear_cohesive_law)
 uguca_add_test(test_linear_coulomb_friction_law)
 uguca_add_test(test_barras_law)
 uguca_add_test(test_rate_and_state_law)
+
+# add self-healing laws
+uguca_add_test(test_linear_coulomb_friction_law_selfhealing)

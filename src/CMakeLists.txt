@@ -77,6 +77,9 @@ set(UGUCA_HEADER
   interface/laws/barras_law.hh
   interface/laws/rate_and_state_law.hh
 
+  # add self-healing model
+  interface/laws/linear_coulomb_friction_law_selfhealing.hh
+  
   # use method as infinite boundary condition for FEM
   interface/infinite_boundary/infinite_boundary.hh
   )
@@ -127,6 +130,9 @@ set(UGUCA_SRC
   interface/laws/linear_shear_cohesive_law.cc
   interface/laws/barras_law.cc
   interface/laws/rate_and_state_law.cc
+  
+  # add self-healing model
+  interface/laws/linear_coulomb_friction_law_selfhealing.cc
 
   # use method as infinite boundary condition for FEM
   interface/infinite_boundary/infinite_boundary.cc

@@ -1,5 +1,7 @@
 # UGUCA extended for analysis of non-self-similar earthquakes
 
+
+
 This repository contains the extended version of the spectral-boundary-integral method-based software [**UGUCA**](https://gitlab.com/uguca/uguca) for the analysis in [**4mNonSelfSim_Paper**](https://github.com/kura-okubo/4mNonSelfSim_Paper), where we performed dynamic rupture modeling of non-self-similar earthquakes observed in laboratory experiments.
 
 This version is forked from the `stable` branch of `v1.0` from the [UGUCA](https://gitlab.com/uguca/uguca) repository.  
@@ -10,6 +12,48 @@ See the original GitLab repository for the latest version and software informati
 - Linear slip-weakening law with slip-strengthening regime.
 - Input files for the case study of laboratory non-self-similar earthquakes.
 - Kernel for the rock specimen ($\nu$=0.246).
+
+## Installation
+Follow the [original instruction](https://gitlab.com/uguca/uguca).
+
+### Tips
+If you find an error:
+```sh
+-- Could NOT find MPI_CXX (missing: MPI_CXX_WORKS)
+CMake Error at /usr/local/share/cmake/Modules/FindPackageHandleStandardArgs.cmake:233 (message):
+  Could NOT find MPI (missing: MPI_CXX_FOUND) (found version "3.1")
+```
+
+I would recommend to install the openmpi from the source with specifying the gcc compilers ([re1](https://stackoverflow.com/questions/9186033/using-homebrew-with-alternate-gcc), [ref2](https://qiita.com/yjmtsmt/items/07dd58761c5405ecc703)).
+
+```sh
+export HOMEBREW_CC=gcc-14 # check the gcc version
+export HOMEBREW_CXX=g++-14
+```
+
+```sh
+brew install gcc
+brew uninstall --ignore-dependencies open-mpi
+brew install open-mpi --build-from-source
+```
+
+Running ctest with MPI-related shell scripts may cause issues. In such cases, the scripts can be executed manually for testing.
+
+## How to run
+
+In the `4mNonSelfSim_UGUCA` directory, execute the following commands::
+```sh
+mkdir build_example
+cd build_example
+sh ../local_cmake_twice.sh # better to make twice
+cd ./example_4mNonSelfSim
+sh run_rupgougepatch_casestudy.sh
+python plot_example_animation.py
+```
+
+## Gallery
+
+<img src="example_4mNonSelfSim/animation_top_velo_0.gif" width="500"/>
 
 ## Original License
 

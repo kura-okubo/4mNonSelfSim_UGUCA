@@ -44,6 +44,11 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -std=c++11 " CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG " CACHE STRING "" FORCE )
 set(CMAKE_MACOSX_RPATH TRUE)
 
+#
+# FFTW path
+# set(FFTW_INCLUDE_PATH "/Users/kokubo/opt/miniconda3/envs/uguca/include")
+#-------------------------------------#
+
 SET(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
   "Build options: None Debug Release RelWithDebInfo MinSizeRel."
   FORCE )
@@ -192,7 +197,7 @@ endif()
 
 # ------------------------------------------------------
 # examples
-option(UCA_EXAMPLES "examples" ON)
+option(UCA_EXAMPLES "examples" OFF)
 if(UCA_EXAMPLES)
   add_subdirectory(examples)
 endif()
@@ -203,4 +208,11 @@ endif()
 option(UCA_SIMULATIONS "simulations" OFF)
 if (UCA_SIMULATIONS)
   add_subdirectory(simulations)
+endif()
+
+# ------------------------------------------------------
+# add examples for 4mNonSelfSim
+option(UCA_EXAMPLES_4mNonSelfSim "example_4mNonSelfSim" ON)
+if (UCA_EXAMPLES_4mNonSelfSim)
+  add_subdirectory(example_4mNonSelfSim)
 endif()
