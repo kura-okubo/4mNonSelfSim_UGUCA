@@ -1,0 +1,57 @@
+# The gouge patch dynamic rupture input file generated at 2025-03-27T11:36:41
+string simulation_id = fb03-087__0052_a=4.00_ruptype=pulse_pdcscaling=0.600_sn=6.0MPa_hatfr=0.3_bgbeta=0.35_0.4450
+
+# Computational domain size
+double x_length = 4.00000000e-02
+double z_length = 4.00000000e-02
+int nb_x_elements = 1024
+int nb_z_elements = 1024
+
+# External loading
+double sn_nuc = -6.00000000e+06
+double sn_patch = -6.00000000e+06
+double sn_background = -2.00000000e+06
+double tau_patch = 3.18307592e+06
+double tau_background = 2.80000000e+05
+
+# Material constants
+double E_top = 9.60000000e+10
+double nu_top = 2.46000000e-01
+double rho_top = 2.98000000e+03
+
+# Frictional parameters
+double Gc_nuc = 3.51034078e-02
+double tau_c_nuc = 3.44116316e+06
+double tau_r_nuc = 1.80000000e+06
+double Gc_patch = 3.51034078e-02
+double tau_c_patch = 3.44116316e+06
+double tau_r_patch = 1.80000000e+06
+double tau_c_background = 8.00000000e+05
+double tau_r_background = 8.00000000e+05
+double dc_nuc = 4.27786935e-08
+double ds_nuc = 2.35282814e-07
+double fp_nuc = 5.73527193e-01
+double fr_nuc = 3.00000000e-01
+double dc_patch = 4.27786935e-08
+double ds_patch = 2.35282814e-07
+double fp_patch = 5.73527193e-01
+double fr_patch = 3.00000000e-01
+double dc_background = 4.27786935e-08
+double ds_background = 4.27786935e-04
+double fp_background = 4.00000000e-01
+double fr_background = 4.00000000e-01
+
+# Patch sizes and locations
+double R_nuc = 2.50000000e-03
+double R_patch = 4.00000000e-03
+double R_margin = 4.08000000e-03
+double nuc_x = -1.50000000e-03
+double nuc_z = 0.00000000e+00
+double c_nucexcess = 2.00000000e-02
+
+# Simulation parameters
+double duration = 4.20000000e-06
+double tsf = 3.00000000e-01
+double char_reg_time= 0.00000000e+00
+string dump_fields = cohesion_0,top_disp_0,top_velo_0
+int nb_dumps = 84
