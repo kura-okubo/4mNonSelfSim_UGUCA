@@ -15,5 +15,9 @@ simulations
 # additional gitignore directories
 archive
 bk_*
+dev_*
 debug_*
 kernels/*.pdf
+
+qsubrunner*
+submit_*
