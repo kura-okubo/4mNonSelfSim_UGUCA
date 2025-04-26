@@ -24,7 +24,7 @@ CMake Error at /usr/local/share/cmake/Modules/FindPackageHandleStandardArgs.cmak
   Could NOT find MPI (missing: MPI_CXX_FOUND) (found version "3.1")
 ```
 
-I would recommend to install the openmpi from the source with specifying the gcc compilers ([re1](https://stackoverflow.com/questions/9186033/using-homebrew-with-alternate-gcc), [ref2](https://qiita.com/yjmtsmt/items/07dd58761c5405ecc703)).
+I would recommend to install the openmpi from the source with specifying the gcc compilers ([ref1](https://stackoverflow.com/questions/9186033/using-homebrew-with-alternate-gcc), [ref2](https://qiita.com/yjmtsmt/items/07dd58761c5405ecc703)).
 
 ```sh
 export HOMEBREW_CC=gcc-14 # check the gcc version
@@ -37,7 +37,7 @@ brew uninstall --ignore-dependencies open-mpi
 brew install open-mpi --build-from-source
 ```
 
-Running ctest with MPI-related shell scripts may cause issues. In such cases, the scripts can be executed manually for testing.
+Running `ctest` with MPI-related shell scripts may cause issues. In such cases, you can run the test scripts manually.
 
 ## Minimum working example: How to run
 
