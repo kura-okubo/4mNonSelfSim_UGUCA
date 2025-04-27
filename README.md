@@ -1,6 +1,6 @@
 # UGUCA extended for analysis of non-self-similar earthquakes
 
-
+[![DOI](https://zenodo.org/badge/951119264.svg)](https://doi.org/10.5281/zenodo.15288456)
 
 This repository contains the extended version of the spectral-boundary-integral method-based software [**UGUCA**](https://gitlab.com/uguca/uguca) for the analysis in [**4mNonSelfSim_Paper**](https://github.com/kura-okubo/4mNonSelfSim_Paper), where we performed dynamic rupture modeling of non-self-similar earthquakes observed in laboratory experiments.
 
