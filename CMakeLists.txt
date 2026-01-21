@@ -212,7 +212,14 @@ endif()
 
 # ------------------------------------------------------
 # add examples for 4mNonSelfSim
-option(UCA_EXAMPLES_4mNonSelfSim "example_4mNonSelfSim" ON)
+option(UCA_EXAMPLES_4mNonSelfSim "example_4mNonSelfSim" OFF)
 if (UCA_EXAMPLES_4mNonSelfSim)
   add_subdirectory(example_4mNonSelfSim)
+endif()
+
+# ------------------------------------------------------
+# add case study for the cosh self healing
+option(UCA_EXAMPLES_4mNonSelfSim_CohSelfHeal "simulation_revision_coshselfheal" ON)
+if (UCA_EXAMPLES_4mNonSelfSim_CohSelfHeal)
+  add_subdirectory(simulation_revision_coshselfheal)
 endif()

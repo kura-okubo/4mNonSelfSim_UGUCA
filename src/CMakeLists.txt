@@ -79,6 +79,7 @@ set(UGUCA_HEADER
 
   # add self-healing model
   interface/laws/linear_coulomb_friction_law_selfhealing.hh
+  interface/laws/linear_coulomb_friction_law_coshselfhealing.hh
   
   # use method as infinite boundary condition for FEM
   interface/infinite_boundary/infinite_boundary.hh
@@ -133,6 +134,7 @@ set(UGUCA_SRC
   
   # add self-healing model
   interface/laws/linear_coulomb_friction_law_selfhealing.cc
+  interface/laws/linear_coulomb_friction_law_coshselfhealing.cc
 
   # use method as infinite boundary condition for FEM
   interface/infinite_boundary/infinite_boundary.cc

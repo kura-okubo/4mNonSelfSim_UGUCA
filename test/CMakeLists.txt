@@ -90,3 +90,4 @@ uguca_add_test(test_rate_and_state_law)
 
 # add self-healing laws
 uguca_add_test(test_linear_coulomb_friction_law_selfhealing)
+uguca_add_test(test_linear_coulomb_friction_law_coshselfhealing)

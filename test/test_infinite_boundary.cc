@@ -174,8 +174,18 @@ int main() {
     NodalFieldComponent & inf_bc_ext = infinite_boundary.getExternal().component(i);
     NodalFieldComponent & inf_bc_vel = infinite_boundary.getVelo().component(i);
     for (int n=0; n<inf_bc_ext.getNbNodes(); ++n){
-      if(std::abs(inf_bc_ext.at(n)-
-		  (- side_factor * mu/Cs*eta[i]*inf_bc_vel.at(n)))>1e-12){
+      
+      std::cout << std::abs(inf_bc_ext.at(n)- (- side_factor * mu/Cs*eta[i]*inf_bc_vel.at(n))) << std::endl;
+
+      double lhs = inf_bc_ext.at(n);
+      double rhs = - side_factor * mu/Cs*eta[i]*inf_bc_vel.at(n);
+      double diff = std::abs(lhs - rhs);
+
+      // if(std::abs(inf_bc_ext.at(n)-
+		  // (- side_factor * mu/Cs*eta[i]*inf_bc_vel.at(n)))>1e-12){
+      // This direct evaluation causes 1e-11 order of the round error.
+      // This order of the error is acceptable for the modeling though.
+      if ( diff > 1e-12 ){
 	std::cout<<"error "<<std::endl;
 	return 1;
       }
