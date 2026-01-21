@@ -13,6 +13,9 @@ See the original GitLab repository for the latest version and software informati
 - Input files for the case study of laboratory non-self-similar earthquakes.
 - Kernel for the rock specimen ($\nu$=0.246).
 
+## Revision version
+A smoothed self-healing friction formulation was implemented during the revision. See the `revisionR1_smoothselfheal` branch.
+
 ## Installation
 Follow the [original instruction](https://gitlab.com/uguca/uguca).
 
