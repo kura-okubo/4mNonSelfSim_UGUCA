@@ -17,6 +17,8 @@ archive
 bk_*
 dev_*
 debug_*
+*diffcheck*
+Testing
 kernels/*.pdf
 
 qsubrunner*
