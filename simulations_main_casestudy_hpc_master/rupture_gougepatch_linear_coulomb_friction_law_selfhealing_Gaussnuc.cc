@@ -7,7 +7,7 @@ Ke, C.-Y., McLaskey, G. C., and Kammer, D. S. Earthquake breakdown energy scalin
 
 https://gitlab.com/uguca/projects/breakdown_energy_scaling
 
-- new functinos: self-healing friction law and the Gaussian stress distribution in the nucleation area.
+- new functions: self-healing friction law and the Gaussian stress distribution in the nucleation area.
 */
 
 /**
