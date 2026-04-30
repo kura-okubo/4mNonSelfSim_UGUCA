@@ -79,3 +79,5 @@ uguca is distributed in the hope that it will be useful, but WITHOUT ANY WARRANT
 
 You should have received a copy of the GNU Lesser General Public License along with uguca.  If not, see <https://www.gnu.org/licenses/>.
 ```
+# Reference
+Okubo, K., Yamashita, F. & Fukuyama, E. Dynamics of non-self-similar earthquakes illuminated by a controlled fault asperity. Nat Commun 17, 3860 (2026). https://doi.org/10.1038/s41467-026-72217-x
